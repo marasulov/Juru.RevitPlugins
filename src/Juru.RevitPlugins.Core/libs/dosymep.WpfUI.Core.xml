@@ -1,0 +1,343 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>dosymep.WpfUI.Core</name>
+    </assembly>
+    <members>
+        <member name="T:dosymep.WpfUI.Core.SimpleServices.WpfUIMessageBoxService">
+            <summary>
+            Класс сервиса окна сообщений. 
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIMessageBoxService.#ctor(dosymep.SimpleServices.IHasTheme,dosymep.SimpleServices.IHasLocalization)">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIMessageBoxService.Show(System.String,System.String,System.Windows.MessageBoxButton,System.Windows.MessageBoxImage,System.Windows.MessageBoxResult)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfUI.Core.SimpleServices.WpfUINotificationService">
+            <summary>
+            Класс сервиса уведомлений
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUINotificationService.#ctor(dosymep.SimpleServices.IHasTheme,dosymep.SimpleServices.IHasLocalization)">
+            <summary>
+            Создает экземпляр сервиса уведомлений.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUINotificationService.ApplicationId">
+            <summary>
+            Идентификатор приложения.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUINotificationService.DefaultAuthor">
+            <summary>
+            Значение автора по умолчанию.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUINotificationService.DefaultFooter">
+            <summary>
+            Значение футера по умолчанию.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUINotificationService.DefaultImage">
+            <summary>
+            Значение изображения по умолчанию.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUINotificationService.NotificationScreen">
+            <summary>
+            Определяет, на каком мониторе будет отображаться уведомление.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUINotificationService.NotificationPosition">
+            <summary>
+            Позиция уведомления на экране.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUINotificationService.NotificationVisibleMaxCount">
+            <summary>
+            Максимальное количество отображаемых уведомлений на экране.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUINotificationService.CreateNotification(System.String,System.String,System.String,System.String,System.Windows.Media.ImageSource)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUINotificationService.CreateFatalNotification(System.String,System.String,System.String,System.Windows.Media.ImageSource)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUINotificationService.CreateWarningNotification(System.String,System.String,System.String,System.Windows.Media.ImageSource)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogFactory">
+            <summary>
+            Класс фабрики создания сервиса прогресс диалога.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogFactory.#ctor(dosymep.SimpleServices.IHasTheme,dosymep.SimpleServices.IHasLocalization)">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogFactory.StepValue">
+            <summary>
+            Шаг обновления значение прогресса.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogFactory.Indeterminate">
+            <summary>
+            Указывает будет ли прогресс бар неопределенным
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogFactory.DisplayTitleFormat">
+            <summary>
+            Строка форматирования отображения.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogFactory.CreateDialog">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService">
+            <summary>
+            Класс сервиса прогресс диалога.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.#ctor(dosymep.SimpleServices.IHasTheme,dosymep.SimpleServices.IHasLocalization)">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.Indeterminate">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.MaxValue">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.StepValue">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.DisplayTitleFormat">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.CreateProgress">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.CreateAsyncProgress">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.CreateCancellationToken">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.Close">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.Show">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.ShowDialog">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.Detach">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIProgressDialogService.Attach(System.Windows.DependencyObject)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfUI.Core.SimpleServices.WpfUIThemeUpdaterService">
+            <summary>
+            Обновляет тему для библиотеки WIN-UI.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIThemeUpdaterService.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIThemeUpdaterService.SetTheme(System.Windows.Window,dosymep.SimpleServices.UIThemes)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.SimpleServices.WpfUIThemeUpdaterService.SetTheme(dosymep.SimpleServices.UIThemes,System.Windows.FrameworkElement)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow">
+            <summary>
+            Предоставляет окно уведомления.
+            </summary>
+            <summary>
+            WpfUINotificationWindow
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.NotificationScreenProperty">
+            <summary>
+            Определяет, на каком мониторе будет отображаться уведомление.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.NotificationPositionProperty">
+            <summary>
+             Позиция уведомления на экране.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.WindowStackProperty">
+            <summary>
+            Список открытых окон уведомлений.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.BodyProperty">
+            <summary>
+            Идентифицирует свойство зависимости Body,
+            которое представляет основное содержимое или сообщение уведомления, отображаемого в уведомлении.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.FooterProperty">
+            <summary>
+            Идентифицирует свойство зависимости Footer,
+            которое представляет нижний текст или дополнительную информацию, отображаемую в уведомлении.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.AuthorProperty">
+            <summary>
+            Идентифицирует свойство зависимости Author,
+            которое представляет автора уведомления, отображаемого в уведомлении.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.ImageSourceProperty">
+            <summary>
+            Идентифицирует свойство зависимости ImageSource,
+            которое определяет источник изображения, отображаемого в уведомлении.
+            </summary>
+        </member>
+        <member name="E:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.ThemeChanged">
+            <inheritdoc cref="E:dosymep.SimpleServices.IHasTheme.ThemeChanged"/>
+        </member>
+        <member name="E:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.LanguageChanged">
+            <inheritdoc cref="E:dosymep.SimpleServices.IHasLocalization.LanguageChanged"/>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.#ctor(dosymep.SimpleServices.IHasTheme,dosymep.SimpleServices.IHasLocalization)">
+            <summary>
+            Предоставляет конструктор окна уведомления.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.NotificationScreen">
+            <summary>
+            Определяет, на каком мониторе будет отображаться уведомление.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.NotificationPosition">
+            <summary>
+             Позиция уведомления на экране.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.WindowStack">
+            <summary>
+            Список открытых окон уведомлений.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.Body">
+            <summary>
+            Представляет основное содержимое или сообщение, отображаемое в окне уведомления.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.Footer">
+            <summary>
+            Идентифицирует свойство зависимости Footer,
+            которое представляет текст нижнего колонтитула, отображаемого в уведомлении.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.Author">
+            <summary>
+            Идентифицирует свойство зависимости Author,
+            которое представляет автора уведомления, отображаемого в окне уведомления.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.ImageSource">
+            <summary>
+            Идентифицирует свойство зависимости ImageSource,
+            которое определяет источник изображения, отображаемого в уведомлении.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.OnExtendsContentIntoTitleBarChanged(System.Boolean,System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.OnBackdropTypeChanged(Wpf.Ui.Controls.WindowBackdropType,Wpf.Ui.Controls.WindowBackdropType)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.OnCornerPreferenceChanged(Wpf.Ui.Controls.WindowCornerPreference,Wpf.Ui.Controls.WindowCornerPreference)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Windows.WpfUINotificationWindow.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Windows.WpfUIProgressWindow.#ctor(dosymep.SimpleServices.IHasTheme,dosymep.SimpleServices.IHasLocalization)">
+            <summary>
+            Инициализирует окно прогресс бара.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Windows.WpfUIProgressWindow.CreateCancellationToken">
+            <summary>
+            Возвращает токен отмены.
+            </summary>
+            <returns>Возвращает токен отмены.</returns>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Windows.WpfUIProgressWindow.DispatcherUpdateWindow(System.Int32)">
+            <summary>
+            Обновляет окно.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Windows.WpfUIProgressWindow.UpdateWindow(System.Int32)">
+            <summary>
+            Обновляет окно.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Windows.WpfUIProgressWindow.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Windows.WpfUIProgressWindow.Dispose(System.Boolean)">
+            <summary>
+            Очищает подписку на событие.
+            </summary>
+            <param name="disposing">Указывает на очистку ресурсов.</param>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Windows.WpfUIProgressWindow.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="T:XamlGeneratedNamespace.GeneratedInternalTypeHelper">
+            <summary>
+            GeneratedInternalTypeHelper
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.CreateInstance(System.Type,System.Globalization.CultureInfo)">
+            <summary>
+            CreateInstance
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.GetPropertyValue(System.Reflection.PropertyInfo,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            GetPropertyValue
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.SetPropertyValue(System.Reflection.PropertyInfo,System.Object,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            SetPropertyValue
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.CreateDelegate(System.Type,System.Object,System.String)">
+            <summary>
+            CreateDelegate
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.AddEventHandler(System.Reflection.EventInfo,System.Object,System.Delegate)">
+            <summary>
+            AddEventHandler
+            </summary>
+        </member>
+    </members>
+</doc>

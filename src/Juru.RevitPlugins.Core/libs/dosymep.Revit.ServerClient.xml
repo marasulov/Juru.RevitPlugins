@@ -1,0 +1,1154 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>dosymep.Revit.ServerClient</name>
+    </assembly>
+    <members>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.FileData">
+            <summary>
+            The file data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.FileData.#ctor(System.String)">
+            <summary>
+            Constructs file data.
+            </summary>
+            <param name="name">Name</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FileData.Name">
+            <summary>
+            Name
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FileData.Size">
+            <summary>
+            Size
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FileData.IsText">
+            <summary>
+            IsText
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.FolderContents">
+            <summary>
+            The folder contents.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.FolderContents.#ctor(System.String)">
+            <summary>
+            Constructs folder contents.
+            </summary>
+            <param name="path">The folder path..</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderContents.Folders">
+            <summary>
+            The list of sub-folders.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderContents.Models">
+            <summary>
+            The list of sub-models.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderContents.DriveSpace">
+            <summary>
+            The total space in bytes of the drive where the folder exists.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderContents.DriveFreeSpace">
+            <summary>
+            The free space in bytes of the drive where the folder exists.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderContents.Files">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderContents.LockState">
+            <summary>
+            The lock state of the folder/model.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderContents.LockContext">
+            <summary>
+            The context of the admin lock on the folder/model,
+            describing the use of the admin lock such as copying or moving a folder
+            from one server to another.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderContents.ModelLocksInProgress">
+            <summary>
+            The list of descendant models that are locked by the Revit clients.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.FolderData">
+            <summary>
+            The folder data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.FolderData.#ctor(System.String)">
+            <summary>
+            Constructs folder data.
+            </summary>
+            <param name="name">The name of folder/model.</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderData.Size">
+            <summary>
+            The size in bytes of the folder.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderData.HasContents">
+            <summary>
+            Whether the folder has any contents.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.FolderInfoData">
+            <summary>
+            The directory data. 
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.FolderInfoData.#ctor(System.String)">
+            <summary>
+            Constructs folder info data.
+            </summary>
+            <param name="path">The folder path..</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderInfoData.Size">
+            <summary>
+            The size of the folder.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderInfoData.FolderCount">
+            <summary>
+            The count of sub-folders under the folder.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderInfoData.ModelCount">
+            <summary>
+            The count of models under the folder.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderInfoData.IsFolder">
+            <summary>
+            Whether the folder is a normal folder and not a model’s folder.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderInfoData.Exists">
+            <summary>
+            Whether the folder exists.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderInfoData.LockState">
+            <summary>
+            The lock state of the folder/model.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderInfoData.LockContext">
+            <summary>
+            The context of the admin lock on the folder/model,
+            describing the use of the admin lock such as copying or moving a folder
+            from one server to another.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.FolderInfoData.ModelLocksInProgress">
+            <summary>
+            The list of descendant models that are locked by the Revit clients.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.LockContext">
+            <summary>
+            The lock context.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.LockContext.Context">
+            <summary>
+            The context of the admin lock on the folder/model,
+            describing the use of the admin lock
+            such as copying or moving a folder from one server to another.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.LockedDescendentsData">
+            <summary>
+            The locked descendents data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.LockedDescendentsData.#ctor(System.String)">
+            <summary>
+            Constructs locked descendents data.
+            </summary>
+            <param name="path">The folder path..</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.LockedDescendentsData.Items">
+            <summary>
+            The list of paths of locked descendents.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.LockedDescendentsData.DescendentHasLockContext">
+            <summary>
+            Whether there is any locked descendents
+            that has lock context describing the use of the admin lock
+            such as copying or moving a folder from one server to another.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.LockState">
+            <summary>
+            The lock states.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.LockState.Unlocked">
+            <summary>
+            Unlocked
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.LockState.Locked">
+            <summary>
+            Locked
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.LockState.HasLockedAncestor">
+            <summary>
+            HasLockedAncestor
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.LockState.HasLockedDescendent">
+            <summary>
+            HasLockedDescendent
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.LockState.Unlocking">
+            <summary>
+            Unlocking
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.LockState.Locking">
+            <summary>
+            Locking
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ModelData">
+            <summary>
+            The model data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.ModelData.#ctor(System.String)">
+            <summary>
+            Constructs model data.
+            </summary>
+            <param name="name">The name of folder/model.</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelData.ModelSize">
+            <summary>
+            The size in bytes of the model.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelData.SupportSize">
+            <summary>
+            The size in bytes of the auxiliary data (such as user temporary data) for the model.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelData.ProductVersion">
+            <summary>
+            The version number of Revit that the model is lasted modified with.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ModelHistoryData">
+            <summary>
+            The model history data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.ModelHistoryData.#ctor(System.String)">
+            <summary>
+            Constructs model history data.
+            </summary>
+            <param name="path">The folder path..</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelHistoryData.Items">
+            <summary>
+            The list of a model’s submission history.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ModelHistoryItem">
+            <summary>
+            The model history.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelHistoryItem.Date">
+            <summary>
+            The date and time the submission was made to the model.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelHistoryItem.User">
+            <summary>
+            The user who made the submission.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelHistoryItem.VersionNumber">
+            <summary>
+            The version of the model created by the submission.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelHistoryItem.ModelSize">
+            <summary>
+            The size of the model at the time the submission was made.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelHistoryItem.SupportSize">
+            <summary>
+            The size of the auxiliary data (such as user temporary data)
+            for the model at the time the submission was made.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelHistoryItem.Comment">
+            <summary>
+            The comment message created by the submission.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelHistoryItem.OverwrittenByHistoryNumber">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ModelInfoData">
+            <summary>
+            The model information data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.ModelInfoData.#ctor(System.String)">
+            <summary>
+            Constructs model info data.
+            </summary>
+            <param name="path">The folder path..</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelInfoData.ModelGuid">
+            <summary>
+            The GUID of the model.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelInfoData.SupportSize">
+            <summary>
+            The size of the auxiliary data (such as user temporary data) for the model.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ModelLockData">
+            <summary>
+            The model lock data.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelLockData.Age">
+            <summary>
+            The age of the model lock.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelLockData.TimeStamp">
+            <summary>
+            The time stamp of the model lock.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelLockData.ModelLockType">
+            <summary>
+            The type of the model lock.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelLockData.ModelLockOptions">
+            <summary>
+            The combination of the model lock options
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelLockData.UserName">
+            <summary>
+            The user who locks the model.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ModelLockData.ModelPath">
+            <summary>
+            The model path.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ModelLockOptions">
+            <summary>
+            The model lock options.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ModelLockOptions.Read">
+            <summary>
+            Read
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ModelLockOptions.Write">
+            <summary>
+            Write
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ModelLockType">
+            <summary>
+            The model lock types.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ModelLockType.Data">
+            <summary>
+            Data
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ModelLockType.Permissions">
+            <summary>
+            Permissions
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ObjectData">
+            <summary>
+            The object data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.ObjectData.#ctor(System.String)">
+            <summary>
+            Constructs object data.
+            </summary>
+            <param name="name">The name of folder/model.</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ObjectData.Name">
+            <summary>
+            The name of folder/model.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ObjectData.LockState">
+            <summary>
+            The lock state of the folder/model.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ObjectData.LockContext">
+            <summary>
+            The context of the admin lock on the folder/model,
+            describing the use of the admin lock such as copying or moving a folder
+            from one server to another.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ObjectData.ModelLocksInProgress">
+            <summary>
+            The list of descendant models that are locked by the Revit clients.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.ObjectData.ToString">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.ObjectData.Equals(dosymep.Revit.ServerClient.DataContracts.ObjectData)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.ObjectData.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.ObjectData.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ObjectInfoData">
+            <summary>
+            The object info data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.ObjectInfoData.#ctor(System.String)">
+            <summary>
+            Constructs object info data.
+            </summary>
+            <param name="path">The folder path..</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ObjectInfoData.DateCreated">
+            <summary>
+            The creation time.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ObjectInfoData.DateModified">
+            <summary>
+            The last modification time.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ObjectInfoData.LastModifiedBy">
+            <summary>
+            The user who did the last modification.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ObjectInfoData.ModelSize">
+            <summary>
+            The size of the model.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ParamInfo">
+            <summary>
+            The parameter information.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ParamInfo.Id">
+            <summary>
+            Guid of shared parameter.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ParamInfo.Value">
+            <summary>
+            The parameter value.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ParamInfo.DisplayName">
+            <summary>
+            The parameter’s display name.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ParamInfo.ParamType">
+            <summary>
+            The parameter’s type
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ParamInfo.ParamValueType">
+            <summary>
+            The parameter’s value type.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ParamInfoItem">
+            <summary>
+            The parameter information item.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ParamInfoItem.Title">
+            <summary>
+            The group name.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ParamInfoItem.Items">
+            <summary>
+            Parameter information.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ParamType">
+            <summary>
+            The parameter types.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ParamType.System">
+            <summary>
+            System
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ParamType.Shared">
+            <summary>
+            Shared
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ParamType.Custom">
+            <summary>
+            Custom
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ParamValueType">
+            <summary>
+            The parameter value type.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ParamValueType.Length">
+            <summary>
+            Length
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ParamValueType.Number">
+            <summary>
+            Number
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ParamValueType.Material">
+            <summary>
+            Material
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ParamValueType.Text">
+            <summary>
+            Text
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ParamValueType.YesNo">
+            <summary>
+            YesNo
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ParamValueType.MultilineText">
+            <summary>
+            Multiline Text
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.PasteAction">
+            <summary>
+            The past actions.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.PasteAction.Copy">
+            <summary>
+            Copy the source object to the destination folder.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.PasteAction.Move">
+            <summary>
+            Move the source object to the destination folder.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ProductVersion">
+            <summary>
+            The product versions.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Unknown">
+            <summary>
+            Unknown
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Version2011">
+            <summary>
+            2011
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Version2012">
+            <summary>
+            2012
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Version2013">
+            <summary>
+            2013
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Version2014">
+            <summary>
+            2014
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Version2015">
+            <summary>
+            2015
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Version2016">
+            <summary>
+            2016
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Version2017">
+            <summary>
+            2017
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Version2018">
+            <summary>
+            2018
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Version2019">
+            <summary>
+            2019
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Version2020">
+            <summary>
+            2020
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Version2021">
+            <summary>
+            2021
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ProductVersion.Version2022">
+            <summary>
+            2022
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ProjectInfo">
+            <summary>
+            The project information.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ProjectInfo.Items">
+            <summary>
+            The project parameters.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.RelativePathData">
+            <summary>
+            The relative path data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.RelativePathData.#ctor(System.String)">
+            <summary>
+            Constructs relative path data.
+            </summary>
+            <param name="path">The folder path..</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.RelativePathData.Path">
+            <summary>
+            The folder path.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.RelativePathData.ToString">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.RelativePathData.Equals(dosymep.Revit.ServerClient.DataContracts.RelativePathData)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.RelativePathData.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.RelativePathData.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ServerProperties">
+            <summary>
+            The server properties.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ServerProperties.Servers">
+            <summary>
+            The name list of servers (not including accelerators) in the Revit Server Network.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ServerProperties.ServerRoles">
+            <summary>
+            The list of roles current server plays.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ServerProperties.MaximumFolderPathLength">
+            <summary>
+            The maximum folder path length that the server supports.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ServerProperties.MaximumModelNameLength">
+            <summary>
+            The maximum model path length that the server supports.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ServerProperties.MachineName">
+            <summary>
+            The server's machine name. 
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.ServerProperties.AccessLevelTypes">
+            <summary>
+            The server's access level types.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.ServerRole">
+            <summary>
+            The server's roles.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ServerRole.Host">
+            <summary>
+            Host
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ServerRole.Accelerator">
+            <summary>
+            Accelerator
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ServerRole.Admin">
+            <summary>
+            Admin
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ServerRole.Cloud">
+            <summary>
+            Cloud
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.ServerClient.DataContracts.ServerRole.NotARevitServer">
+            <summary>
+            NotARevitServer
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.DataContracts.UnlockDescendentsData">
+            <summary>
+            The unlock descendents data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.DataContracts.UnlockDescendentsData.#ctor(System.String)">
+            <summary>
+            Constructs unlock descendents data.
+            </summary>
+            <param name="path">The folder path..</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.DataContracts.UnlockDescendentsData.FailedItems">
+            <summary>
+            The list of paths of descendents that are not unlocked.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.Internal.IRevitHttpClient">
+            <summary>
+            Interface HTTP connection with server.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.IRevitHttpClient.Get(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Generate GET request to the server.
+            </summary>
+            <param name="requestUri">Request url.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns server response.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.IRevitHttpClient.Put(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Generate PUT request to the server.
+            </summary>
+            <param name="requestUri">Request url.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns server response.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.IRevitHttpClient.Post(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Generate POST request to the server.
+            </summary>
+            <param name="requestUri">Request url.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns server response.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.IRevitHttpClient.Delete(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Generate DELETE request to the server.
+            </summary>
+            <param name="requestUri">Request url.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns server response.</returns>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.Internal.JsonSerialization">
+            <summary>
+            The json serialization class,
+            this class using NewtonsoftJson
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.Internal.TimeSpanConverter">
+            <summary>
+            https://stackoverflow.com/questions/12633588/parsing-iso-duration-with-json-net
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.Internal.RevitHttpClient">
+            <summary>
+            The revit http client.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.RevitHttpClient.#ctor(System.String,System.String)">
+            <summary>
+            Creates instance with revit server.
+            </summary>
+            <param name="serverName">Server's name.</param>
+            <param name="serverVersion">Server's version.</param>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.RevitHttpClient.Get(System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.RevitHttpClient.Put(System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.RevitHttpClient.Post(System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.RevitHttpClient.Delete(System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.RevitHttpClient.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.Internal.ServerClientImpl">
+            <summary>
+            The server client.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.#ctor(System.String,System.String)">
+            <summary>
+            Creates instance server client.
+            </summary>
+            <param name="serverName">Server's name.</param>
+            <param name="serverVersion">Server's version.</param>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.Internal.ServerClientImpl.ServerName">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.Internal.ServerClientImpl.ServerVersion">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.GetServerPropertiesAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.GetFolderContentsAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.GetFolderInfoAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.GetModelHistoryAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.GetModelInfoAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.GetModelThumbnailAsync(System.String,System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.GetProjectInfoAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.LockAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.UnlockAsync(System.String,System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.CancelLockAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.GetDescendentsLocksAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.GetDescendentsUnlocksAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.CreateNewFolderAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.RenameObjectAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.RemoveObjectAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.CopyOrMoveAsync(System.String,System.String,dosymep.Revit.ServerClient.DataContracts.PasteAction,System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.Internal.ServerClientImpl.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.IServerClient">
+            <summary>
+            Provides connection to revit server.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.IServerClient.ServerName">
+            <summary>
+            The server name.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.ServerClient.IServerClient.ServerVersion">
+            <summary>
+            The server version.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.GetServerPropertiesAsync(System.Threading.CancellationToken)">
+            <summary>
+            URL: GET /serverProperties
+            Queries the server’s properties.
+            </summary>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns the server’s properties.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.GetFolderContentsAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            URL: GET /{folderPath}/contents
+            Queries the contents of a folder.
+            </summary>
+            <param name="folderPath">The path of the specified folder.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns the contents of a folder.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.GetFolderInfoAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            URL: GET /{folderPath}/DirectoryInfo
+            Queries the folder directory information.
+            </summary>
+            <param name="folderPath">The path of the specified folder.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns the folder directory information.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.GetModelHistoryAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            URL: GET /{modelPath}/history
+            Queries the submission history of a model.
+            </summary>
+            <param name="modelPath">The path of the specified model.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns the submission history of a model.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.GetModelInfoAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            URL: GET /{modelPath}/modelInfo
+            Queries the file information of a model.
+            </summary>
+            <param name="modelPath">The path of the specified model.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns the file information of a model.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.GetModelThumbnailAsync(System.String,System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            URL: GET /{modelPath}/thumbnail?width={width}&amp;height={height}
+            Gets the thumbnail of a model.
+            </summary>
+            <param name="modelPath">The path of the specified model.</param>
+            <param name="width">Width of expected thumbnail.</param>
+            <param name="height">Height of expected thumbnail.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns the thumbnail of a model.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.GetProjectInfoAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            URL: GET /{modelPath}/projectInfo
+            Queries the project information of a model.
+            </summary>
+            <param name="modelPath">The path of the specified model.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns the project information of a model.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.LockAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            URL: PUT /{objectPath}/lock
+            Lock the server, a folder or a model.
+            </summary>
+            <param name="objectPath">The path of the server, the specified folder or the specified model.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.UnlockAsync(System.String,System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            URL: DELETE /{objectPath}/lock?objectMustExist={objectMustExist}
+            Unlocks the server, a folder, or a model.
+            </summary>
+            <param name="objectPath">The path of the server, the specified folder, or the specified model.</param>
+            <param name="objectMustExist">Whether the folder or model must exist.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.CancelLockAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            URL: DELETE /{objectPath}/inProgressLock
+            Cancel the in-progress locking operation on the server, a folder, or a model.
+            </summary>
+            <param name="objectPath">The path of the server, the specified folder, or the specified model.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.GetDescendentsLocksAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            URL: GET /{folderPath}/descendent/locks
+            Gets the lock information of the descendents of a folder.
+            </summary>
+            <param name="folderPath">The path of the specified folder.</param>
+            <returns>Returns the lock information of the descendents of a folder.</returns>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.GetDescendentsUnlocksAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            URL: DELETE /{folderPath}/descendent/locks
+            Unlocks all locks of the descendents of a folder.
+            </summary>
+            <param name="folderPath">The path of the specified folder.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns all locks of the descendents of a folder.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.CreateNewFolderAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            URL: PUT /{folderPath}
+            Creates a new folder.
+            </summary>
+            <param name="folderPath">The path of the new folder to be created.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.RenameObjectAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            URL: DELETE /{objectPath}?newObjectName={newObjectName}
+            Rename a folder or model.
+            </summary>
+            <param name="objectPath">The path of the specified folder or model.</param>
+            <param name="newObjectName">New name for the folder or model. Empty value means the object will be deleted.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.RemoveObjectAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            URL: DELETE /{objectPath}?newObjectName={newObjectName}
+            Remove a folder or model.
+            </summary>
+            <param name="objectPath">The path of the specified folder or model.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.IServerClient.CopyOrMoveAsync(System.String,System.String,dosymep.Revit.ServerClient.DataContracts.PasteAction,System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            URL: POST /{sourceObjectPath}?destinationObjectPath={destinationObjectPath}&amp;pasteAction={pasteAction}&amp;replaceExisting={replaceExisting}
+            Copies or moves a folder or a model to another folder or model.
+            </summary>
+            <param name="sourceObjectPath">The path of the source object.</param>
+            <param name="destinationObjectPath">The path of the destination object.</param>
+            <param name="pasteAction">The action type.</param>
+            <param name="replaceExisting">True if to replace destination object if it already exists, otherwise false.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.ServerClientBuilder">
+            <summary>
+            Class build server client.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.ServerClientBuilder.SetServerName(System.String)">
+            <summary>
+            Sets server's name.
+            </summary>
+            <param name="serverName">Server's name.</param>
+            <returns>Returns current builder.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.ServerClientBuilder.SetServerVersion(System.String)">
+            <summary>
+            Sets server's version.
+            </summary>
+            <param name="serverVersion">Server's version.</param>
+            <returns>Returns current builder.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.ServerClientBuilder.Build">
+            <summary>
+            Creates connection with revit server.
+            </summary>
+            <returns>Returns connection with revit server .</returns>
+        </member>
+        <member name="T:dosymep.Revit.ServerClient.ServerClientExtensions">
+            <summary>
+            Class contains server client extensions.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.ServerClientExtensions.GetRelativeModelPath(dosymep.Revit.ServerClient.DataContracts.FolderContents,dosymep.Revit.ServerClient.DataContracts.ObjectData)">
+            <summary>
+            Returns relative model path.
+            </summary>
+            <param name="folderContents">Parent folder contents.</param>
+            <param name="objectData">Object data.</param>
+            <returns>Returns relative model path.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.ServerClientExtensions.GetRootFolderContentsAsync(dosymep.Revit.ServerClient.IServerClient,System.Threading.CancellationToken)">
+            <summary>
+            Returns root folder contents.
+            </summary>
+            <param name="serverClient">Server client connection.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns root folder contents.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.ServerClientExtensions.GetRecursiveFolderContentsAsync(dosymep.Revit.ServerClient.IServerClient,System.Threading.CancellationToken)">
+            <summary>
+            Returns all revit server contents.
+            </summary>
+            <param name="serverClient">Server client connection.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns all revit contents.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.ServerClientExtensions.GetRecursiveFolderContentsAsync(dosymep.Revit.ServerClient.IServerClient,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Returns all revit server contents.
+            </summary>
+            <param name="serverClient">Server client connection.</param>
+            <param name="folderPath">The path of the specified folder.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Returns all revit server contents.</returns>
+        </member>
+        <member name="M:dosymep.Revit.ServerClient.ServerClientExtensions.GetVisibleModelPath(dosymep.Revit.ServerClient.IServerClient,dosymep.Revit.ServerClient.DataContracts.FolderContents,dosymep.Revit.ServerClient.DataContracts.ModelData)">
+            <summary>
+            Returns visible model path for RS.
+            </summary>
+            <param name="serverClient">Server client connection.</param>
+            <param name="folderContents">Parent folder contents.</param>
+            <param name="objectData">Object data.</param>
+            <returns>Returns visible model path for RS.</returns>
+        </member>
+    </members>
+</doc>

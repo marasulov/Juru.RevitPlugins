@@ -1,0 +1,82 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Debug.R23" />
+    <BuildType Name="Debug.R24" />
+    <BuildType Name="Debug.R25" />
+    <BuildType Name="Debug.R26" />
+    <BuildType Name="Debug.R27" />
+    <BuildType Name="Release" />
+    <BuildType Name="Release.R23" />
+    <BuildType Name="Release.R24" />
+    <BuildType Name="Release.R25" />
+    <BuildType Name="Release.R26" />
+    <BuildType Name="Release.R27" />
+  </Configurations>
+  <Folder Name="/Automation/">
+    <Project Path="build/Build.csproj">
+      <BuildType Solution="Debug.R23|*" Project="Debug" />
+      <BuildType Solution="Debug.R24|*" Project="Debug" />
+      <BuildType Solution="Debug.R25|*" Project="Debug" />
+      <BuildType Solution="Debug.R26|*" Project="Debug" />
+      <BuildType Solution="Debug.R27|*" Project="Debug" />
+      <BuildType Solution="Release.R23|*" Project="Release" />
+      <BuildType Solution="Release.R24|*" Project="Release" />
+      <BuildType Solution="Release.R25|*" Project="Release" />
+      <BuildType Solution="Release.R26|*" Project="Release" />
+      <BuildType Solution="Release.R27|*" Project="Release" />
+      <Build Solution="Debug.R23|*" Project="false" />
+      <Build Solution="Debug.R24|*" Project="false" />
+      <Build Solution="Debug.R25|*" Project="false" />
+      <Build Solution="Debug.R26|*" Project="false" />
+      <Build Solution="Debug.R27|*" Project="false" />
+      <Build Solution="Release.R23|*" Project="false" />
+      <Build Solution="Release.R24|*" Project="false" />
+      <Build Solution="Release.R25|*" Project="false" />
+      <Build Solution="Release.R26|*" Project="false" />
+      <Build Solution="Release.R27|*" Project="false" />
+    </Project>
+    <Project Path="install/Installer.csproj">
+      <BuildType Solution="Debug.R23|*" Project="Debug" />
+      <BuildType Solution="Debug.R24|*" Project="Debug" />
+      <BuildType Solution="Debug.R25|*" Project="Debug" />
+      <BuildType Solution="Debug.R26|*" Project="Debug" />
+      <BuildType Solution="Debug.R27|*" Project="Debug" />
+      <BuildType Solution="Release.R23|*" Project="Release" />
+      <BuildType Solution="Release.R24|*" Project="Release" />
+      <BuildType Solution="Release.R25|*" Project="Release" />
+      <BuildType Solution="Release.R26|*" Project="Release" />
+      <BuildType Solution="Release.R27|*" Project="Release" />
+      <Build Solution="Debug.R23|*" Project="false" />
+      <Build Solution="Debug.R24|*" Project="false" />
+      <Build Solution="Debug.R25|*" Project="false" />
+      <Build Solution="Debug.R26|*" Project="false" />
+      <Build Solution="Debug.R27|*" Project="false" />
+      <Build Solution="Release.R23|*" Project="false" />
+      <Build Solution="Release.R24|*" Project="false" />
+      <Build Solution="Release.R25|*" Project="false" />
+      <Build Solution="Release.R26|*" Project="false" />
+      <Build Solution="Release.R27|*" Project="false" />
+    </Project>
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="build/appsettings.json" />
+    <File Path="Changelog.md" />
+    <File Path="Readme.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Juru.RevitPlugins.App/Juru.RevitPlugins.App.csproj">
+      <BuildType Solution="Debug|*" Project="Debug.R23" />
+      <BuildType Solution="Release|*" Project="Release.R23" />
+    </Project>
+    <Project Path="src/Juru.RevitPlugins.ClashNavigator/Juru.RevitPlugins.ClashNavigator.csproj">
+      <BuildType Solution="Debug|*" Project="Debug.R23" />
+      <BuildType Solution="Release|*" Project="Release.R23" />
+    </Project>
+    <Project Path="src/Juru.RevitPlugins.Core/Juru.RevitPlugins.Core.csproj">
+      <BuildType Solution="Debug|*" Project="Debug.R23" />
+      <BuildType Solution="Release|*" Project="Release.R23" />
+    </Project>
+  </Folder>
+</Solution>

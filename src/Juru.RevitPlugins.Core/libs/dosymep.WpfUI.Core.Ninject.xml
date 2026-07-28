@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>dosymep.WpfUI.Core.Ninject</name>
+    </assembly>
+    <members>
+        <member name="T:dosymep.WpfUI.Core.Ninject.NinjectExtensions">
+            <summary>
+            Расширения для настройки <see cref="T:Ninject.IKernel"/>.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Ninject.NinjectExtensions.UseWpfUIThemeUpdater(Ninject.IKernel)">
+            <summary>
+            Добавляет в контейнер <see cref="T:dosymep.SimpleServices.IUIThemeUpdaterService"/>,
+            который устанавливает тему WpfUI для окна <see cref="T:Wpf.Ui.Controls.FluentWindow"/>.
+            </summary>
+            <param name="kernel">Ninject контейнер.</param>
+            <returns>Возвращает настроенный контейнер Ninject.</returns>
+            <exception cref="T:System.ArgumentNullException">kernel is null.</exception>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Ninject.NinjectExtensions.UseWpfUIMessageBox(Ninject.IKernel)">
+            <summary>
+            Добавляет в контейнер <see cref="T:dosymep.SimpleServices.IMessageBoxService"/>.
+            </summary>
+            <param name="kernel">Ninject контейнер.</param>
+            <returns>Возвращает настроенный контейнер Ninject.</returns>
+            <exception cref="T:System.ArgumentNullException">kernel is null.</exception>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Ninject.NinjectExtensions.UseWpfUIMessageBox``1(Ninject.IKernel)">
+            <summary>
+            Добавляет в контейнер <see cref="T:dosymep.SimpleServices.IMessageBoxService"/>.
+            </summary>
+            <param name="kernel">Ninject контейнер.</param>
+            <typeparam name="T">Тип ViewModel к которой будет прикрепление сервиса.</typeparam>
+            <returns>Возвращает настроенный контейнер Ninject.</returns>
+            <remarks>Обязательно требуется прикрепить к элементу управления через <see cref="T:dosymep.WpfCore.Behaviors.WpfAttachServiceBehavior"/>.</remarks>
+            <exception cref="T:System.ArgumentNullException">kernel is null.</exception>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Ninject.NinjectExtensions.UseWpfUIProgressDialog(Ninject.IKernel,System.Int32,System.Boolean,System.String)">
+            <summary>
+            Добавляет в контейнер <see cref="T:dosymep.SimpleServices.IProgressDialogService"/>.
+            </summary>
+            <param name="kernel">Ninject контейнер.</param>
+            <param name="stepValue">Значение шага прогресса. По умолчанию "10".</param>
+            <param name="indeterminate">True - включает неопределенный ход выполнения. По умолчанию выключено.</param>
+            <param name="displayTitleFormat">Формат отображения хода выполнения.
+            Значение {0} - текущий прогресс, {1} - максимальное количество.
+            По умолчанию "Пожалуйста подождите [{0}/{1}] ..."</param>
+            <returns>Возвращает настроенный контейнер Ninject.</returns>
+            <exception cref="T:System.ArgumentNullException">kernel is null.</exception>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Ninject.NinjectExtensions.UseWpfUIProgressDialog``1(Ninject.IKernel,System.Int32,System.Boolean,System.String)">
+            <summary>
+            Добавляет в контейнер <see cref="T:dosymep.SimpleServices.IProgressDialogFactory"/>.
+            </summary>
+            <param name="kernel">Ninject контейнер.</param>
+            <param name="stepValue">Значение шага прогресса. По умолчанию "10".</param>
+            <param name="indeterminate">True - включает неопределенный ход выполнения. По умолчанию выключено.</param>
+            <param name="displayTitleFormat">Формат отображения хода выполнения.
+            Значение {0} - текущий прогресс, {1} - максимальное количество.
+            По умолчанию "Пожалуйста подождите [{0}/{1}] ..."</param>
+            <typeparam name="T">Тип ViewModel к которой будет прикрепление сервиса.</typeparam>
+            <returns>Возвращает настроенный контейнер Ninject.</returns>
+            <remarks>Обязательно требуется прикрепить к элементу управления через <see cref="T:dosymep.WpfCore.Behaviors.WpfAttachServiceBehavior"/>.</remarks>
+            <exception cref="T:System.ArgumentNullException">kernel is null.</exception>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Ninject.NinjectExtensions.UseWpfUINotifications(Ninject.IKernel,System.String,System.String,System.String,System.Windows.Media.ImageSource,dosymep.WpfCore.SimpleServices.NotificationScreen,dosymep.WpfCore.SimpleServices.NotificationPosition,System.Int32)">
+            <summary>
+            Добавляет в контейнер <see cref="T:dosymep.SimpleServices.INotificationService"/>.
+            </summary>
+            <param name="kernel">Ninject контейнер.</param>
+            <param name="applicationId">Идентификатор приложения.</param>
+            <param name="defaultAuthor">Имя автора по умолчанию. Расположение снизу справа на уведомлении.</param>
+            <param name="defaultFooter">Значение футера по умолчанию. Расположение снизу слева на уведомлении.</param>
+            <param name="defaultImage">Значение изображения по умолчанию. Расположение слева на уведомлении.</param>
+            <param name="notificationScreen">Значение выбора окна.
+            По умолчанию <see cref="F:dosymep.WpfCore.SimpleServices.NotificationScreen.Primary"/>.</param>
+            <param name="notificationPosition">Значение места отображения уведомления.
+            По умолчанию <see cref="F:dosymep.WpfCore.SimpleServices.NotificationPosition.BottomRight"/>.</param>
+            <param name="notificationVisibleMaxCount">Максимальное количество уведомлений на экране. По умолчанию "5".</param>
+            <returns>Возвращает настроенный контейнер Ninject.</returns>
+            <exception cref="T:System.ArgumentNullException">kernel is null.</exception>
+        </member>
+        <member name="M:dosymep.WpfUI.Core.Ninject.NinjectExtensions.UseWpfUINotifications``1(Ninject.IKernel,System.String,System.String,System.String,System.Windows.Media.ImageSource,dosymep.WpfCore.SimpleServices.NotificationScreen,dosymep.WpfCore.SimpleServices.NotificationPosition,System.Int32)">
+            <summary>
+            Добавляет в контейнер <see cref="T:dosymep.SimpleServices.INotificationService"/>.
+            </summary>
+            <param name="kernel">Ninject контейнер.</param>
+            <param name="applicationId">Идентификатор приложения.</param>
+            <param name="defaultAuthor">Имя автора по умолчанию. Расположение снизу справа на уведомлении.</param>
+            <param name="defaultFooter">Значение футера по умолчанию. Расположение снизу слева на уведомлении.</param>
+            <param name="defaultImage">Значение изображения по умолчанию. Расположение слева на уведомлении.</param>
+            <param name="notificationScreen">Значение выбора окна.
+            По умолчанию <see cref="F:dosymep.WpfCore.SimpleServices.NotificationScreen.Primary"/>.</param>
+            <param name="notificationPosition">Значение места отображения уведомления.
+            По умолчанию <see cref="F:dosymep.WpfCore.SimpleServices.NotificationPosition.BottomRight"/>.</param>
+            <param name="notificationVisibleMaxCount">Максимальное количество уведомлений на экране. По умолчанию "5".</param>
+            <typeparam name="T">Тип ViewModel к которой будет прикрепление сервиса.</typeparam>
+            <returns>Возвращает настроенный контейнер Ninject.</returns>
+            <remarks>Обязательно требуется прикрепить к элементу управления через <see cref="T:dosymep.WpfCore.Behaviors.WpfAttachServiceBehavior"/>.</remarks>
+            <exception cref="T:System.ArgumentNullException">kernel is null.</exception>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,594 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>dosymep.Revit.Journaling</name>
+    </assembly>
+    <members>
+        <member name="T:dosymep.Revit.Journaling.JournalElements.DynamoCommandElement">
+            <summary>
+            Dynamo command element.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.DynamoCommandElement.#ctor">
+            <summary>
+            Creates
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.DynamoCommandElement.ScriptPath">
+            <summary>
+            Dynamo script path.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.DynamoCommandElement.NodesInfo">
+            <summary>
+            Dynamo model info.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.DynamoCommandElement.JournalData">
+            <summary>
+            External command journal data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.DynamoCommandElement.Reduce``2(dosymep.AutodeskApps.ITransformer{``0,``1})">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.Journaling.JournalElements.DynamoNodeInfo">
+            <summary>
+            Dynamo model node info.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.DynamoNodeInfo.Id">
+            <summary>
+            Id.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.DynamoNodeInfo.Name">
+            <summary>
+            Name.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.DynamoNodeInfo.Value">
+            <summary>
+            Value.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.Journaling.JournalElements.ExternalCommandElement">
+            <summary>
+            External command journal element.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.ExternalCommandElement.#ctor">
+            <summary>
+            Constructs external command journal element.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.ExternalCommandElement.RevitAddinItem">
+            <summary>
+            External command.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.ExternalCommandElement.JournalData">
+            <summary>
+            External command journal data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.ExternalCommandElement.Reduce``2(dosymep.AutodeskApps.ITransformer{``0,``1})">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.Journaling.JournalElements.JournalElement">
+            <summary>
+            Abstract class revit journal element.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.JournalElement.#ctor(System.String)">
+            <summary>
+            Constructs journal element.
+            </summary>
+            <param name="name">Journal element name.</param>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.JournalElement.Id">
+            <summary>
+            Identity journal element.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.JournalElement.Name">
+            <summary>
+            Journal element name.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.JournalElement.Reduce``2(dosymep.AutodeskApps.ITransformer{``0,``1})">
+            <summary>
+            Transform journal element.
+            </summary>
+            <param name="transformer">Transformer journal element.</param>
+            <typeparam name="T">Transform result.</typeparam>
+            <typeparam name="TVisitable">Visitable element.</typeparam>
+            <returns>Returns transform result.</returns>
+        </member>
+        <member name="T:dosymep.Revit.Journaling.JournalElements.OpenCentralModelElement">
+            <summary>
+            Open central model journal element.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.OpenCentralModelElement.#ctor">
+            <summary>
+            Constructs open central model journal element.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.OpenCentralModelElement.IsWorksharedModel">
+            <summary>
+            Shows that a model with working sets is being opened default true.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.OpenCentralModelElement.Detach">
+            <summary>
+            If true detaching central model.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.OpenCentralModelElement.WithAudit">
+            <summary>
+            If true open central model with audit.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.OpenCentralModelElement.CreateLocal">
+            <summary>
+            If true create local file.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.OpenCentralModelElement.WorksetOption">
+            <summary>
+            Worksets options.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.OpenCentralModelElement.ModelPath">
+            <summary>
+            Model path.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.OpenCentralModelElement.Reduce``2(dosymep.AutodeskApps.ITransformer{``0,``1})">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.Journaling.JournalElements.PurgeUnusedElement">
+            <summary>
+            Purge unused journal element.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.PurgeUnusedElement.#ctor">
+            <summary>
+            Constructs purge unused journal element.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.PurgeUnusedElement.TryCount">
+            <summary>
+            Number command executions.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.PurgeUnusedElement.Reduce``2(dosymep.AutodeskApps.ITransformer{``0,``1})">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement">
+            <summary>
+            Save as command journal element.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement.#ctor">
+            <summary>
+            Constructs save as command journal element.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement.MaxBackupCount">
+            <summary>
+            Maximum backup count.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement.ThumbnailViewId">
+            <summary>
+            View id for generate thumbnail. Default (empty) value -1.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement.RegenerateThumbnail">
+            <summary>
+            Regenerate thumbnail if view/sheet is not up-to date.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement.CompactFile">
+            <summary>
+            Compact file.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement.ReplaceExistingFile">
+            <summary>
+            Replace existing file.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement.EnableWorksharing">
+            <summary>
+            Enable workshared model from not workshared.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement.MakeThisFileCentalModel">
+            <summary>
+            Make this a Central Model after save.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement.ModelPath">
+            <summary>
+            New model path location.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement.WorksetOption">
+            <summary>
+            Worksets options.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement.Reduce``2(dosymep.AutodeskApps.ITransformer{``0,``1})">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.Journaling.JournalElements.SyncCentralModelElement">
+            <summary>
+            Synchronization central model journal element.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.SyncCentralModelElement.#ctor">
+            <summary>
+            Creates synchronization central model journal element.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SyncCentralModelElement.Compact">
+            <summary>
+            If true compact central model when sync.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SyncCentralModelElement.SaveLocalFile">
+            <summary>
+            If true saving local file when sync.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SyncCentralModelElement.BorrowedElements">
+            <summary>
+            If true release borrowed elements when sync.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SyncCentralModelElement.UserCreatedWorksets">
+            <summary>
+            If true release borrowed worksets when sync.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.Journaling.JournalElements.SyncCentralModelElement.Comment">
+            <summary>
+            Comment text when sync.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.JournalElements.SyncCentralModelElement.Reduce``2(dosymep.AutodeskApps.ITransformer{``0,``1})">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.Journaling.JournalElements.WorksetsOption">
+            <summary>
+            Workset options
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.JournalElements.WorksetsOption.Custom">
+            <summary>
+            Custom option (Specify)
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.JournalElements.WorksetsOption.All">
+            <summary>
+            All option.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.JournalElements.WorksetsOption.Edited">
+            <summary>
+            Edited option.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.JournalElements.WorksetsOption.LastViewed">
+            <summary>
+            Last viewed option.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.Journaling.RevitJournalTemplates">
+            <summary>
+            Revit journal templates.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.Init">
+            <summary>
+            Initialization template Revit.
+            </summary>
+            <param name="{0}{0}">Date journal initialization.</param>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.InitDebug">
+            <summary>
+            Initialization debug mode template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.ExitApplication">
+            <summary>
+            Exit revit application template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.PromptDoNotSaveFileWhenExit">
+            <summary>
+            Template automatically selects the "Do not save the project" option.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.PurgeUnused">
+            <summary>
+            Purge unused elements template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.IgnoreMissingLinks">
+            <summary>
+            Ignore missing links template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.PromptUpdaterContinueWorkingWithFile">
+            <summary>
+            Continue working with the file.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.PromptUpdaterDoNotWarnAgain">
+            <summary>
+            Do not warn about this updater again and continue working with the file.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.CentralOpen">
+            <summary>
+            Open central model template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.CentralModelName">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.CentralWorksetConfig">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.CentralAcceptCustomWorksets">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.CentralOpenAsLocalCheckBox">
+            <summary>
+            Create local file template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.CentralOpenDetachCheckBox">
+            <summary>
+            Central open with detach.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.CentralOpenAuditCheckBox">
+            <summary>
+            Central open with audit template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.SaveAsFile">
+            <summary>
+            Save as file command template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.SaveAsFileOptions">
+            <summary>
+            Save as file options template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.SaveAsFileNameOption">
+            <summary>
+            Save as file name option.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.SaveAsMakeThisFileCentalModel">
+            <summary>
+            Save as make this a Central Model after save template
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.SaveAsEnableWorksharing">
+            <summary>
+            Save as enable worksharing template
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.SaveAsReplaceCentralFile">
+            <summary>
+            Replace central file template (replace on revit server)
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.SaveAsReplaceWorksharingFile">
+            <summary>
+            Replace workshring file template (replace on file system)
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.FileSync">
+            <summary>
+            Synchronization central model template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.FileSyncComment">
+            <summary>
+            Sync comment.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.FileSyncAccept">
+            <summary>
+            Accept sync.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.FileSyncCompactFile">
+            <summary>
+            Compact central model template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.FileSyncBorrowedElements">
+            <summary>
+            Release borrowed elements template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.FileSyncUserСreatedWorksets">
+            <summary>
+            Release borrowed worksets template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.FileSyncSaveLocalFile">
+            <summary>
+            Saving local file when sync template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.ExecuteExternalCommand">
+            <summary>
+            Execute external command template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.ExternalCommandJournalData">
+            <summary>
+            Execute external command journal data template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplates.DynamoCommandExecute">
+            <summary>
+            Dynamo command execute template.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.Journaling.RevitJournalTemplatesOld">
+            <summary>
+            Journal templates for Revit after 2022 version.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplatesOld.FileSync">
+            <summary>
+            Synchronization central model template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplatesOld.FileSyncComment">
+            <summary>
+            Sync comment.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplatesOld.FileSyncAccept">
+            <summary>
+            Accept sync.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplatesOld.FileSyncCompactFile">
+            <summary>
+            Compact central model template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplatesOld.FileSyncBorrowedElements">
+            <summary>
+            Release borrowed elements template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplatesOld.FileSyncUserСreatedWorksets">
+            <summary>
+            Release borrowed worksets template.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.Journaling.RevitJournalTemplatesOld.FileSyncSaveLocalFile">
+            <summary>
+            Saving local file when sync template.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.Journaling.RevitJournalTransformer">
+            <summary>
+            Journal transform.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.#ctor(System.Int32)">
+            <summary>
+            Creates revit journal transformer.
+            </summary>
+            <param name="revitVersion">Revit version.</param>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.Transform(System.Collections.Generic.IEnumerable{dosymep.Revit.Journaling.JournalElements.JournalElement})">
+            <summary>
+            Consistently transforms journal elements.
+            </summary>
+            <param name="journalElements">Journal elements.</param>
+            <returns>Returns a string representation of the Revit Journal.</returns>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.Transform(dosymep.Revit.Journaling.JournalElements.JournalElement[])">
+            <summary>
+            Consistently transforms journal elements.
+            </summary>
+            <param name="journalElements">Journal elements.</param>
+            <returns>Returns a string representation of the Revit Journal.</returns>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.Transform(System.DateTimeOffset,dosymep.Revit.Journaling.JournalElements.JournalElement[])">
+            <summary>
+            Consistently transforms journal elements. (for internal use)
+            </summary>
+            <param name="dateTimeOffset">Date time generated revit journal.</param>
+            <param name="journalElements">Journal elements.</param>
+            <returns>Returns a string representation of the Revit Journal.</returns>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.Transform(System.DateTimeOffset,System.Collections.Generic.IEnumerable{dosymep.Revit.Journaling.JournalElements.JournalElement})">
+            <summary>
+            Consistently transforms journal elements. (for internal use)
+            </summary>
+            <param name="dateTimeOffset">Date time generated revit journal.</param>
+            <param name="journalElements">Journal elements.</param>
+            <returns>Returns a string representation of the Revit Journal.</returns>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.Transform(dosymep.Revit.Journaling.JournalElements.JournalElement)">
+            <summary>
+            Default transformer.
+            </summary>
+            <param name="visitable">Visitable object.</param>
+            <returns>Returns transformation object.</returns>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.Transform(dosymep.Revit.Journaling.JournalElements.OpenCentralModelElement)">
+            <summary>
+            Open central model transformer.
+            </summary>
+            <param name="visitable">Visitable object.</param>
+            <returns>Returns transformation object.</returns>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.Transform(dosymep.Revit.Journaling.JournalElements.SyncCentralModelElement)">
+            <summary>
+            Sync central model transformer.
+            </summary>
+            <param name="visitable">Visitable object.</param>
+            <returns>Returns transformation object.</returns>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.Transform(dosymep.Revit.Journaling.JournalElements.PurgeUnusedElement)">
+            <summary>
+            Purge unused transformer.
+            </summary>
+            <param name="visitable">Visitable object.</param>
+            <returns>Returns transformation object.</returns>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.Transform(dosymep.Revit.Journaling.JournalElements.DynamoCommandElement)">
+            <summary>
+            External command transformer.
+            </summary>
+            <param name="visitable">Visitable object.</param>
+            <returns>Returns transformation object.</returns>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.Transform(dosymep.Revit.Journaling.JournalElements.ExternalCommandElement)">
+            <summary>
+            External command transformer.
+            </summary>
+            <param name="visitable">Visitable object.</param>
+            <returns>Returns transformation object.</returns>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.Transform(dosymep.Revit.Journaling.JournalElements.SaveAsFileCommandElement)">
+            <summary>
+            Save as command transformer.
+            </summary>
+            <param name="visitable">Visitable object.</param>
+            <returns>Returns transformation object.</returns>
+        </member>
+        <member name="M:dosymep.Revit.Journaling.RevitJournalTransformer.IsRsnFile(System.String)">
+            <summary>
+            Determines whether the path is RSN path.
+            </summary>
+            <param name="modelPath">Model path.</param>
+            <returns>true if path is RSN path, otherwise fals.</returns>
+        </member>
+    </members>
+</doc>

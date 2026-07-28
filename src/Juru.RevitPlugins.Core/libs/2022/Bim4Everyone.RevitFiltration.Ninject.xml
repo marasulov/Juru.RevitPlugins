@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Bim4Everyone.RevitFiltration.Ninject</name>
+    </assembly>
+    <members>
+        <member name="T:Bim4Everyone.RevitFiltration.Ninject.NinjectExtensions">
+            <summary>
+                Расширения для настройки <see cref="T:Ninject.IKernel" />.
+            </summary>
+        </member>
+        <member name="M:Bim4Everyone.RevitFiltration.Ninject.NinjectExtensions.UseLogicalFilterProviderFactory(Ninject.IKernel)">
+            <summary>
+                Добавляет в контейнер <see cref="T:Bim4Everyone.RevitFiltration.Controls.ILogicalFilterProviderFactory" />.
+                Также необходимо зарегистрировать в контейнере <see cref="T:Bim4Everyone.RevitFiltration.ILogicalFilterFactory" /> через
+                <see cref="M:Bim4Everyone.RevitFiltration.Ninject.NinjectExtensions.UseLogicalFilterFactory(Ninject.IKernel)" />.
+            </summary>
+            <param name="kernel">Ninject контейнер.</param>
+            <returns>Возвращает настроенный контейнер Ninject.</returns>
+            <exception cref="T:System.ArgumentNullException">kernel is null.</exception>
+            <exception cref="T:System.InvalidOperationException">В kernel не зарегистрирован ILogicalFilterFactory.</exception>
+        </member>
+        <member name="M:Bim4Everyone.RevitFiltration.Ninject.NinjectExtensions.UseFilterContextParser(Ninject.IKernel)">
+            <summary>
+                Добавляет в контейнер <see cref="T:Bim4Everyone.RevitFiltration.Controls.IFilterContextParser" />.
+                Также необходимо зарегистрировать в контейнере <see cref="T:Bim4Everyone.RevitFiltration.ILogicalFilterFactory" /> через
+                <see cref="M:Bim4Everyone.RevitFiltration.Ninject.NinjectExtensions.UseLogicalFilterFactory(Ninject.IKernel)" />.
+            </summary>
+            <param name="kernel">Ninject контейнер.</param>
+            <returns>Возвращает настроенный контейнер Ninject.</returns>
+            <exception cref="T:System.ArgumentNullException">kernel is null.</exception>
+            <exception cref="T:System.InvalidOperationException">В kernel не зарегистрирован ILogicalFilterFactory.</exception>
+        </member>
+        <member name="M:Bim4Everyone.RevitFiltration.Ninject.NinjectExtensions.UseLogicalFilterParser(Ninject.IKernel)">
+            <summary>
+                Добавляет в контейнер <see cref="T:Bim4Everyone.RevitFiltration.ILogicalFilterParser" />.
+            </summary>
+            <param name="kernel">Ninject контейнер.</param>
+            <returns>Возвращает настроенный контейнер Ninject.</returns>
+            <exception cref="T:System.ArgumentNullException">kernel is null.</exception>
+        </member>
+        <member name="M:Bim4Everyone.RevitFiltration.Ninject.NinjectExtensions.UseLogicalFilterFactory(Ninject.IKernel)">
+            <summary>
+                Добавляет в контейнер <see cref="T:Bim4Everyone.RevitFiltration.ILogicalFilterFactory" />.
+            </summary>
+            <param name="kernel">Ninject контейнер.</param>
+            <returns>Возвращает настроенный контейнер Ninject.</returns>
+            <exception cref="T:System.ArgumentNullException">kernel is null.</exception>
+        </member>
+    </members>
+</doc>

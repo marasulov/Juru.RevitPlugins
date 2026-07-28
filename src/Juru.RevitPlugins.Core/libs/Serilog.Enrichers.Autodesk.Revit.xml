@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Serilog.Enrichers.Autodesk.Revit</name>
+    </assembly>
+    <members>
+        <member name="T:Serilog.AutodeskRevitLoggerConfigurationExtensions">
+            <summary>
+            Extends <see cref="T:Serilog.Configuration.LoggerSinkConfiguration"/>.
+            </summary>
+        </member>
+        <member name="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitVersionPropertyName">
+            <summary>
+            Default revit version property name.
+            </summary>
+        </member>
+        <member name="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitBuildPropertyName">
+            <summary>
+            Default revit build property name.
+            </summary>
+        </member>
+        <member name="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitUserNamePropertyName">
+            <summary>
+            Default revit username property name.
+            </summary>
+        </member>
+        <member name="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitLanguagePropertyName">
+            <summary>
+            Default revit language property name.
+            </summary>
+        </member>
+        <member name="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitAddinPropertyName">
+            <summary>
+            Default revit addin property name.
+            </summary>
+        </member>
+        <member name="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitDocumentTitlePropertyName">
+            <summary>
+            Default revit document title property name.
+            </summary>
+        </member>
+        <member name="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitDocumentPathNamePropertyName">
+            <summary>
+            Default revit document path name property name.
+            </summary>
+        </member>
+        <member name="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitDocumentModelPathPropertyName">
+            <summary>
+            Default revit document model path property name.
+            </summary>
+        </member>
+        <member name="M:Serilog.AutodeskRevitLoggerConfigurationExtensions.WithRevitVersion(Serilog.Configuration.LoggerEnrichmentConfiguration,Autodesk.Revit.UI.UIApplication,System.String)">
+            <summary>
+            Enrich log events with a <a href="https://www.revitapidocs.com/2017.1/320391bf-2c21-98ca-192c-da1d9becff11.htm">VersionNumber</a> property.
+            </summary>
+            <param name="loggerEnrichmentConfiguration">Logger enrichment configuration.</param>
+            <param name="uiApplication">Revit UIApplication.</param>
+            <param name="revitVersionPropertyName">Revit version property name. Default is <see cref="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitVersionPropertyName"/>.</param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+        <member name="M:Serilog.AutodeskRevitLoggerConfigurationExtensions.WithRevitVersion(Serilog.Configuration.LoggerEnrichmentConfiguration,Autodesk.Revit.UI.UIControlledApplication,System.String)">
+            <summary>
+            Enrich log events with a <a href="https://www.revitapidocs.com/2017.1/35b18b73-4c47-fee3-d2f9-21298f029f7f.htm">VersionNumber</a> property.
+            </summary>
+            <param name="loggerEnrichmentConfiguration">Logger enrichment configuration.</param>
+            <param name="uiControlledApplication">Revit UIControlledApplication.</param>
+            <param name="revitVersionPropertyName">Revit version property name. Default is <see cref="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitVersionPropertyName"/>.</param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+        <member name="M:Serilog.AutodeskRevitLoggerConfigurationExtensions.WithRevitBuild(Serilog.Configuration.LoggerEnrichmentConfiguration,Autodesk.Revit.UI.UIApplication,System.String)">
+            <summary>
+            Enrich log events with a <a href="https://www.revitapidocs.com/2017.1/04ef312a-e25a-cbcd-40c4-43fe6311e677.htm">VersionBuild</a> property.
+            </summary>
+            <param name="loggerEnrichmentConfiguration">Logger enrichment configuration.</param>
+            <param name="uiApplication">Revit UIApplication.</param>
+            <param name="revitBuildPropertyName">Revit build property name. Default is <see cref="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitBuildPropertyName"/>.</param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+        <member name="M:Serilog.AutodeskRevitLoggerConfigurationExtensions.WithRevitBuild(Serilog.Configuration.LoggerEnrichmentConfiguration,Autodesk.Revit.UI.UIControlledApplication,System.String)">
+            <summary>
+            Enrich log events with a <a href="https://www.revitapidocs.com/2017.1/c5963cab-c85b-561b-1ea2-b9d11b58050c.htm">VersionBuild</a> property.
+            </summary>
+            <param name="loggerEnrichmentConfiguration">Logger enrichment configuration.</param>
+            <param name="uiControlledApplication">Revit UIControlledApplication.</param>
+            <param name="revitBuildPropertyName">Revit build property name. Default is <see cref="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitBuildPropertyName"/>.</param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+        <member name="M:Serilog.AutodeskRevitLoggerConfigurationExtensions.WithRevitUserName(Serilog.Configuration.LoggerEnrichmentConfiguration,Autodesk.Revit.UI.UIApplication,System.String)">
+            <summary>
+            Enrich log events with a <a href="https://www.revitapidocs.com/2017.1/2a7c8664-de0d-7a43-e670-2e733e579609.htm">Username</a> property.
+            </summary>
+            <param name="loggerEnrichmentConfiguration">Logger enrichment configuration.</param>
+            <param name="uiApplication">Revit UIApplication.</param>
+            <param name="revitUserNamePropertyName">Revit username property name. Default is <see cref="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitUserNamePropertyName"/>.</param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+        <member name="M:Serilog.AutodeskRevitLoggerConfigurationExtensions.WithRevitLanguage(Serilog.Configuration.LoggerEnrichmentConfiguration,Autodesk.Revit.UI.UIApplication,System.String)">
+            <summary>
+            Enrich log events with a <a href="https://www.revitapidocs.com/2017.1/2b1d8b80-a11c-2a57-63bd-6c0d67691879.htm">Language</a> property.
+            </summary>
+            <param name="loggerEnrichmentConfiguration">Logger enrichment configuration.</param>
+            <param name="uiApplication">Revit UIApplication.</param>
+            <param name="revitLanguagePropertyName">Revit language property name. Default is <see cref="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitLanguagePropertyName"/>.</param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+        <member name="M:Serilog.AutodeskRevitLoggerConfigurationExtensions.WithRevitDocumentTitle(Serilog.Configuration.LoggerEnrichmentConfiguration,Autodesk.Revit.UI.UIApplication,System.String)">
+            <summary>
+            Enrich log events with a <a href="https://www.revitapidocs.com/2017.1/4cee7916-d799-fc83-daf3-97cb03900b72.htm">Document.Title</a> property.
+            </summary>
+            <param name="loggerEnrichmentConfiguration">Logger enrichment configuration.</param>
+            <param name="uiApplication">Revit UIApplication.</param>
+            <param name="revitDocumentTitlePropertyName">Revit document title name. Default is <see cref="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitDocumentTitlePropertyName"/>.</param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+        <member name="M:Serilog.AutodeskRevitLoggerConfigurationExtensions.WithRevitDocumentPathName(Serilog.Configuration.LoggerEnrichmentConfiguration,Autodesk.Revit.UI.UIApplication,System.String)">
+            <summary>
+            Enrich log events with a <a href="https://www.revitapidocs.com/2022/8a92a6fd-ce25-cd86-2068-f9dcb24d72d6.htm">Document.PathName</a> property.
+            </summary>
+            <param name="loggerEnrichmentConfiguration">Logger enrichment configuration.</param>
+            <param name="uiApplication">Revit UIApplication.</param>
+            <param name="revitDocumentPathNamePropertyName">Revit document path name. Default is <see cref="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitDocumentPathNamePropertyName"/>.</param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+        <member name="M:Serilog.AutodeskRevitLoggerConfigurationExtensions.WithRevitDocumentModelPath(Serilog.Configuration.LoggerEnrichmentConfiguration,Autodesk.Revit.UI.UIApplication,System.String)">
+            <summary>
+            Enrich log events with a ModelPath property.
+            <br/>If <a href="https://www.revitapidocs.com/2020/e12f7980-ba6c-2e72-6687-f0bf807ff014.htm">Document.IsModelInCloud</a> is true enriches <a href="https://www.revitapidocs.com/2020/087a7c14-1a6e-7022-c47b-923e90f4c5be.htm">Document.GetCloudModelPath()</a>.
+            <br/>If <a href="https://www.revitapidocs.com/2017.1/7f368167-6543-9be9-67a3-c6e1696ae060.htm">Document.IsWorkshared</a> is true enriches <a href="https://www.revitapidocs.com/2017.1/6d42ee05-5738-8685-2165-57f9809f3161.htm">Document.GetWorksharingCentralModelPath()</a>.
+            </summary>
+            <param name="loggerEnrichmentConfiguration">Logger enrichment configuration.</param>
+            <param name="uiApplication">Revit UIApplication.</param>
+            <param name="revitDocumentModelPathPropertyName">Revit document model path. Default is <see cref="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitDocumentModelPathPropertyName"/>.</param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+        <member name="M:Serilog.AutodeskRevitLoggerConfigurationExtensions.WithRevitAddinId(Serilog.Configuration.LoggerEnrichmentConfiguration,Autodesk.Revit.UI.UIApplication,System.String)">
+            <summary>
+            Enrich log events with a <a href="https://www.revitapidocs.com/2017.1/08272796-d8b8-8122-c712-08b108184334.htm">ActiveAddinId</a> property.
+            </summary>
+            <param name="loggerEnrichmentConfiguration">Logger enrichment configuration.</param>
+            <param name="uiApplication">Revit UIApplication.</param>
+            <param name="revitAddinPropertyName">Revit adin id. Default is <see cref="F:Serilog.AutodeskRevitLoggerConfigurationExtensions.RevitAddinPropertyName"/>.</param>
+            <returns>Configuration object allowing method chaining.</returns>
+        </member>
+    </members>
+</doc>

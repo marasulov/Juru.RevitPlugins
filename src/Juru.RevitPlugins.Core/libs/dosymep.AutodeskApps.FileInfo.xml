@@ -1,0 +1,174 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>dosymep.AutodeskApps.FileInfo</name>
+    </assembly>
+    <members>
+        <member name="T:dosymep.AutodeskApps.FileInfo.LanguageCode">
+            <summary>
+            Autodesk language code.
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.ENU">
+            <summary>
+            English - United States
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.ENG">
+            <summary>
+            English - United Kingdom
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.FRA">
+            <summary>
+            French
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.DEU">
+            <summary>
+            German
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.ITA">
+            <summary>
+            Italian
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.JPN">
+            <summary>
+            Japanese
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.KOR">
+            <summary>
+            Korean
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.PLK">
+            <summary>
+            Polish
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.ESP">
+            <summary>
+            Spanish
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.CHS">
+            <summary>
+            Simplified Chinese
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.CHT">
+            <summary>
+            Traditional Chinese
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.PTB">
+            <summary>
+            Brazilian Portuguese
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.RUS">
+            <summary>
+            Russian
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.CSY">
+            <summary>
+            Czech
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.HUN">
+            <summary>
+            Hungarian
+            </summary>
+        </member>
+        <member name="F:dosymep.AutodeskApps.FileInfo.LanguageCode.Unknown">
+            <summary>
+            Unknown
+            </summary>
+        </member>
+        <member name="M:dosymep.AutodeskApps.FileInfo.LanguageCode.GetLanguageCode(System.String)">
+            <summary>
+            Returns language code by code or full code.
+            </summary>
+            <param name="languageCode">Language code.</param>
+            <returns>Returns language code by code or full code.</returns>
+        </member>
+        <member name="M:dosymep.AutodeskApps.FileInfo.LanguageCode.GetLanguageCode(System.Globalization.CultureInfo)">
+            <summary>
+            Returns language code by culture info.
+            </summary>
+            <param name="cultureInfo">Culture info.</param>
+            <returns>Returns language code by culture info.</returns>
+        </member>
+        <member name="M:dosymep.AutodeskApps.FileInfo.LanguageCode.#ctor(System.String,System.String,System.Globalization.CultureInfo)">
+            <summary>
+            Creates language code object. 
+            </summary>
+            <param name="code">Language code value.</param>
+            <param name="fullCode">Language full code value.</param>
+            <param name="cultureInfo">Culture info.</param>
+        </member>
+        <member name="P:dosymep.AutodeskApps.FileInfo.LanguageCode.Code">
+            <summary>
+            Language code value.
+            </summary>
+        </member>
+        <member name="P:dosymep.AutodeskApps.FileInfo.LanguageCode.FullCode">
+            <summary>
+            Language full code value.
+            </summary>
+        </member>
+        <member name="P:dosymep.AutodeskApps.FileInfo.LanguageCode.CultureInfo">
+            <summary>
+            Current culture info.
+            </summary>
+        </member>
+        <member name="P:dosymep.AutodeskApps.FileInfo.LanguageCode.DisplayName">
+            <summary>
+            Display name.
+            </summary>
+        </member>
+        <member name="P:dosymep.AutodeskApps.FileInfo.LanguageCode.EnglishName">
+            <summary>
+            English name.
+            </summary>
+        </member>
+        <member name="M:dosymep.AutodeskApps.FileInfo.LanguageCode.GetLanguageCodes">
+            <summary>
+            Returns all supported language codes.
+            </summary>
+            <returns>Returns all supported language codes.</returns>
+        </member>
+        <member name="M:dosymep.AutodeskApps.FileInfo.LanguageCode.ToString">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.AutodeskApps.FileInfo.LanguageCode.Equals(dosymep.AutodeskApps.FileInfo.LanguageCode)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.AutodeskApps.FileInfo.LanguageCode.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.AutodeskApps.FileInfo.LanguageCode.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.AutodeskApps.FileInfo.LanguageCode.op_Equality(dosymep.AutodeskApps.FileInfo.LanguageCode,dosymep.AutodeskApps.FileInfo.LanguageCode)">
+            <summary>
+            
+            </summary>
+            <param name="left"></param>
+            <param name="right"></param>
+            <returns></returns>
+        </member>
+        <member name="M:dosymep.AutodeskApps.FileInfo.LanguageCode.op_Inequality(dosymep.AutodeskApps.FileInfo.LanguageCode,dosymep.AutodeskApps.FileInfo.LanguageCode)">
+            <summary>
+            
+            </summary>
+            <param name="left"></param>
+            <param name="right"></param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

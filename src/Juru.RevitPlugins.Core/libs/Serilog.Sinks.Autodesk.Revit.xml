@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Serilog.Sinks.Autodesk.Revit</name>
+    </assembly>
+    <members>
+        <member name="T:Serilog.AutodeskRevitSinkLoggerConfigurationExtensions">
+            <summary>
+            Extends <see cref="T:Serilog.Configuration.LoggerSinkConfiguration"/>.
+            </summary>
+        </member>
+        <member name="F:Serilog.AutodeskRevitSinkLoggerConfigurationExtensions.DefaultOutputTemplate">
+            <summary>
+            Default output template. From Serilog.Sinks.RollingFile.
+            </summary>
+        </member>
+        <member name="M:Serilog.AutodeskRevitSinkLoggerConfigurationExtensions.RevitJournal(Serilog.Configuration.LoggerSinkConfiguration,Autodesk.Revit.UI.UIApplication,System.Boolean,System.String,Serilog.Events.LogEventLevel,Serilog.Core.LoggingLevelSwitch,System.IFormatProvider)">
+            <summary>
+            Write log events to Autodesk Revit
+            <a href="https://www.revitapidocs.com/2017.1/97ec1eca-ab92-1cee-fdda-7bf3ce91c504.htm">Journal</a>.
+            </summary>
+            <param name="sinkConfiguration">Logger sink configuration.</param>
+            <param name="uiApplication">Revit UIApplication.</param>
+            <param name="useTimeStamps">Use time stamps in revit journal.</param>
+            <param name="outputTemplate">A message template describing the format used to write to the sink.</param>
+            <param name="restrictedToMinimumLevel"></param>
+            <param name="levelSwitch">A switch allowing the pass-through minimum level to be changed at runtime.</param>
+            <param name="formatProvider">Supplies culture-specific formatting information, or <see langword="null" />.</param>
+            <returns></returns>
+            <exception cref="T:System.ArgumentNullException">When <paramref name="sinkConfiguration"/> or <paramref name="uiApplication"/> is <see langword="null" />.</exception>
+        </member>
+        <member name="M:Serilog.AutodeskRevitSinkLoggerConfigurationExtensions.RevitJournal(Serilog.Configuration.LoggerSinkConfiguration,Autodesk.Revit.UI.UIControlledApplication,System.Boolean,System.String,Serilog.Events.LogEventLevel,Serilog.Core.LoggingLevelSwitch,System.IFormatProvider)">
+            <summary>
+            Write log events to Autodesk Revit
+            <a href="https://www.revitapidocs.com/2017.1/97ec1eca-ab92-1cee-fdda-7bf3ce91c504.htm">Journal</a>.
+            </summary>
+            <param name="sinkConfiguration">Logger sink configuration.</param>
+            <param name="uiControlledApplication">Revit UIControlledApplication.</param>
+            <param name="useTimeStamps">Use time stamps in revit journal.</param>
+            <param name="outputTemplate">A message template describing the format used to write to the sink.</param>
+            <param name="restrictedToMinimumLevel"></param>
+            <param name="levelSwitch">A switch allowing the pass-through minimum level to be changed at runtime.</param>
+            <param name="formatProvider">Supplies culture-specific formatting information, or <see langword="null" />.</param>
+            <returns></returns>
+            <exception cref="T:System.ArgumentNullException">When <paramref name="sinkConfiguration"/> or <paramref name="uiControlledApplication"/> is <see langword="null" />.</exception>
+        </member>
+        <member name="T:Serilog.Sinks.Autodesk.Revit.AutodeskRevitSink">
+            <summary>
+            Autodesk Revit Sink
+            </summary>
+        </member>
+        <member name="M:Serilog.Sinks.Autodesk.Revit.AutodeskRevitSink.#ctor(Serilog.Sinks.Autodesk.Revit.IRevitOutput,Serilog.Formatting.ITextFormatter)">
+            <summary>
+            Creates Autodesk Revit Sink.
+            </summary>
+            <param name="revitOutput">Revit UIApplication.</param>
+            <param name="textFormatter">Message format provider.</param>
+        </member>
+        <member name="P:Serilog.Sinks.Autodesk.Revit.AutodeskRevitSink.UseTimeStamps">
+            <summary>
+            Use time stamps in revit journal.
+            </summary>
+        </member>
+        <member name="M:Serilog.Sinks.Autodesk.Revit.AutodeskRevitSink.Emit(Serilog.Events.LogEvent)">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

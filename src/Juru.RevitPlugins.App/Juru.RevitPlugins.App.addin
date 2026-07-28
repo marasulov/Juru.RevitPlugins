@@ -1,0 +1,14 @@
+<RevitAddIns>
+    <AddIn Type="Application">
+        <Name>Juru.RevitPlugins.App</Name>
+        <Assembly>Juru.RevitPlugins.App\Juru.RevitPlugins.App.dll</Assembly>
+        <AddInId>BD4F74D4-63D1-4772-863A-90E309B8CC11</AddInId>
+        <FullClassName>Juru.RevitPlugins.App.Application</FullClassName>
+        <VendorId>Development</VendorId>
+        <VendorDescription></VendorDescription>
+    </AddIn>
+    <ManifestSettings>
+        <UseRevitContext>False</UseRevitContext>
+        <ContextName>Juru.RevitPlugins.App</ContextName>
+    </ManifestSettings>
+</RevitAddIns>

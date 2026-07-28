@@ -1,0 +1,28 @@
+
+using Autodesk.Revit.DB;
+
+using dosymep.Bim4Everyone;
+using dosymep.Revit;
+
+using Juru.RevitPlugins.ClashNavigator.Models.Interfaces;
+
+namespace Juru.RevitPlugins.ClashNavigator.Models.Value;
+internal class DoubleParamValue : ParamValue<double> {
+    public DoubleParamValue() {
+
+    }
+    public DoubleParamValue(double value, string stringValue) : base(value, stringValue) { }
+
+    public DoubleParamValue(double value) : base(value) { }
+
+    public override FilterRule GetFilterRule(IVisiter visiter, Document doc, RevitParam param) {
+        var paramId = GetParamId(doc, param);
+        return paramId == ElementId.InvalidElementId ? null : visiter.Create(paramId, TValue);
+    }
+
+    public override void SetParamValue(Element element, string paramName) {
+        if(element.IsExistsParam(paramName)) {
+            element.SetParamValue(paramName, TValue);
+        }
+    }
+}

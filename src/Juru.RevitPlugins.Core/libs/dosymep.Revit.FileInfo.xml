@@ -1,0 +1,1264 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>dosymep.Revit.FileInfo</name>
+    </assembly>
+    <members>
+        <member name="T:dosymep.Revit.FileInfo.BasicFileStream.ApplicationInfo">
+            <summary>
+            This is application information.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.ApplicationInfo.Build">
+            <summary>
+            Application build version.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.ApplicationInfo.Format">
+            <summary>
+            File format version.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.ApplicationInfo.ClientAppName">
+            <summary>
+            The client application.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo">
+            <summary>
+            Class provides basic file info.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.BasicFileInfoName">
+            <summary>
+            Basic file info stream name.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.LastSavePath">
+            <summary>
+            Last save path.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.CentralPath">
+            <summary>
+            Central model file path.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.IsModified">
+            <summary>
+            True if model file is modified.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.IsWorkshared">
+            <summary>
+            True if model file is workshared.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.WorksharingType">
+            <summary>
+            Worksharing type.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.IsSingleUserCloudModel">
+            <summary>
+            Is single user cloud model.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.IsRevitLite">
+            <summary>
+            Is revit lite.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.Username">
+            <summary>
+            User name who save model file.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.Author">
+            <summary>
+            Author.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.DefaultOpenWorkset">
+            <summary>
+            Default open workset.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.FileVersion">
+            <summary>
+            File version.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.FileLocale">
+            <summary>
+            Locale used when saved model file.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.Identity">
+            <summary>
+            Model identity.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.CentralIdentity">
+            <summary>
+            Central model identity.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.AppInfo">
+            <summary>
+            Application information.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.CurrentVersion">
+            <summary>
+            Current model file version.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.CentralVersion">
+            <summary>
+            Central model file version.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.ReadBasicFileInfo(System.String)">
+            <summary>
+            Reads basic file information.
+            </summary>
+            <param name="modelPath">Model path.</param>
+            <returns>Returns basic file information if BasicFileInfo exists.</returns>
+            <exception cref="T:System.ArgumentException"><paramref name="modelPath" /> is <see langword="null" />, <see cref="F:System.String.Empty"/> or not exists.</exception>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.BasicFileStream.BasicFileInfo.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity">
+            <summary>
+            Model identity
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity.Empty">
+            <summary>
+            Empty model identity.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity.#ctor(System.Guid)">
+            <summary>
+            Creates model identity.
+            </summary>
+            <param name="guid"></param>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity.ToString">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity.Equals(dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity.op_Equality(dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity,dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity)">
+            <summary>
+            
+            </summary>
+            <param name="left"></param>
+            <param name="right"></param>
+            <returns></returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity.op_Inequality(dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity,dosymep.Revit.FileInfo.BasicFileStream.ModelIdentity)">
+            <summary>
+            
+            </summary>
+            <param name="left"></param>
+            <param name="right"></param>
+            <returns></returns>
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.BasicFileStream.ModelVersionInfo">
+            <summary>
+            This is the central model's version information.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.BasicFileStream.ModelVersionInfo.Empty">
+            <summary>
+            Empty version info.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.BasicFileStream.ModelVersionInfo.#ctor(System.Guid,System.Int32)">
+            <summary>
+            Creates model version info.
+            </summary>
+            <param name="id">Identity.</param>
+            <param name="versionNumber">Version number.</param>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.ModelVersionInfo.Id">
+            <summary>
+            This is the central model's episode GUID corresponding to the last reload latest done for this model.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.BasicFileStream.ModelVersionInfo.VersionNumber">
+            <summary>
+            This is the central model's version number corresponding to the last reload latest done for this model.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.BasicFileStream.ModelVersionInfo.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.BasicFileStream.WorksharingType">
+            <summary>
+            Worksharing types.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.BasicFileStream.WorksharingType.NotEnabled">
+            <summary>
+            Not enable worksharing.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.BasicFileStream.WorksharingType.Central">
+            <summary>
+            Enable worksharing.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.BasicFileStream.WorksharingType.Local">
+            <summary>
+            Created local file.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.BasicFileStream.WorksharingType.InProgress">
+            <summary>
+            In progress.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.BasicFileStream.WorksharingType.CreatedLocal">
+            <summary>
+            Created local from RS (RevitServerToolCommand).
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.RevitAddins.Discipline">
+            <summary>
+            Describes the conditions under which a particular external command will be visible in the Revit UI.
+            </summary>
+            <remarks> Note that there are a few conditions where the Revit API framework prevents commands from being available always:
+            <list type="number">
+                <item> When the user has another Revit command active, e.g. creating Windows, Doors, or editing sketches. </item>
+                <item> When the active view is in perspective mode, or when the view is a Walkthrough, Drawings Lists, View Lists, Note Blocks, View Lists, etc. </item>
+            </list>
+            </remarks>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.Discipline.Any">
+            <summary>
+            The command is available in all possible disciplines.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.Discipline.Architecture">
+            <summary>
+            The command is available in the Architecture discipline.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.Discipline.Structure">
+            <summary>
+            The command is available in the Structure discipline.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.Discipline.StructuralAnalysis">
+            <summary>
+            The command is available in the StructuralAnalysis discipline.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.Discipline.MassingAndSite">
+            <summary>
+            The command is available in the Massing and Site discipline.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.Discipline.EnergyAnalysis">
+            <summary>
+            The command is available in the EnergyAnalysis discipline.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.Discipline.Mechanical">
+            <summary>
+            The command is available in the Mechanical discipline.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.Discipline.Electrical">
+            <summary>
+            The command is available in the Electrical discipline.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.Discipline.Piping">
+            <summary>
+            The command is available in the Piping discipline.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.Discipline.MechanicalAnalysis">
+            <summary>
+            The command is available in the MechanicalAnalysis discipline.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.Discipline.PipingAnalysis">
+            <summary>
+            The command is available in the PipingAnalysis discipline.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.Discipline.ElectricalAnalysis">
+            <summary>
+            The command is available in the ElectricalAnalysis discipline.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.RevitAddins.RevitAddinApplication">
+            <summary>
+            Represents a Revit external application.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinApplication.CreateAddinApplication(System.Xml.XmlNode,dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest)">
+            <summary>
+            Creates revit addin application.
+            </summary>
+            <param name="addinElement">Addin element xml node.</param>
+            <param name="addinManifest">Root addin manifest.</param>
+            <returns>Returns revit addin application.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinApplication.GetAddinApplications(System.Reflection.Assembly)">
+            <summary>
+            Returns addin DB applications.
+            </summary>
+            <param name="assembly">Assembly.</param>
+            <returns> Returns addin DB applications.</returns>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinApplication.TypeName">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinApplication.AssemblyName">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinApplication.TypeInterfaceName">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinApplication.FillXmlNodeImpl(System.Xml.XmlNode)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinApplication.Reduce``2(dosymep.AutodeskApps.ITransformer{``0,``1})">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand">
+            <summary>
+            Represents a Revit external command.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.TextTag">
+            <summary>
+            TextTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.DescriptionTag">
+            <summary>
+            DescriptionTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.LongDescriptionTag">
+            <summary>
+            LongDescriptionTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.LargeImageTag">
+            <summary>
+            LargeImageTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.TooltipImageTag">
+            <summary>
+            TooltipImageTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.DisciplineTag">
+            <summary>
+            DisciplineTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.VisibilityModeTag">
+            <summary>
+            VisibilityModeTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.LanguageTypeTag">
+            <summary>
+            LanguageTypeTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.AvailabilityClassNameTag">
+            <summary>
+            AvailabilityClassNameTag
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.CreateAddinCommand(System.Xml.XmlNode,dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest)">
+            <summary>
+            Creates revit addin commands.
+            </summary>
+            <param name="addinElement">Addin element xml node.</param>
+            <param name="addinManifest">Root addin manifest.</param>
+            <returns>Returns revit addin commands.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.GetAddinCommands(System.Reflection.Assembly)">
+            <summary>
+            Returns addin DB applications.
+            </summary>
+            <param name="assembly">Assembly.</param>
+            <returns> Returns addin DB applications.</returns>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.TypeName">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.AssemblyName">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.TypeInterfaceName">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.FillXmlNodeImpl(System.Xml.XmlNode)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.Reduce``2(dosymep.AutodeskApps.ITransformer{``0,``1})">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.Text">
+            <summary>
+            The text displayed on the external command button.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.Description">
+            <summary>
+            The short description and short tooltip for the command.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.LongDescription">
+            <summary>
+            The text shown in the extended command tooltip.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.LargeImage">
+            <summary>
+            The path to the large image for the command button.
+            </summary>
+            <remarks>
+            This image will be shown on the button in the External Tools pulldown.
+            The image should be 32 x 32 pixels. If the image is larger it will be adjusted to fit the button.
+            </remarks>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.TooltipImage">
+            <summary>
+            The image shown in the extended command tooltip.
+            </summary>
+            <remarks> Recommended image size is 304 * 188 pixels. </remarks>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.Discipline">
+            <summary>
+            The modes in which the external command will be visible.
+            </summary>
+            <remarks>
+            There is 1 set of mode where visibility can be set:
+            <item> Visibility affected by the availability of a certain discipline. </item>
+            </remarks>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.VisibilityMode">
+            <summary>
+            The modes in which the external command will be visible.
+            </summary>
+            <remarks>
+            There are 2 sets of modes where visibility can be set:
+            <item> Visibility affected by the type of active document. </item>
+            </remarks>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.LanguageCode">
+            <summary>
+            The language type of Revit Add-In.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinCommand.AvailabilityClassName">
+            <summary>
+            The full class name for the class providing the entry point to decide availability of this command.
+            </summary>
+            <remarks> This is the class implementing IExternalCommandAvailability interface. </remarks>
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.RevitAddins.RevitAddinDBApplication">
+            <summary>
+            Represents a Revit DB external application.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinDBApplication.LoadInRevitWorkerTag">
+            <summary>
+            LoadInRevitWorkerTag
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinDBApplication.CreateAddinDBApplication(System.Xml.XmlNode,dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest)">
+            <summary>
+            Creates revit addin db application.
+            </summary>
+            <param name="addinElement">Addin element xml node.</param>
+            <param name="addinManifest">Root addin manifest.</param>
+            <returns>Returns revit addin db application.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinDBApplication.GetAddinDBApplications(System.Reflection.Assembly)">
+            <summary>
+            Returns addin DB applications.
+            </summary>
+            <param name="assembly">Assembly.</param>
+            <returns> Returns addin DB applications.</returns>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinDBApplication.TypeName">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinDBApplication.AssemblyName">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinDBApplication.TypeInterfaceName">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinDBApplication.FillXmlNodeImpl(System.Xml.XmlNode)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinDBApplication.Reduce``2(dosymep.AutodeskApps.ITransformer{``0,``1})">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinDBApplication.LoadInRevitWorker">
+            <summary>
+            Indicates whether or not a RevitWorker process will load this add-in.
+            </summary>
+            <remarks>The default is false.</remarks>
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem">
+            <summary>
+            Represents a single Revit Add-In.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.AssemblyRevitApi">
+            <summary>
+            RevitAPI
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.AssemblyRevitApiUi">
+            <summary>
+            RevitAPIUI
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.CommandInterface">
+            <summary>
+            Autodesk.Revit.DB.IExternalCommand
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.ApplicationInterface">
+            <summary>
+            Autodesk.Revit.DB.IExternalApplication
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.DBApplicationInterface">
+            <summary>
+            Autodesk.Revit.DB.IExternalDBApplication
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.AddInTypeTag">
+            <summary>
+            AddInTypeTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.NameTag">
+            <summary>
+            NameTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.AddInIdTag">
+            <summary>
+            AddInIdTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.AssemblyTag">
+            <summary>
+            AssemblyTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.ClientIdTag">
+            <summary>
+            ClientIdTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.FullClassNameTag">
+            <summary>
+            FullClassNameTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.SuppressedWarningTag">
+            <summary>
+            SuppressedWarningTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.VendorIdTag">
+            <summary>
+            VendorIdTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.VendorDescriptionTag">
+            <summary>
+            VendorDescriptionTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.ProductImageTag">
+            <summary>
+            ProductImageTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.ProductVersionTag">
+            <summary>
+            ProductVersionTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.ProductDescriptionTag">
+            <summary>
+            ProductDescriptionTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.AllowLoadingIntoExistingSessionTag">
+            <summary>
+            AllowLoadingIntoExistingSessionTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.JournalDataTag">
+            <summary>
+            JournalDataTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem._addinManifest">
+            <summary>
+            Root addin manifest.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.CreateRevitAddinItem``1(System.Xml.XmlNode,dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest)">
+            <summary>
+            Creates revit addin item.
+            </summary>
+            <param name="addinElement">Addin element xml node.</param>
+            <param name="addinManifest">Root addin manifest.</param>
+            <typeparam name="T">Revit addin item type.</typeparam>
+            <returns>Returns revit addin item.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.FillXmlNode(System.Xml.XmlNode)">
+            <summary>
+            Fills xml node.
+            </summary>
+            <param name="addinItemNode">Root node.</param>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.IsTypeInheritInterface(System.Type,System.String)">
+            <summary>
+            Checks type of inherits interface.
+            </summary>
+            <param name="type">Checked type.</param>
+            <param name="interfaceFullName">Interface full name.</param>
+            <returns>Returns true - if type inherit interface, otherwise false.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.GetAddinItems``1(System.Reflection.Assembly,System.String)">
+            <summary>
+            Returns addin items.
+            </summary>
+            <param name="assembly">Assembly.</param>
+            <param name="interfaceFullName">Interface full name.</param>
+            <typeparam name="T">Revit addin type.</typeparam>
+            <returns>Returns addin items.</returns>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.TypeName">
+            <summary>
+            Returns type name revit addin item. 
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.AssemblyName">
+            <summary>
+            Assembly name.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.TypeInterfaceName">
+            <summary>
+            Type interface name.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.FillXmlNodeImpl(System.Xml.XmlNode)">
+            <summary>
+            Fills xml node.
+            </summary>
+            <param name="addinItemNode">Current node.</param>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.Reduce``2(dosymep.AutodeskApps.ITransformer{``0,``1})">
+            <summary>
+            Transform journal element.
+            </summary>
+            <param name="transformer">Transformer journal element.</param>
+            <typeparam name="T">Transform result.</typeparam>
+            <typeparam name="TVisitable">Visitable element.</typeparam>
+            <returns>Returns transform result.</returns>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.Name">
+            <summary>
+            Addin name.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.AddinId">
+            <summary>
+            The id for the Add-In. Each add-in must be assigned a unique identifier.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.AssemblyPath">
+            <summary>
+            The file path for the assembly which defines the Add-In.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.FullAssemblyPath">
+            <summary>
+            The full file path for the assembly which defines the Add-In.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.FullClassName">
+            <summary>
+            The full class name for the class providing the entry point into the Add-In.
+            </summary>
+            <remarks>This is the class implementing IExternalCommand or IExternalApplication or IExternalDBApplication.</remarks>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.SuppressedWarning">
+            <summary>
+            A startup failure which, if it occurs, will be suppressed from the user.
+            </summary>
+            <remarks>
+            When Revit attempts to start an Add-In and fails to do so, it will show a message to the user about the error.
+            Users have the option to ignore that error in the future. This property is used to represent the user's choice to ignore an error.
+            Note that if a different error occurs for the Add-In, it will still be shown to the user.
+            </remarks>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.VendorId">
+            <summary>
+            The vendor id.
+            </summary>
+            <remarks> This is required by add-in application. </remarks>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.VendorDescription">
+            <summary>
+            The vendor description.
+            </summary>
+            <remarks>This should be a string that the user can use to identify the vendor. </remarks>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.ProductImage">
+            <summary>
+            The product image.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.ProductVersion">
+            <summary>
+            The product version.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.ProductDescription">
+            <summary>
+            The product description.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.AllowLoadingIntoExistingSession">
+            <summary>
+            The flag of loading permission.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.JournalData">
+            <summary>
+            Journal data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.LoadAssembly">
+            <summary>
+            Loading revit addin item assembly in Current Domain.
+            </summary>
+            <returns>Returns loaded revit addin item assembly in Current Domain.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.GetAddinItemType">
+            <summary>
+            Returns addin item type.
+            </summary>
+            <returns>Returns addin item type.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.CreateAddinItemObject``1">
+            <summary>
+            Creates addin item object.
+            </summary>
+            <typeparam name="T">Addin item type.</typeparam>
+            <returns>Returns addin item object.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinItem.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest">
+            <summary>
+            Represents the contents of a single .addin file.
+            </summary>
+            <remarks> The manifest contains a collection of external commands and external applications listed in the .addin file. </remarks>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.AddinFileExt">
+            <summary>
+            Revit addin file extension (.addin).
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.RevitAddInTag">
+            <summary>
+            RevitAddInTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.RevitAddInsTag">
+            <summary>
+            RevitAddInsTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.AddInTag">
+            <summary>
+            AddInTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.AddInCommandTag">
+            <summary>
+            AddInCommandTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.AddInApplicationTag">
+            <summary>
+            AddInApplicationTag
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.AddInDBApplicationTag">
+            <summary>
+            AddInDBApplicationTag
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.GetAddinManifest(System.String)">
+            <summary>
+            Creates revit addin manifest (.addin file).
+            </summary>
+            <param name="fullFileName">Full file name to .addin file.</param>
+            <returns>Returns revit addin manifest (.addin file).</returns>
+            <exception cref="T:System.ArgumentException">When fullFileName is null or empty.</exception>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.SaveAs(System.String)">
+            <summary>
+            Saved revit addin manifest file.
+            </summary>
+            <param name="fullFileName">Full file name path to save.</param>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.GetAddinManifests(System.String)">
+            <summary>
+            Gets addin manifest by root path.
+            </summary>
+            <param name="rootPath">Root path.</param>
+            <returns>Returns enums addin manifests.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.GetAddinManifests(System.String,System.IO.SearchOption)">
+            <summary>
+            Gets addin manifest by root path.
+            </summary>
+            <param name="rootPath">Root path.</param>
+            <param name="searchOption">Search option in root path.</param>
+            <returns>Returns enums addin manifests.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.CreateAddinManifest(System.String)">
+            <summary>
+            Creates addin manifest by assembly path.
+            </summary>
+            <param name="assemblyPath">Assembly path.</param>
+            <returns>Returns enums addin manifests.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.CreateAddinManifests(System.String)">
+            <summary>
+            Creates addin manifest by root path.
+            </summary>
+            <param name="rootPath">Root path.</param>
+            <returns>Returns enums addin manifests.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.CreateAddinManifests(System.String,System.IO.SearchOption)">
+            <summary>
+            Creates addin manifest by root path.
+            </summary>
+            <param name="rootPath">Root path.</param>
+            <param name="searchOption">Search option in root path.</param>
+            <returns>Returns enums addin manifests.</returns>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.Name">
+            <summary>
+            The file name which is associated with the manifest.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.FullName">
+            <summary>
+            The full path and file name which is associated with the manifest.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.AddinCommands">
+            <summary>
+            The collection of all external commands in the manifest.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.AddinApplications">
+            <summary>
+            The collection of all external applications in the manifest.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.AddinDBApplications">
+            <summary>
+            The collection of all external DB applications in the manifest.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.AddinItems">
+            <summary>
+            Enums all revit addin items in the manifest.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.Save">
+            <summary>
+            Saves revit addin manifest file.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitAddins.RevitAddinManifest.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.RevitAddins.VisibilityMode">
+            <summary>
+            Describes the conditions under which a particular external command will be visible in the Revit UI.
+            </summary>
+            <remarks> Note that there are a few conditions where the Revit API framework prevents commands from being available always:
+            <list type="number">
+                <item> When the user has another Revit command active, e.g. creating Windows, Doors, or editing sketches. </item>
+                <item> When the active view is in perspective mode, or when the view is a Walkthrough, Drawings Lists, View Lists, Note Blocks, View Lists, etc. </item>
+                <item> When the user is editing an in-place family. </item>
+            </list>
+            </remarks>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.VisibilityMode.AlwaysVisible">
+            <summary>
+            The command is available in all possible modes supported by the Revit API.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.VisibilityMode.NotVisibleInProject">
+            <summary>
+            The command is invisible when there is a project document active.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.VisibilityMode.NotVisibleInFamily">
+            <summary>
+            The command is invisible when there is a family document active.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.VisibilityMode.NotVisibleWhenNoActiveDocument">
+            <summary>
+            The command is invisible when there is no active document.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.RevitAddins.WarningType">
+            <summary>
+            Defines types of warnings issued by Revit related to Add-In failures.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.NoWarning">
+            <summary>
+            There is no warning in this Addin.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.ClassNotFound">
+            <summary>
+            Revit could not find the indicated class in the assembly file.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.WrongAssemblyPath">
+            <summary>
+            Revit could not find the assembly file.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.UncaughtException">
+            <summary>
+            Unhandled exceptions were caught when the AddIn was executed.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.GuidConflict">
+            <summary>
+            There is another add-in which registered the same Id (GUID).
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.NoFullClassName">
+            <summary>
+            Missing the required value of the FullClassName node.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.NoClientId">
+            <summary>
+            Missing the required value of the ClientId node.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.NoAssembly">
+            <summary>
+            Missing the required value of the Assembly node.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.NoApplicationName">
+            <summary>
+            Missing the required value of the Name node for application add-in.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.InvalidFormatClientId">
+            <summary>
+            Revit could not interop.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.WrongAvailabilityClass">
+            <summary>
+            Revit could not invoke IExternalCommandAvailability correctly.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.UncaughtExceptionInAvailabilityClass">
+            <summary>
+            Unhandled exceptions were caught when the availability command was executed.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.InvalidTransactionAttributeError">
+            <summary>
+            Not a valid transaction attribute.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.InvalidRegenerationAttributeError">
+            <summary>
+            Not a valid regeneration attribute.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitAddins.WarningType.NoVendorId">
+            <summary>
+            Missing the required value of the VendorId node.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.RevitFileInfo">
+            <summary>
+            Revit file info.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.RevitFileInfo.RevitFilesExtensions">
+            <summary>
+            Enums revit files extensions.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitFileInfo.#ctor(System.String)">
+            <summary>
+            Creates revit file info.
+            </summary>
+            <param name="modelPath">Revit model file path.</param>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitFileInfo.ModelPath">
+            <summary>
+            Revit model file path.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitFileInfo.BasicFileInfo">
+            <summary>
+            Basic file info.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.RevitFileInfo.TransmissionData">
+            <summary>
+            Transmission data.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.RevitFileInfo.UpdateTransmissionData">
+            <summary>
+            Updates transmission data.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference">
+            <summary>
+            External file reference.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference.ElementId">
+            <summary>
+            Linked file element id.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference.ExternalFileReferenceType">
+            <summary>
+            Type linked file.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference.LastSavedPath">
+            <summary>
+            Linked file last saved path.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference.LastSavedAbsolutePath">
+            <summary>
+            Linked file last saved absolute path.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference.LastSavedCentralServerLocation">
+            <summary>
+            Linked file last saved path on server. 
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference.LastSavedPathType">
+            <summary>
+            Linked file last saved path type.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference.LastSavedLoadState">
+            <summary>
+            Linked file last saved load state.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference.DesiredPath">
+            <summary>
+            Linked file desired path.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference.DesiredCentralServerLocation">
+            <summary>
+            Linked file desired path on server. 
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference.DesiredPathType">
+            <summary>
+            Linked file desired path type.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference.DesiredLoadState">
+            <summary>
+            Linked file desired load state.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReference.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReferenceType">
+            <summary>
+            Type linked files.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReferenceType.Decal">
+            <summary>
+            Decal.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReferenceType.CADLink">
+            <summary>
+            CAD Link.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReferenceType.RevitLink">
+            <summary>
+            Revit Link.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReferenceType.KeynoteTable">
+            <summary>
+            Keynote Table.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReferenceType.AssemblyCodeTable">
+            <summary>
+            Assembly Code Table
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.ExternalFileReferenceType.DWFMarkup">
+            <summary>
+            DWF Markup
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.TransmissionDataStream.LoadState">
+            <summary>
+            Linked file load states.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.LoadState.Loaded">
+            <summary>
+            Loaded.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.LoadState.Unloaded">
+            <summary>
+            Unloaded.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.LoadState.NotFound">
+            <summary>
+            Not found.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.TransmissionDataStream.PathType">
+            <summary>
+            Path types.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.PathType.Absolute">
+            <summary>
+            Absolute path.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.PathType.Relative">
+            <summary>
+            Relative path.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.PathType.ServerLocation">
+            <summary>
+            Path from RS or BIM360.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.PathType.RelativeCentralModel">
+            <summary>
+            Relative to Central Model.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.PathType.RelativeLibraryLocations">
+            <summary>
+            Relative to Library Locations.
+            </summary>
+        </member>
+        <member name="T:dosymep.Revit.FileInfo.TransmissionDataStream.TransmissionData">
+            <summary>
+            Transmission data.
+            </summary>
+        </member>
+        <member name="F:dosymep.Revit.FileInfo.TransmissionDataStream.TransmissionData.TransmissionDataFileName">
+            <summary>
+            Transmission data stream name.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.TransmissionData.IsTransmitted">
+            <summary>
+            If model was transmitted value is true.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.TransmissionData.UserData">
+            <summary>
+            User data.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.TransmissionData.Version">
+            <summary>
+            Version.
+            </summary>
+        </member>
+        <member name="P:dosymep.Revit.FileInfo.TransmissionDataStream.TransmissionData.ExternalFileReferences">
+            <summary>
+            Linked files info.
+            </summary>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.TransmissionDataStream.TransmissionData.ReadTransmissionData(System.String)">
+            <summary>
+            Reads transmission data.
+            </summary>
+            <param name="revitFileName">Revit model path.</param>
+            <returns>Returns transmission data.</returns>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.TransmissionDataStream.TransmissionData.WriteTransmissionData(System.String,dosymep.Revit.FileInfo.TransmissionDataStream.TransmissionData)">
+            <summary>
+            Writes transmission data.
+            </summary>
+            <param name="revitFileName">Revit model path.</param>
+            <param name="transmissionData">Transmission data.</param>
+        </member>
+        <member name="M:dosymep.Revit.FileInfo.TransmissionDataStream.TransmissionData.ToString">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

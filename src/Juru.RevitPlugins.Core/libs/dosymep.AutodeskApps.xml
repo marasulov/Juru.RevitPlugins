@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>dosymep.AutodeskApps</name>
+    </assembly>
+    <members>
+        <member name="T:dosymep.AutodeskApps.ITransformer">
+            <summary>
+            Marker transform interface.
+            </summary>
+        </member>
+        <member name="T:dosymep.AutodeskApps.ITransformer`2">
+            <summary>
+            Transform interface.
+            </summary>
+            <typeparam name="T">Transform type result.</typeparam>
+            <typeparam name="TVisitable">Visitable type element.</typeparam>
+        </member>
+        <member name="M:dosymep.AutodeskApps.ITransformer`2.Transform(`1)">
+            <summary>
+            Transform method.
+            </summary>
+            <param name="visitable">Visitable element.</param>
+            <returns>Returns transform result.</returns>
+        </member>
+    </members>
+</doc>

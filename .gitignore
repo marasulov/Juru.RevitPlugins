@@ -1,0 +1,14 @@
+﻿#IDE folders
+*.idea/
+*.vs/
+*.vscode/
+
+#Project-specific folders
+*obj/
+*bin/
+
+#Build output folder
+/output/
+
+#User-specific files
+*.user

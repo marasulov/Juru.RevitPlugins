@@ -1,0 +1,1206 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>dosymep.WpfCore</name>
+    </assembly>
+    <members>
+        <member name="T:dosymep.WpfCore.Behaviors.WpfAttachServiceBehavior">
+            <summary>
+            Поведение прикрепление сервисов.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Behaviors.WpfAttachServiceBehavior.AttachableServiceProperty">
+            <summary>
+            Свойство прикрепляемого сервиса.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Behaviors.WpfAttachServiceBehavior.AttachableService">
+            <summary>
+            Прикрепляемый сервис.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfAttachServiceBehavior.OnAttached">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfAttachServiceBehavior.OnDetaching">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Behaviors.WpfLocalizationBehavior">
+            <summary>
+            Поведение применения языка.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfLocalizationBehavior.OnAttached">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfLocalizationBehavior.OnDetaching">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior">
+            <summary>
+            Поведение, которое применяет анимацию скольжения появления окна.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.NotificationScreenProperty">
+            <summary>
+            Определяет, на каком мониторе будет отображаться уведомление.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.NotificationPositionProperty">
+            <summary>
+            Позиция уведомления на экране.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.WindowStackProperty">
+            <summary>
+            Список открытых окон уведомлений.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.OffsetProperty">
+            <summary>
+            Идентифицирует свойство зависимости BottomOffset,
+            которое определяет расстояние от нижнего края экрана до нижнего края окна при анимации скольжения.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.OnAttached">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.WindowStack">
+            <summary>
+            Список открытых окон уведомлений.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.NotificationScreen">
+            <summary>
+            Определяет, на каком мониторе будет отображаться уведомление.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.NotificationPosition">
+            <summary>
+            Позиция уведомления на экране.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.Offset">
+            <summary>
+            Определяет расстояние от нижнего края экрана до нижнего края окна при анимации скольжения.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.OnDetaching">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.OnShowing">
+            <summary>
+            Запускает анимацию показа окна.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.OnClosing">
+            <summary>
+            Запускает анимацию закрытия окна.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfNotificationWindowBehavior.OnAutoClosing">
+            <summary>
+            Запускает анимацию закрытия окна по времени.
+            </summary>
+        </member>
+        <member name="T:dosymep.WpfCore.Behaviors.WpfSavePositionBehavior">
+            <summary>
+            Поведение сохранения позиции окна.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Behaviors.WpfSavePositionBehavior.SerializationServiceProperty">
+            <summary>
+            Сервис сериализации.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Behaviors.WpfSavePositionBehavior.SerializationService">
+            <summary>
+            Сервис сериализации.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Behaviors.WpfSavePositionBehavior.ConfigPathProperty">
+            <summary>
+            Путь до конфигурации позиции окна.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Behaviors.WpfSavePositionBehavior.ConfigPath">
+            <summary>
+            Путь до конфигурации позиции окна.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfSavePositionBehavior.OnAttached">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfSavePositionBehavior.OnDetaching">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Behaviors.WpfThemeBehavior">
+            <summary>
+            Поведение применения темы.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfThemeBehavior.OnAttached">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Behaviors.WpfThemeBehavior.OnDetaching">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.BoolNegationConverter">
+            <summary>
+            Инвертированный конвертер bool в bool.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolNegationConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolNegationConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.BoolToObjectConverter">
+            <summary>
+            Конвертер bool в object.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToObjectConverter.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToObjectConverter.#ctor(System.Object,System.Object)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="trueValue">Значение, которое будет отображаться если true.</param>
+            <param name="falseValue">Значение, которое будет отображаться если false.</param>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToObjectConverter.#ctor(System.Object,System.Object,System.Object)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="trueValue">Значение, которое будет отображаться если true.</param>
+            <param name="falseValue">Значение, которое будет отображаться если false.</param>
+            <param name="defaultValue">Значение, которое будет отображаться если null.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.BoolToObjectConverter.TrueValue">
+            <summary>
+            Вывод, когда значение bool == True.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.BoolToObjectConverter.FalseValue">
+            <summary>
+            Вывод, когда значение bool == False.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.BoolToObjectConverter.DefaultValue">
+            <summary>
+            Вывод, когда значение bool == default.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToObjectConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToObjectConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.BoolToStringConverter">
+            <summary>
+            Конвертер bool в string.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToStringConverter.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToStringConverter.#ctor(System.String,System.String)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="trueValue">Значение, которое будет отображаться если true.</param>
+            <param name="falseValue">Значение, которое будет отображаться если false.</param>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToStringConverter.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="trueValue">Значение, которое будет отображаться если true.</param>
+            <param name="falseValue">Значение, которое будет отображаться если false.</param>
+            <param name="defaultValue">Значение, которое будет отображаться если null.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.BoolToStringConverter.TrueValue">
+            <summary> 
+            Вывод, когда значение bool == True.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.BoolToStringConverter.FalseValue">
+            <summary>
+            Вывод, когда значение bool == False.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.BoolToStringConverter.DefaultValue">
+            <summary>
+            Вывод, когда значение bool == default.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToStringConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToStringConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.BoolToVisibilityConverter">
+            <summary>
+            Конвертер bool в Visibility.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToVisibilityConverter.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToVisibilityConverter.#ctor(System.Windows.Visibility,System.Windows.Visibility)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="trueValue">Значение, которое будет отображаться если true.</param>
+            <param name="falseValue">Значение, которое будет отображаться если false.</param>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToVisibilityConverter.#ctor(System.Windows.Visibility,System.Windows.Visibility,System.Nullable{System.Windows.Visibility})">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="trueValue">Значение, которое будет отображаться если true.</param>
+            <param name="falseValue">Значение, которое будет отображаться если false.</param>
+            <param name="defaultValue">Значение, которое будет отображаться если null.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.BoolToVisibilityConverter.TrueValue">
+            <summary>
+            Вывод, когда значение bool == True.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.BoolToVisibilityConverter.FalseValue">
+            <summary>
+            Вывод, когда значение bool == False.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.BoolToVisibilityConverter.DefaultValue">
+            <summary>
+            Вывод, когда значение bool == default.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToVisibilityConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.BoolToVisibilityConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.DefaultToStringConverter">
+            <summary>
+            Конвертер null в string.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.DefaultToStringConverter.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.DefaultToStringConverter.#ctor(System.String)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="defaultValue">Значение, которое будет отображаться если null.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.DefaultToStringConverter.DefaultValue">
+            <summary> 
+            Вывод, когда значение Null.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.DefaultToStringConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.DefaultToStringConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.DoubleOffsetConverter">
+            <summary>
+            Добавляет указаное значение.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.DoubleOffsetConverter.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.DoubleOffsetConverter.#ctor(System.Double)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="offsetValue">Значение на которое изменяется.</param>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.DoubleOffsetConverter.#ctor(System.Boolean,System.Double)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="inverted">Признак инвертированости.</param>
+            <param name="offsetValue">Значение на которое изменяется.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.DoubleOffsetConverter.Inverted">
+            <summary>
+            Признак инвертированости.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.DoubleOffsetConverter.OffsetValue">
+            <summary>
+            Значение на которое изменяется.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.DoubleOffsetConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.DoubleOffsetConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.IntOffsetConverter">
+            <summary>
+            Добавляет указаное значение.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.IntOffsetConverter.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.IntOffsetConverter.#ctor(System.Int32)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="offsetValue">Значение на которое изменяется.</param>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.IntOffsetConverter.#ctor(System.Boolean,System.Int32)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="inverted">Признак инвертированости.</param>
+            <param name="offsetValue">Значение на которое изменяется.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.IntOffsetConverter.Inverted">
+            <summary>
+            Признак инвертированости.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.IntOffsetConverter.OffsetValue">
+            <summary>
+            Значение на которое изменяется.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.IntOffsetConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.IntOffsetConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.LocalizationSourceExtensionConverter">
+            <summary>
+            Type converter to inform the serialization system how to construct a DynamicResourceExtension from
+            an instance. It reports that ResourceKey should be used as the first parameter to the constructor.
+            https://github.com/dotnet/wpf/blob/main/src/Microsoft.DotNet.Wpf/src/PresentationFramework/System/Windows/DynamicResourceExtensionConverter.cs
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.LocalizationSourceExtensionConverter.CanConvertTo(System.ComponentModel.ITypeDescriptorContext,System.Type)">
+            <summary>
+            True if converting to an instance descriptor
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.LocalizationSourceExtensionConverter.ConvertTo(System.ComponentModel.ITypeDescriptorContext,System.Globalization.CultureInfo,System.Object,System.Type)">
+            <summary>
+            Converts to an instance descriptor
+            </summary>
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.NumericToBoolConverter">
+            <summary>
+            Конвертер числа в bool.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.NumericToBoolConverter.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.NumericToBoolConverter.#ctor(System.Boolean)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="inverted">Признак инвертированости.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.NumericToBoolConverter.Inverted">
+            <summary>
+            Признак инвертированости.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.NumericToBoolConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.NumericToBoolConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.ObjectToBoolConverter">
+            <summary>
+            Конвертер object в bool.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.ObjectToBoolConverter.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.ObjectToBoolConverter.#ctor(System.Boolean)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="inverted">Признак инвертированости.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.ObjectToBoolConverter.Inverted">
+            <summary>
+            Признак инвертированости.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.ObjectToBoolConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.ObjectToBoolConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.ObjectToObjectConverter">
+            <summary>
+            Конвертирует object в object.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.ObjectToObjectConverter.DefaultSource">
+            <summary>
+            Значение по умолчанию для исходника.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.ObjectToObjectConverter.DefaultTarget">
+            <summary>
+            Значение по умолчанию для назначения.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.ObjectToObjectConverter.CoupleItems">
+            <summary>
+            Список пар.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.ObjectToObjectConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.ObjectToObjectConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.CoupleItem">
+            <summary>
+            Класс пар объектов.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.CoupleItem.Source">
+            <summary>
+            Исходник.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.CoupleItem.Target">
+            <summary>
+            Назначение.
+            </summary>
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.StringToBoolConverter">
+            <summary>
+            Конвертер string в bool.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.StringToBoolConverter.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.StringToBoolConverter.#ctor(System.Boolean)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="inverted">Признак инвертированости.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.StringToBoolConverter.Inverted">
+            <summary>
+            Признак инвертированости.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.StringToBoolConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.StringToBoolConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.StringToVisibilityConverter">
+            <summary>
+            Класс конвертации string в Visibility
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.StringToVisibilityConverter.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.StringToVisibilityConverter.#ctor(System.Boolean)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="inverted">Признак инвертированости.</param>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.StringToVisibilityConverter.#ctor(System.Boolean,System.Windows.Visibility)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="inverted">Признак инвертированости.</param>
+            <param name="falseValue">Вывод, когда значение bool == False.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.StringToVisibilityConverter.Inverted">
+            <summary>
+            Признак инвертированости.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.StringToVisibilityConverter.FalseValue">
+            <summary>
+            Вывод, когда значение bool == False.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.StringToVisibilityConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.StringToVisibilityConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.Converters.TypeConverterDecorator">
+            <summary>
+            Декоратор для <see cref="T:System.ComponentModel.TypeConverter" />.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.TypeConverterDecorator.#ctor">
+            <summary>
+            Конструирует объект. 
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.TypeConverterDecorator.#ctor(System.ComponentModel.TypeConverter)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="converter">Конвертер типов.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.Converters.TypeConverterDecorator.Converter">
+            <summary>
+            Конвертер типов.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.TypeConverterDecorator.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.Converters.TypeConverterDecorator.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.MarkupExtensions.EnumToItemsSourceExtension">
+            <summary>
+            Конвертирует enum в список значений.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.MarkupExtensions.EnumToItemsSourceExtension.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.MarkupExtensions.EnumToItemsSourceExtension.#ctor(System.Type)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="enumType">Тип enum.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.MarkupExtensions.EnumToItemsSourceExtension.EnumType">
+            <summary>
+            Тип enum.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.MarkupExtensions.EnumToItemsSourceExtension.ProvideValue(System.IServiceProvider)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.MarkupExtensions.LocalizationSourceExtension">
+            <summary>
+            Класс для получения локализации.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.MarkupExtensions.LocalizationSourceExtension.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.MarkupExtensions.LocalizationSourceExtension.#ctor(System.String)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="resourceKey">Наименование ресурса.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.MarkupExtensions.LocalizationSourceExtension.ResourceKey">
+            <summary>
+            Наименование ресурса.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.MarkupExtensions.LocalizationSourceExtension.ProvideValue(System.IServiceProvider)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.MarkupExtensions.QualifiedImageExtension">
+            <summary>
+            Расширение выбора изображений, на основе темы окна и его языка.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.MarkupExtensions.QualifiedImageExtension.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.MarkupExtensions.QualifiedImageExtension.#ctor(System.String)">
+            <summary>
+            Конструирует объект.
+            </summary>
+            <param name="uri">Путь до ресурса.</param>
+        </member>
+        <member name="P:dosymep.WpfCore.MarkupExtensions.QualifiedImageExtension.Uri">
+            <summary>
+            Путь до ресурса.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.MarkupExtensions.QualifiedImageExtension.ProvideValue(System.IServiceProvider)">
+            <inheritdoc />
+        </member>
+        <member name="F:dosymep.WpfCore.Native.NativeMethods.SW_SHOWNORMAL">
+            <summary>
+            Активирует и отображает окно. Если окно свернуто, развернуто или упорядочено,
+            система восстанавливает его исходный размер и положение.
+            Приложение должно указать этот флаг при первом отображении окна.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.NativeMethods.SW_SHOWMINIMIZED">
+            <summary>
+            Активирует окно и отображает его как свернутое окно.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.Native.NativeMethods.GetWindowPlacement(System.IntPtr,dosymep.WpfCore.Native.WINDOWPLACEMENT@)">
+             <summary>
+             Извлекает состояние отображения и восстановленные, свернутые и развернутые позиции указанного окна.
+             </summary>
+             <param name="hWnd">Дескриптор окна.</param>
+             <param name="lpwndpl">
+             Указатель на структуру WINDOWPLACEMENT, которая получает сведения о состоянии отображения и положении.
+             Перед вызовом GetWindowPlacement задайте для элемента длины значение sizeof(WINDOWPLACEMENT).
+             GetWindowPlacement завершается ошибкой, если длинаlpwndpl> задана неправильно.
+             </param>
+             <returns>
+             Если функция выполняется успешно, возвращается ненулевое значение.
+             Если функция выполняется неудачно, возвращается нулевое значение. Дополнительные сведения об ошибке можно получить, вызвав GetLastError.
+             </returns>
+             <remarks>
+             Элемент флагов WINDOWPLACEMENT, полученный этой функцией, всегда равен нулю.
+             Если окно, определенное параметром hWnd , развернуто, элемент showCmd SW_SHOWMAXIMIZED.
+             Если окно свернуто, параметр showCmd SW_SHOWMINIMIZED. В противном случае это SW_SHOWNORMAL.
+            
+             Элемент длины WINDOWPLACEMENT должен иметь значение sizeof(WINDOWPLACEMENT).
+             Если этот элемент задан неправильно, функция возвращает значение FALSE.
+             Дополнительные замечания о правильном использовании координат размещения окна см. в разделе WINDOWPLACEMENT.
+             </remarks>
+        </member>
+        <member name="M:dosymep.WpfCore.Native.NativeMethods.SetWindowPlacement(System.IntPtr,dosymep.WpfCore.Native.WINDOWPLACEMENT@)">
+             <summary>
+             
+             </summary>
+             <param name="hWnd">Дескриптор окна.</param>
+             <param name="lpwndpl">
+             Указатель на структуру WINDOWPLACEMENT, которая задает новое состояние отображения и позиции окна.
+             Перед вызовом SetWindowPlacement задайте для элемента длины структуры WINDOWPLACEMENT значение sizeof(WINDOWPLACEMENT).
+             SetWindowPlacement завершается ошибкой, если член длины задан неправильно.
+             </param>
+             <returns>
+             Если функция выполняется успешно, возвращается ненулевое значение.
+             Если функция выполняется неудачно, возвращается нулевое значение. Дополнительные сведения об ошибке можно получить, вызвав GetLastError.
+             </returns>
+             <remarks>
+             Если информация, указанная в windowplacement, приведет к тому, что окно полностью отключается от экрана,
+             система автоматически корректирует координаты таким образом, чтобы окно было видимым,
+             учитывая изменения в разрешении экрана и конфигурации нескольких мониторов.
+            
+             Элемент длины WINDOWPLACEMENT должен иметь значение sizeof(WINDOWPLACEMENT).
+             Если этот элемент задан неправильно, функция возвращает значение FALSE.
+             Дополнительные замечания о правильном использовании координат размещения окна см. в разделе WINDOWPLACEMENT.
+             </remarks>
+        </member>
+        <member name="T:dosymep.WpfCore.Native.POINT">
+            <summary>
+            Структура POINT определяет координаты x и y точки.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.POINT.x">
+            <summary>
+            Указывает координату точки по оси X.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.POINT.y">
+            <summary>
+            Указывает координату точки по оси Y.
+            </summary>
+        </member>
+        <member name="T:dosymep.WpfCore.Native.RECT">
+            <summary>
+            Структура RECT определяет прямоугольник по координатам верхнего левого и нижнего правого углов.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.RECT.left">
+            <summary>
+            Задает координату по оси X левого верхнего угла прямоугольника.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.RECT.top">
+            <summary>
+            Задает координату по оси Y левого верхнего угла прямоугольника.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.RECT.right">
+            <summary>
+            Задает координату X правого нижнего угла прямоугольника.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.RECT.bottom">
+            <summary>
+            Задает координату по оси Y правого нижнего угла прямоугольника.
+            </summary>
+        </member>
+        <member name="T:dosymep.WpfCore.Native.WINDOWPLACEMENT">
+             <summary>
+             Содержит сведения о размещении окна на экране.
+             </summary>
+             <remarks>
+             Если окно является окном верхнего уровня без стиля окна WS_EX_TOOLWINDOW , то координаты,
+             представленные следующими элементами, находятся в координатах рабочей области: ptMinPosition,
+             ptMaxPosition и rcNormalPosition. В противном случае эти элементы находятся в экранных координатах.
+            
+             Координаты рабочей области отличаются от экранных координат тем, что учитывают расположение и
+             размеры панелей инструментов приложений (включая панель задач). Координата рабочей области (0,0) —
+             это левый верхний угол области рабочей области, область экрана, не используемая панелями инструментов приложения.
+            
+             Координаты, используемые в структуре WINDOWPLACEMENT , должны использоваться только функциями
+             GetWindowPlacement и SetWindowPlacement . Передача координат рабочей области в функции, которые
+             ожидают экранные координаты (например , SetWindowPos), приведет к тому, что окно появится в
+             неправильном расположении. Например, если панель задач находится в верхней части экрана, сохранение
+             координат окна с помощью GetWindowPlacement и их восстановление с помощью SetWindowPos приведет
+             к тому, что окно будет "ползать" вверх по экрану.
+             </remarks>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.WINDOWPLACEMENT.WPF_ASYNCWINDOWPLACEMENT">
+            <summary>
+            Если вызывающий поток и поток, которому принадлежит окно,
+            присоединены к разным входным очередям, система отправляет запрос потоку,
+            которому принадлежит окно. Это предотвращает блокировку выполнения вызывающего потока,
+            пока другие потоки обрабатывают запрос.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.WINDOWPLACEMENT.WPF_RESTORETOMAXIMIZED">
+            <summary>
+            Восстановленное окно будет развернуто независимо от того, было ли развернуто до его свертывание.
+            Этот параметр действителен только при следующем восстановлении окна. Он не изменяет поведение восстановления по умолчанию.
+            Этот флаг действителен, только если для элемента showCmd указано значение SW_SHOWMINIMIZED.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.WINDOWPLACEMENT.WPF_SETMINPOSITION">
+            <summary>
+            Можно указать координаты свернутого окна.
+            Этот флаг необходимо указать, если координаты заданы в элементе ptMinPosition.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.WINDOWPLACEMENT.length">
+            <summary>
+            Длина структуры в байтах.
+            Перед вызовом функций GetWindowPlacement или SetWindowPlacement задайте для этого элемента значение sizeof(WINDOWPLACEMENT).
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.WINDOWPLACEMENT.flags">
+            <summary>
+            Флаги, управляющие положением свернутого окна и методом восстановления окна. Этот элемент может быть одним или несколькими из следующих значений.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.WINDOWPLACEMENT.showCmd">
+            <summary>
+            Текущее состояние отображения окна. Это может быть любое из значений, которые можно указать в параметре nCmdShow для функции ShowWindow .
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.WINDOWPLACEMENT.ptMinPosition">
+            <summary>
+            Координаты левого верхнего угла окна при свернутом окне.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.WINDOWPLACEMENT.ptMaxPosition">
+            <summary>
+            Координаты левого верхнего угла окна при развернутом окне.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.Native.WINDOWPLACEMENT.rcNormalPosition">
+            <summary>
+            Координаты окна, когда окно находится в восстановленном положении.
+            </summary>
+        </member>
+        <member name="T:dosymep.WpfCore.ServiceProviderExtensions">
+            <summary>
+            Расширения интерфейса <see cref="T:System.IServiceProvider"/>.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.ServiceProviderExtensions.GetService``1(System.IServiceProvider)">
+            <summary>
+            Возвращает сервис и приводит его к заданому типу.
+            </summary>
+            <param name="serviceProvider">Интерфейс провайдера сервисов.</param>
+            <typeparam name="T">Тип в который нужно привести root объект.</typeparam>
+            <returns>Возвращает сервис и приводит его к заданому типу.</returns>
+        </member>
+        <member name="M:dosymep.WpfCore.ServiceProviderExtensions.GetRootObject``1(System.IServiceProvider)">
+            <summary>
+            Возвращает root объект и приводит к заданому типу.
+            </summary>
+            <param name="serviceProvider">Интерфейс провайдера сервисов.</param>
+            <typeparam name="T">Тип в который нужно привести root объект.</typeparam>
+            <returns>Возвращает root объект сконвертированный в нужный тип.</returns>
+        </member>
+        <member name="T:dosymep.WpfCore.SimpleServices.NotificationPosition">
+            <summary>
+            Определяет возможные позиции отображения уведомлений.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.SimpleServices.NotificationPosition.TopRight">
+            <summary>
+            Сверху справа.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.SimpleServices.NotificationPosition.BottomRight">
+            <summary>
+            Снизу справа.
+            </summary>
+        </member>
+        <member name="T:dosymep.WpfCore.SimpleServices.NotificationScreen">
+            <summary>
+            Перечисление, представляющее различные экраны для отображения уведомлений.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.SimpleServices.NotificationScreen.Primary">
+            <summary>
+            Основной экран.
+            </summary>
+        </member>
+        <member name="F:dosymep.WpfCore.SimpleServices.NotificationScreen.ApplicationWindow">
+            <summary>
+            Экран, где расположено окно.
+            </summary>
+        </member>
+        <member name="T:dosymep.WpfCore.SimpleServices.WpfBaseService">
+            <summary>
+            Базовый класс прикрепления сервисов.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfBaseService.IsAttached">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfBaseService.AllowAttach">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfBaseService.AssociatedObject">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfBaseService.Detach">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfBaseService.Attach(System.Windows.DependencyObject)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfBaseService.GetAssociatedWindow">
+            <summary>
+            Возвращает ассоциированное окно с сервисом.
+            </summary>
+            <returns>Возвращает ассоциированное окно с сервисом.</returns>
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfBaseService.SetAssociatedOwner(System.Windows.Window)">
+            <summary>
+            Устанавливает родителя для переданного окна.
+            </summary>
+            <param name="window">Окно для которого требуется установить родителя.</param>
+        </member>
+        <member name="T:dosymep.WpfCore.SimpleServices.WpfDispatcherService">
+            <summary>
+            Класс сервиса диспетчера окна.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfDispatcherService.Invoke(System.Action)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfDispatcherService.BeginInvoke(System.Action)">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.SimpleServices.WpfLocalizationService">
+            <summary>
+            Класс сервиса локализации.
+            </summary>
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfLocalizationService.#ctor(System.String,System.Globalization.CultureInfo)">
+            <summary>
+            Создает экземпляр сервиса локализации.
+            </summary>
+            <param name="resourceName">Отноcительный или абсолютный путь до ресурсов <see cref="T:System.Windows.ResourceDictionary"/> локализации.</param>
+            <param name="defaultCulture">Языковые стандарты по умолчанию. Применяются, если не были найдены основные.</param>
+            <exception cref="T:System.ArgumentException"><paramref name="resourceName"/> пустое или null.</exception>
+            <exception cref="T:System.ArgumentNullException"><paramref name="defaultCulture"/> если null.</exception>
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfLocalizationService.SetLocalization(System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfLocalizationService.SetLocalization(System.Globalization.CultureInfo,System.Windows.FrameworkElement)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfLocalizationService.GetLocalizedString(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfLocalizationService.GetLocalizedString(System.String,System.Object[])">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService">
+            <summary>
+            Предоставляет методы для открытия  диалога просмотра и открытия файлов.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.Multiselect">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.AddExtension">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.AutoUpgradeEnabled">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.CheckFileExists">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.CheckPathExists">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.ValidateNames">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.DereferenceLinks">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.RestoreDirectory">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.ShowHelp">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.SupportMultiDottedExtensions">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.FilterIndex">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.Title">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.Filter">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.InitialDirectory">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.File">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.Files">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.ShowDialog">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.ShowDialog(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfOpenFileDialogService.Reset">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService">
+            <summary>
+            Предоставляет методы для открытия диалога выбора папок.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.Multiselect">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.AddExtension">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.AutoUpgradeEnabled">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.CheckFileExists">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.CheckPathExists">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.ValidateNames">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.DereferenceLinks">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.RestoreDirectory">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.ShowHelp">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.SupportMultiDottedExtensions">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.FilterIndex">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.Title">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.Filter">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.InitialDirectory">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.Folder">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.Folders">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.ShowDialog">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.ShowDialog(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfOpenFolderDialogService.Reset">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService">
+            <summary>
+            Предоставляет методы для открытия диалога сохранения файлов.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.AddExtension">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.AutoUpgradeEnabled">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.CheckFileExists">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.CheckPathExists">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.ValidateNames">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.DereferenceLinks">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.RestoreDirectory">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.ShowHelp">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.SupportMultiDottedExtensions">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.FilterIndex">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.Title">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.Filter">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.InitialDirectory">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.DefaultExt">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.DefaultFileName">
+            <inheritdoc />
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.File">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.ShowDialog(System.String,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfSaveFileDialogService.Reset">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.SimpleServices.WpfWindowsLanguageService">
+            <summary>
+            Класс сервиса доступа к языку Windows.
+            </summary>
+        </member>
+        <member name="E:dosymep.WpfCore.SimpleServices.WpfWindowsLanguageService.LanguageChanged">
+            <inheritdoc/>
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfWindowsLanguageService.#ctor">
+            <summary>
+            Конструирует объект.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfWindowsLanguageService.HostLanguage">
+            <inheritdoc/>
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfWindowsLanguageService.Dispose(System.Boolean)">
+            <summary>
+            Очищает подписку на событие.
+            </summary>
+            <param name="disposing">Указывает на очистку ресурсов.</param>
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfWindowsLanguageService.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:dosymep.WpfCore.SimpleServices.WpfWindowsThemeService">
+            <summary>
+            Класс сервиса тем для окон.
+            </summary>
+        </member>
+        <member name="E:dosymep.WpfCore.SimpleServices.WpfWindowsThemeService.UIThemeChanged">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfWindowsThemeService.#ctor">
+            <summary>
+            Создает экземпляр сервиса для окон.
+            </summary>
+        </member>
+        <member name="P:dosymep.WpfCore.SimpleServices.WpfWindowsThemeService.HostTheme">
+            <inheritdoc />
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfWindowsThemeService.Dispose(System.Boolean)">
+            <summary>
+            Очищает подписку на событие.
+            </summary>
+            <param name="disposing">Указывает на очистку ресурсов.</param>
+        </member>
+        <member name="M:dosymep.WpfCore.SimpleServices.WpfWindowsThemeService.Dispose">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>
