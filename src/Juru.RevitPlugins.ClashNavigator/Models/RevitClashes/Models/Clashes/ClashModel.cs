@@ -47,6 +47,8 @@ internal class ClashModel : IEquatable<ClashModel> {
     public ElementModel OtherElement { get; set; }
     /// <summary>Точка коллизии из отчёта Navisworks, в метрах.</summary>
     public XYZModel ClashPoint { get; set; }
+    /// <summary>Absolute path to the screenshot exported with a Navisworks clash report.</summary>
+    public string ImagePath { get; set; }
 
     public HashSet<ClashComment> Comments { get; set; } = [];
 
@@ -117,6 +119,10 @@ internal class ClashModel : IEquatable<ClashModel> {
         } catch(ArgumentException) {
             return new ClashData();
         } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+            return new InvalidClashData();
+        } catch(EntryPointNotFoundException) {
+            // A geometry API call can be unavailable in an older Revit host.
+            // The report itself remains usable: selection only needs element IDs.
             return new InvalidClashData();
         }
     }

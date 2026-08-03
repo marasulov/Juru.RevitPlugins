@@ -152,13 +152,29 @@ internal class NavisXmlClashesLoader : BaseClashesLoader, IClashesLoader {
             Name = name,
             ClashStatus = status,
             Comments = comments,
-            ClashPoint = GetClashPoint(clashResult)
+            ClashPoint = GetClashPoint(clashResult),
+            ImagePath = GetImagePath(clashResult)
         };
         if(elements.Length == 2) {
             clash.MainElement = elements[0];
             clash.OtherElement = elements[1];
         }
         return clash.SetRevitRepository(_revitRepository);
+    }
+
+    private string GetImagePath(XElement clashResult) {
+        string href = (string)clashResult.Attribute("href");
+        if(string.IsNullOrWhiteSpace(href)) return null;
+
+        string reportDirectory = Path.GetDirectoryName(FilePath);
+        string imageName = Path.GetFileName(href);
+        string directPath = Path.Combine(reportDirectory, href.Replace('/', Path.DirectorySeparatorChar));
+        if(File.Exists(directPath)) return directPath;
+
+        string reportName = Path.GetFileNameWithoutExtension(FilePath);
+        string[] folders = [reportName + "_files", reportName + "__files"];
+        return folders.Select(folder => Path.Combine(reportDirectory, folder, imageName))
+            .FirstOrDefault(File.Exists);
     }
 
     private ElementModel GetElementModel(XElement clashObject) {
@@ -203,6 +219,9 @@ internal class NavisXmlClashesLoader : BaseClashesLoader, IClashesLoader {
 
         return new ElementModel {
             Id = id,
+            // The current Navisworks XML format exports no source-RVT field.
+            // Keep the missing resolution visible instead of rendering a blank cell.
+            DocumentName = "<\u043d\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d \u0432 Revit>",
             Name = GetSmartTagValue(clashObject, "Item Name"),
             FamilyName = GetSmartTagValue(clashObject, "Item Type"),
             Level = clashObject.Element("layer")?.Value ?? string.Empty

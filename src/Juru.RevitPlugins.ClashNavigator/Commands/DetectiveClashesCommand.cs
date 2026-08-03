@@ -64,6 +64,11 @@ public class DetectiveClashesCommand : BasePluginCommand {
         kernel.Bind<SettingsConfig>()
             .ToMethod(c => SettingsConfig.GetSettingsConfig(c.Kernel.Get<IConfigSerializer>()));
 
+        // WpfUIMessageBoxService requires these services during construction.
+        kernel.UseWpfWindowsTheme();
+        kernel.UseWpfWindowsLanguage();
+        kernel.UseWpfUIThemeUpdater();
+
         kernel.Bind<MainViewModel>()
             .ToSelf()
             .InSingletonScope();
@@ -75,7 +80,6 @@ public class DetectiveClashesCommand : BasePluginCommand {
             .UseWpfSaveFileDialog<MainViewModel>()
             .UseWpfUIMessageBox<MainViewModel>();
 
-        kernel.UseWpfUIThemeUpdater();
         string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
         kernel.UseWpfLocalization(
             $"/{assemblyName};component/assets/Localization/Language.xaml",

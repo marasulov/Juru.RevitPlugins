@@ -83,6 +83,8 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
         set => RaiseAndSetIfChanged(ref _clashName, value);
     }
 
+    public string ImagePath => Clash?.ImagePath;
+
     public bool ClashDataIsValid {
         get => _clashDataIsValid;
         set => RaiseAndSetIfChanged(ref _clashDataIsValid, value);

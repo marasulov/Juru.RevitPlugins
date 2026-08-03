@@ -6,6 +6,15 @@
         WindowStartupLocation="CenterScreen"
         Background="{ui:ThemeResource ApplicationBackgroundBrush}"
         Foreground="{ui:ThemeResource TextFillColorPrimaryBrush}">
+    <Window.Resources>
+        <DataTemplate x:Key="FilterHeaderTemplate">
+            <DockPanel LastChildFill="False">
+                <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                <Button Content="▼" Tag="{Binding RelativeSource={RelativeSource AncestorType=DataGridColumnHeader}, Path=Column.SortMemberPath}"
+                        Padding="5,0" Margin="4,0,0,0" />
+            </DockPanel>
+        </DataTemplate>
+    </Window.Resources>
     <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -35,18 +44,25 @@
         <TextBlock Grid.Row="1" VerticalAlignment="Bottom" Margin="0,27,0,-22"
                    Foreground="DarkOrange" Text="{Binding Diagnostic}" TextWrapping="Wrap" />
 
-        <DataGrid Grid.Row="2" ItemsSource="{Binding SelectedReport.GuiClashes}"
+        <DataGrid x:Name="ClashesGrid" Grid.Row="2" ItemsSource="{Binding SelectedReport.GuiClashes}"
                   SelectedItem="{Binding SelectedReport.SelectedGuiClash}" AutoGenerateColumns="False"
                   CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column"
                   GridLinesVisibility="Horizontal" BorderThickness="1"
                   BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Коллизия" Binding="{Binding ClashName}" Width="120" />
-                <DataGridTextColumn Header="Файл 1" Binding="{Binding FirstDocumentName}" Width="*" />
-                <DataGridTextColumn Header="ID 1" Binding="{Binding FirstId}" Width="100" />
-                <DataGridTextColumn Header="Файл 2" Binding="{Binding SecondDocumentName}" Width="*" />
-                <DataGridTextColumn Header="ID 2" Binding="{Binding SecondId}" Width="100" />
-                <DataGridTextColumn Header="Статус" Binding="{Binding ClashStatusName}" Width="130" />
+                <DataGridTextColumn Header="Коллизия" Binding="{Binding ClashName}" SortMemberPath="ClashName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="120" />
+                <DataGridTextColumn Header="Файл 1" Binding="{Binding FirstDocumentName}" SortMemberPath="FirstDocumentName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
+                <DataGridTextColumn Header="ID 1" Binding="{Binding FirstId}" SortMemberPath="FirstId" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="100" />
+                <DataGridTextColumn Header="Файл 2" Binding="{Binding SecondDocumentName}" SortMemberPath="SecondDocumentName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
+                <DataGridTextColumn Header="ID 2" Binding="{Binding SecondId}" SortMemberPath="SecondId" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="100" />
+                <DataGridTextColumn Header="Статус" Binding="{Binding ClashStatusName}" SortMemberPath="ClashStatusName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="130" />
+                <DataGridTemplateColumn Header="Снимок" Width="145">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding ImagePath}" Height="70" Stretch="Uniform" ToolTip="{Binding ImagePath}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTemplateColumn Header="Revit" Width="110">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

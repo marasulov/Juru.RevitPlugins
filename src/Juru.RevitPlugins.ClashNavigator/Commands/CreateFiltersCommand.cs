@@ -67,11 +67,15 @@ public class CreateFiltersCommand : BasePluginCommand {
             .ToSelf()
             .InSingletonScope()
             .WithPropertyValue(nameof(System.Windows.Window.DataContext), c => c.Kernel.Get<FiltersViewModel>());
+
+        // WpfUIMessageBoxService requires these services during construction.
+        kernel.UseWpfWindowsTheme();
+        kernel.UseWpfWindowsLanguage();
+        kernel.UseWpfUIThemeUpdater();
         kernel.UseWpfOpenFileDialog<FiltersViewModel>()
             .UseWpfSaveFileDialog<FiltersViewModel>()
             .UseWpfUIMessageBox<FiltersViewModel>();
 
-        kernel.UseWpfUIThemeUpdater();
         string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
         kernel.UseWpfLocalization(
             $"/{assemblyName};component/assets/Localization/Language.xaml",

@@ -7,6 +7,7 @@
     xmlns:local="clr-namespace:Juru.RevitPlugins.ClashNavigator.Views"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:wpfbehaviors="clr-namespace:dosymep.WpfCore.Behaviors;assembly=dosymep.WpfCore"
     xmlns:clashDetective="clr-namespace:Juru.RevitPlugins.ClashNavigator.ViewModels.ClashDetective"
     xmlns:checks="clr-namespace:Juru.RevitPlugins.ClashNavigator.Views.Checks"
     mc:Ignorable="d"
@@ -22,6 +23,12 @@
             <i:InvokeCommandAction Command="{Binding AskForSaveCommand}" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
+
+    <!-- Required by UseWpfUIMessageBox: supplies the window theme to the service. -->
+    <i:Interaction.Behaviors>
+        <wpfbehaviors:WpfAttachServiceBehavior
+            AttachableService="{Binding MessageBoxService}" />
+    </i:Interaction.Behaviors>
 
     <Grid Margin="10">
         <Grid.RowDefinitions>

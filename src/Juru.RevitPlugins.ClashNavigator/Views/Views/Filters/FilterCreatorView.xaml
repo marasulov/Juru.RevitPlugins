@@ -35,7 +35,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="../../Resources/CustomStyles.xaml" />
+                    Source="../../../Resources/CustomStyles.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/Wpf.Ui;component/Controls/ListView/ListView.xaml" />
                 <ResourceDictionary

@@ -22,7 +22,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="../../Resources/CustomStyles.xaml" />
+                    Source="../../../Resources/CustomStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <ui:TextBlock
                 x:Key="RemoveParamTooltip"

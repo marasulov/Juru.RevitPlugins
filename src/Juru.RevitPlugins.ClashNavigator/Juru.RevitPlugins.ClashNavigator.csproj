@@ -8,6 +8,12 @@
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug.R23' Or '$(Configuration)' == 'Release.R23'">
         <DefineConstants>$(DefineConstants);REVIT_2023_OR_LESS</DefineConstants>
+        <!-- Revit 2024 assemblies reference API members unavailable in Revit 2023. -->
+        <DosymepRevitLibsVersion>2023</DosymepRevitLibsVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(DosymepRevitLibsVersion)' == ''">
+        <DosymepRevitLibsVersion>2024</DosymepRevitLibsVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -40,10 +46,10 @@
 
     <ItemGroup>
       <Reference Include="dosymep.Bim4Everyone">
-        <HintPath>..\Juru.RevitPlugins.Core\libs\2024\dosymep.Bim4Everyone.dll</HintPath>
+        <HintPath>..\Juru.RevitPlugins.Core\libs\$(DosymepRevitLibsVersion)\dosymep.Bim4Everyone.dll</HintPath>
       </Reference>
       <Reference Include="dosymep.Revit">
-        <HintPath>..\Juru.RevitPlugins.Core\libs\2024\dosymep.Revit.dll</HintPath>
+        <HintPath>..\Juru.RevitPlugins.Core\libs\$(DosymepRevitLibsVersion)\dosymep.Revit.dll</HintPath>
       </Reference>
       <Reference Include="dosymep.SimpleServices">
         <HintPath>..\Juru.RevitPlugins.Core\libs\dosymep.SimpleServices.dll</HintPath>
