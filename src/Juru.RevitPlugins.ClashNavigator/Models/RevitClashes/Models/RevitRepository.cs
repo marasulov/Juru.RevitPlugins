@@ -321,6 +321,9 @@ internal class RevitRepository {
                 elements.Select(element => element.GetElement(DocInfos)).Where(element => element is not null),
                 _view);
             _uiDocument.Selection.SetElementIds(ids);
+
+            var uiView = _uiDocument.GetOpenUIViews().FirstOrDefault(item => item.ViewId == _view.Id);
+            uiView?.ZoomToFit();
         };
         _revitEventHandler.Raise();
     }

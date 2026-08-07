@@ -34,8 +34,7 @@ internal class ImaginaryFirstClashViewModel
 
         _revitRepository = revitRepository ?? throw new ArgumentNullException(nameof(revitRepository));
         _firstElement = firstElement ?? throw new ArgumentNullException(nameof(firstElement));
-        ClashStatusName = localizationService.GetLocalizedString(
-            $"{nameof(Juru.RevitPlugins.ClashNavigator.Models.Clashes.ClashStatus)}.{ClashStatus}");
+        ClashStatusName = ClashStatus.GetDisplayName();
         FirstElementVolume = firstElement.ElementVolume;
 
         FirstId = _firstElement.Element.Id;

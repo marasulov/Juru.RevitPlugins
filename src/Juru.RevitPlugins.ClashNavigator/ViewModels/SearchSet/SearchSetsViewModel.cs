@@ -65,8 +65,8 @@ internal class SearchSetsViewModel : BaseViewModel {
 
     private void Close() {
         void action() {
-            var command = new CreateFiltersCommand();
-            command.ExecuteCommand(_revitRepository.UiApplication, Filter.Name);
+            //var command = new CreateFiltersCommand();
+            //command.ExecuteCommand(_revitRepository.UiApplication, Filter.Name);
         }
         _revitRepository.DoAction(action);
     }

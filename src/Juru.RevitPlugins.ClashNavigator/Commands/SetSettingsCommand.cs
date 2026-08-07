@@ -21,14 +21,18 @@ using Juru.RevitPlugins.ClashNavigator.Views.Settings;
 namespace Juru.RevitPlugins.ClashNavigator.Commands;
 
 [Transaction(TransactionMode.Manual)]
-internal class SetSettingsCommand : BasePluginCommand {
+public class SetSettingsCommand : BasePluginCommand {
     public SetSettingsCommand() {
         PluginName = "Настройки";
     }
 
     protected override void Execute(UIApplication uiApplication) {
-        using var kernel = uiApplication.CreatePlatformServices();
+        // Plain kernel, not uiApplication.CreatePlatformServices() - see comment in GetClashesCommand.
+        var kernel = new StandardKernel();
 
+        // CreatePlatformServices() used to supply this; a bare kernel has to bind it itself.
+        kernel.Bind<UIApplication>()
+            .ToConstant(uiApplication);
         kernel.Bind<RevitRepository>()
             .ToSelf()
             .InSingletonScope();
@@ -39,6 +43,9 @@ internal class SetSettingsCommand : BasePluginCommand {
             .ToSelf()
             .InSingletonScope();
 
+        kernel.Bind<IConfigSerializer>()
+            .To<dosymep.Serializers.ConfigSerializer>()
+            .InSingletonScope();
         kernel.Bind<SettingsConfig>()
             .ToMethod(c => SettingsConfig.GetSettingsConfig(c.Kernel.Get<IConfigSerializer>()));
 

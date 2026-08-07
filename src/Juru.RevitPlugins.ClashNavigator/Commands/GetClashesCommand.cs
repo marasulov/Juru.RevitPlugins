@@ -8,8 +8,9 @@ using Autodesk.Revit.UI;
 using dosymep.Bim4Everyone;
 using dosymep.Bim4Everyone.ProjectConfigs;
 using dosymep.Bim4Everyone.SimpleServices;
+using dosymep.SimpleServices;
 using dosymep.WpfCore.Ninject;
-using dosymep.Xpf.Core.Ninject;
+using dosymep.WpfUI.Core.Ninject;
 
 using Ninject;
 
@@ -30,7 +31,20 @@ public class GetClashesCommand : BasePluginCommand {
     }
 
     protected override void Execute(UIApplication uiApplication) {
-        using var kernel = uiApplication.CreatePlatformServices();
+        // Plain kernel, not uiApplication.CreatePlatformServices() - that builds a ChildKernel off
+        // dosymep's static ServicesProvider.Instance/LoadInstance, which pulls in DevExpress via
+        // dosymep.Xpf.Core.Ninject and conflicts with the separately-installed real Bim4Everyone
+        // plugin's copy of the same dependency. We only ever needed WpfUI-based local services.
+        var kernel = new StandardKernel();
+        // CreatePlatformServices() used to supply these; a bare kernel has to bind them itself.
+        kernel.Bind<UIApplication>()
+            .ToConstant(uiApplication);
+        kernel.Bind<ILoggerService>()
+            .To<dosymep.Serializers.NullLoggerService>()
+            .InSingletonScope();
+        kernel.Bind<ISerializationService>()
+            .To<dosymep.Serializers.JsonSerializationService>()
+            .InSingletonScope();
         kernel.Bind<RevitRepository>()
             .ToSelf()
             .InSingletonScope();
@@ -47,16 +61,30 @@ public class GetClashesCommand : BasePluginCommand {
         kernel.Bind<IContentDialogService>()
             .To<ContentDialogService>()
             .InSingletonScope();
+        kernel.Bind<IConfigSerializer>()
+            .To<dosymep.Serializers.ConfigSerializer>()
+            .InSingletonScope();
         kernel.Bind<SettingsConfig>()
             .ToMethod(c => SettingsConfig.GetSettingsConfig(c.Kernel.Get<IConfigSerializer>()));
+
+        // WpfUIMessageBoxService requires these services during construction.
+        kernel.UseWpfWindowsTheme();
+        kernel.UseWpfWindowsLanguage();
+        kernel.UseWpfUIThemeUpdater();
+
         kernel.UseWpfOpenFileDialog<NavigatorViewModel>(
             filter: "NavisClashReport (*.xml)|*.xml|PluginClashReport (*.json)|*.json");
         kernel.UseWpfSaveFileDialog<NavigatorViewModel>();
-        kernel.UseXtraMessageBox<NavigatorViewModel>();
+        kernel.UseWpfUIMessageBox<NavigatorViewModel>();
         kernel.Bind<NavigatorWindow>()
             .ToSelf()
             .InSingletonScope()
             .WithPropertyValue(nameof(Window.DataContext), c => c.Kernel.Get<NavigatorViewModel>());
+        // WpfUIMessageBoxService requires IHasTheme/IHasLocalization to be resolvable — NavigatorWindow provides them.
+        kernel.Bind<IHasTheme>()
+            .ToMethod(c => c.Kernel.Get<NavigatorWindow>());
+        kernel.Bind<IHasLocalization>()
+            .ToMethod(c => c.Kernel.Get<NavigatorWindow>());
 
         string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
         kernel.UseWpfLocalization(

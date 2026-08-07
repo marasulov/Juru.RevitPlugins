@@ -4,6 +4,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 
@@ -42,6 +44,15 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     private readonly IContentDialogService _contentDialogService;
     private readonly SettingsConfig _settingsConfig;
 
+    private static readonly string[] _filterableColumns = [
+        nameof(IClashViewModel.ClashName),
+        nameof(IClashViewModel.FirstDocumentName),
+        nameof(IClashViewModel.FirstId),
+        nameof(IClashViewModel.SecondDocumentName),
+        nameof(IClashViewModel.SecondId),
+        nameof(IClashViewModel.ClashStatusName)
+    ];
+
     public ReportViewModel(RevitRepository revitRepository,
         string name,
         ILocalizationService localization,
@@ -66,6 +77,10 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
             new ClashStatusViewModel(_localization, ClashStatus.Imaginary),
         ]);
 
+        ColumnFilters = _filterableColumns.ToDictionary(
+            p => p,
+            p => new ColumnFilterViewModel(p, ApplyColumnFilters));
+
         Initialize(revitRepository, name);
         if(clashes is null) {
             throw new ArgumentNullException(nameof(clashes));
@@ -76,6 +91,11 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
 
 
     public IReadOnlyCollection<ClashStatusViewModel> ClashStatuses { get; }
+
+    /// <summary>
+    /// Фильтры по значениям колонок таблицы коллизий, ключ - имя свойства <see cref="IClashViewModel"/>.
+    /// </summary>
+    public IReadOnlyDictionary<string, ColumnFilterViewModel> ColumnFilters { get; }
 
     public string Name {
         get => _name;
@@ -192,10 +212,10 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         Clashes = new ObservableCollection<ClashViewModel>(_allClashes);
 
         GuiClashes = new ObservableCollection<IClashViewModel>(Clashes.OrderBy(c => c.ClashName));
-        SetAdditionalParamValues(GuiClashes);
         SetIntersectionPercentage(GuiClashes);
         RaisePropertyChanged(nameof(ImportedClashesCount));
         RaisePropertyChanged(nameof(ResolvedClashesCount));
+        RefreshColumnFilters();
     }
 
     private void Initialize(RevitRepository revitRepository, string name) {
@@ -250,15 +270,6 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         SecondIntersectionPercentage = Math.Round(collisionTotalVolume / secondTotalVolume * 100, 2);
     }
 
-    private void SetAdditionalParamValues(ICollection<IClashViewModel> clashes) {
-        string[] paramsNames = _settingsConfig.ParamNames;
-        if(paramsNames.Length > 0) {
-            foreach(var clash in clashes) {
-                clash.SetElementParams(paramsNames);
-            }
-        }
-    }
-
     private ElementViewModel GetFirstElementViewModel(IClashViewModel clash) {
         try {
             return new ElementViewModel(clash.GetFirstElement(), clash.FirstElementVolume);
@@ -284,6 +295,40 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
             GuiClashes = new ObservableCollection<IClashViewModel>(Clashes);
         }
         SetIntersectionPercentage(GuiClashes);
+        RefreshColumnFilters();
+    }
+
+    /// <summary>
+    /// Обновляет доступные значения фильтров по актуальному содержимому <see cref="GuiClashes"/>
+    /// и переустанавливает фильтр на представление коллекции.
+    /// </summary>
+    private void RefreshColumnFilters() {
+        foreach(var filter in ColumnFilters.Values) {
+            var property = typeof(IClashViewModel).GetProperty(filter.PropertyName);
+            var values = GuiClashes.Select(c => GetPropertyStringValue(property, c));
+            filter.SetOptions(values);
+        }
+        ApplyColumnFilters();
+    }
+
+    private void ApplyColumnFilters() {
+        var view = CollectionViewSource.GetDefaultView(GuiClashes);
+        if(view is null) {
+            return;
+        }
+
+        var activeFilters = ColumnFilters.Values.Where(f => f.IsActive).ToArray();
+        var properties = activeFilters.ToDictionary(
+            f => f, f => typeof(IClashViewModel).GetProperty(f.PropertyName));
+
+        view.Filter = activeFilters.Length == 0
+            ? null
+            : item => item is IClashViewModel clash
+                && activeFilters.All(f => f.Matches(GetPropertyStringValue(properties[f], clash)));
+    }
+
+    private static string GetPropertyStringValue(PropertyInfo property, IClashViewModel clash) {
+        return property?.GetValue(clash)?.ToString() ?? string.Empty;
     }
 
     private CheckViewModel GetCheckViewModel() {
@@ -315,8 +360,6 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
                 _imaginarySecondClashes = FilterElements(Clashes, GetElementViewModels(secondProviders))
                     .Select(e => new ImaginarySecondClashViewModel(_revitRepository, e, _localization))
                     .ToArray();
-                SetAdditionalParamValues(_imaginaryFirstClashes);
-                SetAdditionalParamValues(_imaginarySecondClashes);
             } else {
                 _imaginaryFirstClashes = [];
                 _imaginarySecondClashes = [];

@@ -34,8 +34,7 @@ internal class ImaginarySecondClashViewModel
 
         _revitRepository = revitRepository ?? throw new ArgumentNullException(nameof(revitRepository));
         _secondElement = secondElement ?? throw new ArgumentNullException(nameof(secondElement));
-        ClashStatusName = localizationService.GetLocalizedString(
-            $"{nameof(Juru.RevitPlugins.ClashNavigator.Models.Clashes.ClashStatus)}.{ClashStatus}");
+        ClashStatusName = ClashStatus.GetDisplayName();
         SecondElementVolume = secondElement.ElementVolume;
 
         SecondId = _secondElement.Element.Id;

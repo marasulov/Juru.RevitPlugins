@@ -29,7 +29,12 @@ internal class ElementModel : IEquatable<ElementModel> {
         : this(element, new TransformModel(transform)) {
     }
 
-    public ElementModel(Element element, TransformModel transformModel) {
+    /// <param name="computeLevel">
+    /// Вычислять <see cref="Level"/> (перебор параметров уровня в Revit API). Отключается, когда уровень
+    /// заведомо не используется вызывающим кодом, а элементов много - перебор параметров заметно дороже
+    /// остальных полей и может ощутимо замедлить массовое построение моделей (например, при загрузке коллизий с сервера).
+    /// </param>
+    public ElementModel(Element element, TransformModel transformModel, bool computeLevel = true) {
         if(element is null) { throw new ArgumentNullException(nameof(element)); }
         if(transformModel is null) { throw new ArgumentNullException(nameof(transformModel)); }
 
@@ -42,7 +47,7 @@ internal class ElementModel : IEquatable<ElementModel> {
             : element.Document.GetElement(element.GetTypeId()) as ElementType;
         FamilyName = type?.FamilyName ?? string.Empty;
         Category = element.Category?.Name;
-        Level = RevitRepository.GetLevelName(element);
+        Level = computeLevel ? RevitRepository.GetLevelName(element) : string.Empty;
         DocumentName = RevitRepository.GetDocumentName(element.Document);
         TransformModel = transformModel;
     }

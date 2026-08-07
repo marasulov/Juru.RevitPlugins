@@ -1,4 +1,4 @@
-﻿using Juru.RevitPlugins.App.Commands;
+﻿using Juru.RevitPlugins.ClashNavigator.Commands;
 using Nice3point.Revit.Toolkit.External;
 
 namespace Juru.RevitPlugins.App
@@ -16,11 +16,17 @@ namespace Juru.RevitPlugins.App
 
         private void CreateRibbon()
         {
-            var panel = Application.CreatePanel("Commands", "Juru.RevitPlugins.App");
+            var panel = Application.CreatePanel("ClashNavigator", "JuruPlugins");
 
-            panel.AddPushButton<StartupCommand>("Execute")
-                .SetImage("/Juru.RevitPlugins.App;component/Resources/Icons/RibbonIcon16.png")
-                .SetLargeImage("/Juru.RevitPlugins.App;component/Resources/Icons/RibbonIcon32.png");
+            panel.AddPushButton<GetClashesCommand>("Навигатор\nколлизий")
+                .SetImage("/Juru.RevitPlugins.App;component/Resources/Icons/NavigatorIcon16Small.png")
+                .SetLargeImage("/Juru.RevitPlugins.App;component/Resources/Icons/NavigatorIcon32.png")
+                .SetToolTip("Открывает навигатор коллизий");
+
+            panel.AddPushButton<SetSettingsCommand>("Настройки")
+                .SetImage("/Juru.RevitPlugins.App;component/Resources/Icons/SettingsIcon16.png")
+                .SetLargeImage("/Juru.RevitPlugins.App;component/Resources/Icons/SettingsIcon32.png")
+                .SetToolTip("Настройки навигатора коллизий");
         }
     }
 }

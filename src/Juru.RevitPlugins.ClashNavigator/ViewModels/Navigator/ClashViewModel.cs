@@ -74,7 +74,7 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
         }
     }
 
-    public string ClashStatusName => _localizationService.GetLocalizedString($"{nameof(ClashStatus)}.{ClashStatus}");
+    public string ClashStatusName => ClashStatus.GetDisplayName();
 
     public string CommentsTitle => ClashName;
 

@@ -1,4 +1,4 @@
-﻿<Window
+<Window
     x:Class="Juru.RevitPlugins.ClashNavigator.Views.Settings.SettingsWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:local="clr-namespace:Juru.RevitPlugins.ClashNavigator.Views.Settings"
@@ -13,9 +13,11 @@
     xmlns:me="clr-namespace:dosymep.WpfCore.MarkupExtensions;assembly=dosymep.WpfCore"
     mc:Ignorable="d"
     WindowStartupLocation="CenterOwner"
-    Title="{me:LocalizationSource SettingsWindow.Title}"
-    MinWidth="950"
-    MinHeight="550"
+    Title="Настройки"
+    Width="450"
+    Height="320"
+    MinWidth="420"
+    MinHeight="300"
     d:DataContext="{d:DesignInstance vms:SettingsViewModel, IsDesignTimeCreatable=False}">
 
     <Window.Resources>
@@ -24,9 +26,6 @@
                 <ResourceDictionary
                     Source="../../../Resources/CustomStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <ui:TextBlock
-                x:Key="RemoveParamTooltip"
-                Text="{me:LocalizationSource SettingsWindow.RemoveParamTooltip}" />
         </ResourceDictionary>
     </Window.Resources>
     <b:Interaction.Triggers>
@@ -42,172 +41,65 @@
             <RowDefinition
                 Height="Auto" />
             <RowDefinition
-                Height="*" />
+                Height="Auto" />
             <RowDefinition
                 Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition />
-            <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-
         <ui:TitleBar
             Grid.Row="0"
-            Grid.ColumnSpan="2"
-            Title="{me:LocalizationSource SettingsWindow.Title}" />
+            Title="Настройки" />
 
         <Border
             Grid.Row="1"
-            Margin="10 0 0 0"
+            Margin="10"
             Style="{StaticResource CustomBorder}">
             <StackPanel>
+                <Border
+                    Margin="0 0 0 10"
+                    Style="{StaticResource CustomBorder}">
+                    <StackPanel>
+                        <Label
+                            Content="Сервер коллизий" />
+                        <DockPanel
+                            Margin="14 8"
+                            VerticalAlignment="Center">
+                            <Label
+                                Width="150"
+                                Style="{StaticResource CustomLabel}"
+                                Content="Адрес сервера" />
+                            <ui:TextBox
+                                Text="{Binding ClashServerUrl, UpdateSourceTrigger=PropertyChanged}"
+                                PlaceholderText="http://localhost:5000" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
                 <Label
-                    Content="{me:LocalizationSource SettingsWindow.ClashViewSettings}" />
+                    Content="Отображение коллизий" />
                 <Border
                     Style="{StaticResource CustomBorder}">
                     <StackPanel>
-                        <ui:ToggleSwitch
-                            Style="{StaticResource LabeledToggleSwitch}"
-                            Content="{me:LocalizationSource SettingsWindow.ApplySectionBoxSettings}"
-                            IsChecked="{Binding ApplySectionBoxSettings, UpdateSourceTrigger=PropertyChanged}" />
+                        
                         <StackPanel
                             Margin="14 8"
                             IsEnabled="{Binding ApplySectionBoxSettings}">
                             <DockPanel
-                                Margin="0 0 0 5"
                                 VerticalAlignment="Center">
                                 <Label
                                     Width="150"
                                     Style="{StaticResource CustomLabel}"
-                                    Content="{me:LocalizationSource SettingsWindow.SectionBoxModeSettings}" />
-                                <ComboBox
-                                    DisplayMemberPath="Name"
-                                    SelectedItem="{Binding SelectedSectionBoxMode}"
-                                    ItemsSource="{Binding SectionBoxModes}" />
-                            </DockPanel>
-                            <DockPanel
-                                VerticalAlignment="Center">
-                                <Label
-                                    Width="150"
-                                    Style="{StaticResource CustomLabel}"
-                                    Content="{me:LocalizationSource SettingsWindow.SectionBoxAdditionalSize}" />
+                                    Content="Размер Section Box, мм" />
                                 <ui:TextBox
                                     Text="{Binding SectionBoxOffset, UpdateSourceTrigger=PropertyChanged}" />
                             </DockPanel>
                         </StackPanel>
                     </StackPanel>
                 </Border>
-                <Border
-                    Margin="0 10"
-                    Style="{StaticResource CustomBorder}">
-                    <ui:ToggleSwitch
-                        Style="{StaticResource LabeledToggleSwitch}"
-                        Content="{me:LocalizationSource SettingsWindow.ApplyIsolationSettings}"
-                        IsChecked="{Binding ApplyIsolationSettings}" />
-                </Border>
-                <Border
-                    Style="{StaticResource CustomBorder}">
-                    <StackPanel>
-                        <ui:ToggleSwitch
-                            Style="{StaticResource LabeledToggleSwitch}"
-                            Content="{me:LocalizationSource SettingsWindow.ApplyColorSettings}"
-                            IsChecked="{Binding ApplyColorSettings, UpdateSourceTrigger=PropertyChanged}" />
-                        <StackPanel
-                            Margin="14 8"
-                            IsEnabled="{Binding ApplyColorSettings}">
-                            <Label
-                                Margin="0 0 0 10"
-                                Style="{StaticResource CustomLabel}"
-                                Content="{me:LocalizationSource SettingsWindow.MainElementVisibilitySettings}" />
-                            <local:ElementVisibilitySettingsView
-                                DataContext="{Binding MainElementVisibilitySettings}" />
-                            <Label
-                                Margin="0 0 0 10"
-                                Style="{StaticResource CustomLabel}"
-                                Content="{me:LocalizationSource SettingsWindow.SecondElementVisibilitySettings}" />
-                            <local:ElementVisibilitySettingsView
-                                DataContext="{Binding SecondElementVisibilitySettings}" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
             </StackPanel>
-        </Border>
-
-        <Border
-            Grid.Row="1"
-            Grid.Column="1"
-            Margin="10 0"
-            ToolTip="{me:LocalizationSource SettingsWindow.ParamsTooltip}"
-            Style="{StaticResource CustomBorder}">
-            <DockPanel
-                LastChildFill="True">
-                <Label
-                    DockPanel.Dock="Top"
-                    Content="{me:LocalizationSource SettingsWindow.ParamsLabel}" />
-                <DockPanel
-                    DockPanel.Dock="Top"
-                    HorizontalAlignment="Left">
-                    <ui:Button
-                        Width="Auto"
-                        ToolTip="{me:LocalizationSource SettingsWindow.AddParamTooltip}"
-                        Content="{ui:SymbolIcon Symbol=Add20}"
-                        Command="{Binding AddParamCommand}" />
-                    <ui:Button
-                        Width="Auto"
-                        Margin="5 0"
-                        ToolTip="{me:LocalizationSource SettingsWindow.RemoveParamTooltip}"
-                        Content="{ui:SymbolIcon Symbol=Delete20}"
-                        Command="{Binding RemoveParamCommand}"
-                        CommandParameter="{Binding SelectedParam}" />
-                    <ui:Button
-                        Width="Auto"
-                        ToolTip="{me:LocalizationSource SettingsWindow.MoveParamUpTooltip}"
-                        Content="{ui:SymbolIcon Symbol=ArrowUp20}"
-                        Command="{Binding MoveParamUpCommand}"
-                        CommandParameter="{Binding SelectedParam}" />
-                    <ui:Button
-                        Margin="5 0 0 0"
-                        Width="Auto"
-                        ToolTip="{me:LocalizationSource SettingsWindow.MoveParamDownTooltip}"
-                        Content="{ui:SymbolIcon Symbol=ArrowDown20}"
-                        Command="{Binding MoveParamDownCommand}"
-                        CommandParameter="{Binding SelectedParam}" />
-                </DockPanel>
-                <ui:ListView
-                    SelectionMode="Single"
-                    ItemsSource="{Binding Params}"
-                    SelectedItem="{Binding SelectedParam}">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <Border
-                                Style="{StaticResource CustomBorder}">
-                                <DockPanel
-                                    LastChildFill="True">
-                                    <ui:Button
-                                        Margin="5 0 0 0"
-                                        Width="Auto"
-                                        Height="36"
-                                        DockPanel.Dock="Right"
-                                        HorizontalAlignment="Right"
-                                        ToolTip="{StaticResource RemoveParamTooltip}"
-                                        Content="{ui:SymbolIcon Symbol=Delete20}"
-                                        Command="{Binding DataContext.RemoveParamCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}" />
-                                    <ui:TextBox
-                                        Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                                        ToolTip="{Binding Name}" />
-                                </DockPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ui:ListView>
-            </DockPanel>
         </Border>
 
         <StackPanel
             Grid.Row="2"
-            Grid.ColumnSpan="2"
             Orientation="Horizontal"
             HorizontalAlignment="Right">
 
@@ -221,14 +113,14 @@
                 Margin="10"
                 Width="80"
                 Appearance="Info"
-                Content="{me:LocalizationSource Ok}"
+                Content="ОК"
                 Click="ButtonOk_Click"
                 Command="{Binding AcceptViewCommand}" />
 
             <ui:Button
                 Margin="10"
                 Width="80"
-                Content="{me:LocalizationSource Cancel}"
+                Content="Отмена"
                 IsCancel="True"
                 Click="ButtonCancel_Click" />
         </StackPanel>

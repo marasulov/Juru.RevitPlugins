@@ -27,7 +27,7 @@ public sealed class CreateInstallerModule(IOptions<BuildOptions> buildOptions) :
         var versioningResult = await context.GetModule<ResolveVersioningModule>();
         var versioning = versioningResult.ValueOrDefault!;
 
-        var wixTarget = new File(Projects.Juru_RevitPlugins.FullName);
+        var wixTarget = new File(Projects.Juru_RevitPlugins_App.FullName);
         var wixInstaller = new File(Projects.Installer.FullName);
         var wixToolFolder = await InstallWixAsync(context, cancellationToken);
 

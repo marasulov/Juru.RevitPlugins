@@ -1,0 +1,39 @@
+{
+  "FamilyTypes": {
+    "Circled": {
+      "FamilyNames": {
+        "WallType": "opening_wall_circ",
+        "FloorType": "opening_slab_circ"
+      },
+      "ArFamilyNames": {
+        "WallType": "U_ARC_ОтверстиеКруглое_Стена",
+        "FloorType": "ADSK_ОтверстиеКруглое_Перекрытие"
+      },
+      "FamilyParameters": [
+        "Diameter",
+        "Depth"
+      ]
+    },
+    "Rectangled": {
+      "FamilyNames": {
+        "WallType": "opening_wall_rect",
+        "FloorType": "opening_slab_rect"
+      },
+      "ArFamilyNames": {
+        "WallType": "U_ARC_ОтверстиеПрямоугольное_Стена",
+        "FloorType": "ADSK_ОтверстиеПрямоугольное_Перекрытие"
+      },
+      "FamilyParameters": [
+        "Width",
+        "Height",
+        "Depth"
+      ]
+    }
+  },
+  "FamilyNames": [
+    "opening_wall_circ",
+    "opening_slab_circ",
+    "opening_wall_rect",
+    "opening_slab_rect"
+  ]
+}

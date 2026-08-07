@@ -41,6 +41,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Reference Include="System.Net.Http" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\Juru.RevitPlugins.Core\Juru.RevitPlugins.Core.csproj" />
     </ItemGroup>
 
@@ -66,8 +70,18 @@
       <Reference Include="dosymep.WpfUI.Core.Ninject">
         <HintPath>..\Juru.RevitPlugins.Core\libs\dosymep.WpfUI.Core.Ninject.dll</HintPath>
       </Reference>
-      <Reference Include="dosymep.Xpf.Core.Ninject">
-        <HintPath>..\Juru.RevitPlugins.Core\libs\dosymep.Xpf.Core.Ninject.dll</HintPath>
+      <!-- Transitive dependency of dosymep.Bim4Everyone.dll, provided by Revit/pyRevit at runtime.
+           Not used directly by our code, but ILRepack (IsRepackable on the App project) needs it on
+           its /lib search path to fully resolve dosymep.Bim4Everyone.dll during IL linking. -->
+      <Reference Include="pyRevitLabs.Json">
+        <HintPath>..\Juru.RevitPlugins.Core\libs\pyRevitLabs.Json.dll</HintPath>
+        <Private>false</Private>
+      </Reference>
+      <!-- Transitive dependency of dosymep.Bim4Everyone.dll's own logging (Serilog.Enrichers/Sinks.Autodesk.Revit.dll).
+           Same reason as pyRevitLabs.Json above: needed on ILRepack's /lib path, not used directly by our code. -->
+      <Reference Include="Serilog">
+        <HintPath>..\Juru.RevitPlugins.Core\libs\Serilog.dll</HintPath>
+        <Private>false</Private>
       </Reference>
     </ItemGroup>
 

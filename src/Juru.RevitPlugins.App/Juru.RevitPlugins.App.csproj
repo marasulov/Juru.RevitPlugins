@@ -4,7 +4,15 @@
         <UseWPF>true</UseWPF>
         <DeployAddin>true</DeployAddin>
         <LaunchRevit>true</LaunchRevit>
-        <IsRepackable>false</IsRepackable>
+        <!-- Merge shared dependencies (dosymep.*, Ninject, Newtonsoft.Json, etc.) into this add-in's own assembly
+             on pre-2027 Revit, where the process has no per-add-in assembly isolation. Without this, a separately
+             installed product that ships a different version of the same dependency (e.g. the real Bim4Everyone
+             plugin's dosymep.WpfCore.dll) can win the .NET simple-name assembly resolution race and cause a
+             MissingMethodException in this add-in at runtime. -->
+        <IsRepackable Condition="'$(RevitVersion)' &lt; '2027'">true</IsRepackable>
+        <!-- Unused transitive deps of dosymep.Bim4Everyone.dll (nothing in our code calls into Serilog) -
+             kept as loose files instead of merging. -->
+        <RepackBinariesExcludes>Serilog.Enrichers.Autodesk.Revit.dll;Serilog.Sinks.Autodesk.Revit.dll</RepackBinariesExcludes>
         <EnableDynamicLoading>true</EnableDynamicLoading>
         <Configurations>Debug.R23;Debug.R24;Debug.R25;Debug.R26;Debug.R27</Configurations>
         <Configurations>$(Configurations);Release.R23;Release.R24;Release.R25;Release.R26;Release.R27</Configurations>
@@ -20,11 +28,27 @@
         <!-- Development Dependencies -->
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" PrivateAssets="all"/>
         <PackageReference Include="Polyfill" Version="10.5.1" PrivateAssets="all"/>
+
+        <!-- Required by IsRepackable to merge dependencies and avoid simple-name assembly conflicts with other installed add-ins -->
+        <PackageReference Include="ILRepack" Version="2.0.46" PrivateAssets="all"/>
+
+        <!-- dosymep.Bim4Everyone.dll depends on this (transitively, via a vendored raw <Reference>, so it never
+             gets restored on its own). Without an explicit reference it's never present in our build output for
+             ILRepack to merge, so at runtime the CLR loads the copy from the separately-installed Bim4Everyone
+             product instead - which expects the ORIGINAL (non-repacked) Ninject types, not the ones internalized
+             into this assembly, causing a MissingMethodException on ChildKernel's constructor. -->
+        <PackageReference Include="Ninject.Extensions.ChildKernel" Version="3.3.0" PrivateAssets="all"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Resource Include="Resources\Icons\RibbonIcon16.png"/>
-        <Resource Include="Resources\Icons\RibbonIcon32.png"/>
+        <Resource Include="Resources\Icons\NavigatorIcon16Small.png"/>
+        <Resource Include="Resources\Icons\NavigatorIcon32.png"/>
+        <Resource Include="Resources\Icons\SettingsIcon16.png"/>
+        <Resource Include="Resources\Icons\SettingsIcon32.png"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Juru.RevitPlugins.ClashNavigator\Juru.RevitPlugins.ClashNavigator.csproj"/>
     </ItemGroup>
 
 </Project>

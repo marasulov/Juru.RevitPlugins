@@ -16,6 +16,7 @@ using dosymep.WPF.ViewModels;
 using Juru.RevitPlugins.ClashNavigator.Models;
 using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport;
+using Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport.ServerClashes;
 using Juru.RevitPlugins.ClashNavigator.Commands;
 using Juru.RevitPlugins.ClashNavigator.Services.ReportsMerging;
 using Juru.RevitPlugins.ClashNavigator.Services.RevitViewSettings;
@@ -67,6 +68,7 @@ internal class NavigatorViewModel : BaseViewModel {
 
         OpenClashDetectorCommand = RelayCommand.Create(OpenClashDetector, CanOpenClashDetector);
         LoadCommand = RelayCommand.Create(Load);
+        LoadFromServerCommand = RelayCommand.Create(LoadFromServer);
         DeleteCommand = RelayCommand.Create(Delete, CanDelete);
         SelectClashCommand = RelayCommand.Create<IClashViewModel>(SelectClash, CanSelectClash);
         EditCommentsCommand = RelayCommand.Create<ICommentable>(ShowCommentsEditor, CanEditComments);
@@ -82,6 +84,7 @@ internal class NavigatorViewModel : BaseViewModel {
     public ICommand SelectClashCommand { get; }
     public ICommand OpenClashDetectorCommand { get; }
     public ICommand LoadCommand { get; }
+    public ICommand LoadFromServerCommand { get; }
     public ICommand DeleteCommand { get; }
     public ICommand SaveAllReportsCommand { get; }
     public ICommand AskForSaveCommand { get; }
@@ -148,8 +151,8 @@ internal class NavigatorViewModel : BaseViewModel {
 
     private void OpenClashDetector() {
         _revitRepository.DoAction(() => {
-            var command = new DetectiveClashesCommand();
-            command.ExecuteCommand(_revitRepository.UiApplication);
+            //var command = new DetectiveClashesCommand();
+            //command.ExecuteCommand(_revitRepository.UiApplication);
         });
     }
 
@@ -235,6 +238,46 @@ internal class NavigatorViewModel : BaseViewModel {
         int imported = Reports.Sum(report => report.ImportedClashesCount);
         int resolved = Reports.Sum(report => report.ResolvedClashesCount);
         Diagnostic = $"Загружено отчётов: {Reports.Count}; коллизий: {imported}; найдено пар в Revit: {resolved}.";
+    }
+
+    private void LoadFromServer() {
+        try {
+            string fileName = _revitRepository.GetDocumentName();
+            if(!RevitFileNameInfo.TryParse(fileName, out var fileInfo)) {
+                Diagnostic = $"Имя файла \"{fileName}\" не соответствует стандарту наименования " +
+                    "(Проект-Объект-Дисциплина-vXX).";
+                MessageBox.Show(Diagnostic, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if(string.IsNullOrWhiteSpace(_settingsConfig.ClashServerUrl)) {
+                Diagnostic = "Не задан адрес сервера коллизий в настройках плагина.";
+                MessageBox.Show(Diagnostic, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            var client = new ClashServerClient(_settingsConfig.ClashServerUrl);
+            var report = ServerReportLoader.GetReportAsync(client, fileInfo, _revitRepository)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+
+            var reportViewModel = new ReportViewModel(
+                _revitRepository,
+                report.Name,
+                _localizationService,
+                OpenFileDialogService,
+                SaveFileDialogService,
+                MessageBoxService,
+                _contentDialogService,
+                _settingsConfig,
+                report.Clashes?.ToArray() ?? []);
+
+            SetReports(Reports.Where(r => r.Name != reportViewModel.Name).Append(reportViewModel));
+
+            Diagnostic = $"Загружено с сервера коллизий: {reportViewModel.ImportedClashesCount}.";
+        } catch(Exception exception) {
+            Diagnostic = $"Ошибка загрузки с сервера: {exception.GetBaseException().Message}";
+            MessageBox.Show(Diagnostic, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void SetReports(IEnumerable<ReportViewModel> reports) {

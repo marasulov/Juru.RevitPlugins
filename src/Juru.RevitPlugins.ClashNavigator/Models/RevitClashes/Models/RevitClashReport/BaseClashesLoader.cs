@@ -10,7 +10,14 @@ internal abstract class BaseClashesLoader {
     /// <summary>
     /// Возвращает Id или InvalidElementId, если не удалось преобразовать строку
     /// </summary>
-    private protected ElementId GetId(string idString) {
+    private protected ElementId GetId(string idString) => ParseElementId(idString);
+
+    /// <summary>
+    /// Возвращает Id или InvalidElementId, если не удалось преобразовать строку.
+    /// Используется загрузчиками отчётов, для которых Id элемента приходит как произвольная строка
+    /// (например, "Объект Id" из Navisworks или elementIdA/elementIdB с сервера коллизий).
+    /// </summary>
+    internal static ElementId ParseElementId(string idString) {
         if(string.IsNullOrWhiteSpace(idString)) { return ElementId.InvalidElementId; }
 
         var match = Regex.Match(idString, @"(?'id'\d+)");
