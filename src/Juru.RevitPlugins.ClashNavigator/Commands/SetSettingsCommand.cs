@@ -43,11 +43,9 @@ public class SetSettingsCommand : BasePluginCommand {
             .ToSelf()
             .InSingletonScope();
 
-        kernel.Bind<IConfigSerializer>()
-            .To<dosymep.Serializers.ConfigSerializer>()
-            .InSingletonScope();
+        // Constructed directly, not bound as IConfigSerializer - see comment in GetClashesCommand.
         kernel.Bind<SettingsConfig>()
-            .ToMethod(c => SettingsConfig.GetSettingsConfig(c.Kernel.Get<IConfigSerializer>()));
+            .ToMethod(c => SettingsConfig.GetSettingsConfig(new dosymep.Serializers.ConfigSerializer()));
 
         kernel.UseWpfUIThemeUpdater();
 

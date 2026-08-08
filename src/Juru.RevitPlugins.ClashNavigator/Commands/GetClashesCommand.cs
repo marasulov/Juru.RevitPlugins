@@ -39,11 +39,13 @@ public class GetClashesCommand : BasePluginCommand {
         // CreatePlatformServices() used to supply these; a bare kernel has to bind them itself.
         kernel.Bind<UIApplication>()
             .ToConstant(uiApplication);
+        // ToMethod, not the generic To<T>() - dosymep.SimpleServices can be loaded twice under AddinManager,
+        // and To<T>()'s runtime constraint check throws a VerificationException when it is.
         kernel.Bind<ILoggerService>()
-            .To<dosymep.Serializers.NullLoggerService>()
+            .ToMethod(_ => new dosymep.Serializers.NullLoggerService())
             .InSingletonScope();
         kernel.Bind<ISerializationService>()
-            .To<dosymep.Serializers.JsonSerializationService>()
+            .ToMethod(_ => new dosymep.Serializers.JsonSerializationService())
             .InSingletonScope();
         kernel.Bind<RevitRepository>()
             .ToSelf()
@@ -61,11 +63,12 @@ public class GetClashesCommand : BasePluginCommand {
         kernel.Bind<IContentDialogService>()
             .To<ContentDialogService>()
             .InSingletonScope();
-        kernel.Bind<IConfigSerializer>()
-            .To<dosymep.Serializers.ConfigSerializer>()
-            .InSingletonScope();
+        // Constructed directly rather than bound as IConfigSerializer: Ninject's generic To<T>() verifies
+        // the TImplementation : TService constraint at runtime, which throws a VerificationException when
+        // AddinManager side-loads this assembly and dosymep.Bim4Everyone ends up loaded twice under two
+        // identities. Nothing else resolves IConfigSerializer from the kernel.
         kernel.Bind<SettingsConfig>()
-            .ToMethod(c => SettingsConfig.GetSettingsConfig(c.Kernel.Get<IConfigSerializer>()));
+            .ToMethod(c => SettingsConfig.GetSettingsConfig(new dosymep.Serializers.ConfigSerializer()));
 
         // WpfUIMessageBoxService requires these services during construction.
         kernel.UseWpfWindowsTheme();

@@ -8,8 +8,12 @@
              on pre-2027 Revit, where the process has no per-add-in assembly isolation. Without this, a separately
              installed product that ships a different version of the same dependency (e.g. the real Bim4Everyone
              plugin's dosymep.WpfCore.dll) can win the .NET simple-name assembly resolution race and cause a
-             MissingMethodException in this add-in at runtime. -->
-        <IsRepackable Condition="'$(RevitVersion)' &lt; '2027'">true</IsRepackable>
+             MissingMethodException in this add-in at runtime.
+
+             Release only: repacking collapses every project into Juru.RevitPlugins.App.dll, which leaves no
+             Juru.RevitPlugins.ClashNavigator.dll for AddinManager to load and forces a full solution build per
+             iteration. Debug keeps loose assemblies so AddinManager can point straight at the project output. -->
+        <IsRepackable Condition="'$(RevitVersion)' &lt; '2027' And $(Configuration.StartsWith('Release'))">true</IsRepackable>
         <!-- Unused transitive deps of dosymep.Bim4Everyone.dll (nothing in our code calls into Serilog) -
              kept as loose files instead of merging. -->
         <RepackBinariesExcludes>Serilog.Enrichers.Autodesk.Revit.dll;Serilog.Sinks.Autodesk.Revit.dll</RepackBinariesExcludes>
