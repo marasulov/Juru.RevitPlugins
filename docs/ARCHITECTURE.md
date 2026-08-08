@@ -107,6 +107,29 @@ Selecting a clash calls `RevitRepository.SelectAndShowElement`.
 
 `RevitEventHandler` runs Revit API work raised from the modeless window.
 
+## Unreachable code
+
+The ribbon exposes `GetClashesCommand` and `SetSettingsCommand`.
+A reachability walk from those two roots over non-comment source reaches 123 of 183 files.
+Of the 60 remaining files, 53 hold no reachable type, and they total about 3 000 lines.
+
+`CreateFiltersCommand.cs` and `DetectiveClashesCommand.cs` are commented out in full.
+`NavigatorViewModel.OpenClashDetector()` has an empty body.
+Clash detection therefore has no entry point at runtime.
+`ClashDetector`, `ProvidersClashDetector`, and `FilterProvider` run only from `ViewModels/ClashDetective`, which only those two entry points reach.
+The plugin loads and reviews reports; it does not produce them.
+
+The filter editor is unreachable as a whole: `ViewModels/FilterCreatorViewModels` at 14 files, `Views/Views/Filters` at 10, and `ViewModels/SearchSet` at 4.
+
+`Models/RevitClashes/Models/RevitViewSettings` at 6 files, `View3DBuilder`, `IView3DBuilder`, and `IView3DProvider` form a second view-construction subsystem that nothing instantiates.
+`Services/RevitViewSettings/ClashViewSettings` is the live `IView3DSetting` implementation.
+
+`Juru.RevitPlugins.ClashNavigatorView` and `Juru.RevitPlugins.ClashNavigatorViewModel` are template scaffolding.
+`Resources/ClashStatusResources.xaml` and `Resources/CustomDataGrid.xaml` have no reference.
+
+The five classes under `Models/RevitClashes/Models/Extensions` stay live through extension-method syntax.
+Individual members of them are unused: `GetIntersectedBb`, `GetIntersection`, `GetUnitedBb`, `IntersectedWith`, `IsIntersected`, `GetSolid`, `GetUnitedSolids`, and `DrowSolid`.
+
 ## Dependencies
 
 The plugin references five vendored `dosymep` assemblies plus `Bim4Everyone.RevitFiltration`, `pyRevitLabs.Json`, and `Serilog`.
