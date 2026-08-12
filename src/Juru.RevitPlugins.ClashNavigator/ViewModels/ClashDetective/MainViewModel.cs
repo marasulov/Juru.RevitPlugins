@@ -234,7 +234,7 @@ internal class MainViewModel : BaseViewModel {
                 SecondSelection = check.SecondSelection.GetCheckSettings()
             });
         }
-        _checksConfig.RevitVersion = ModuleEnvironment.RevitVersion;
+        _checksConfig.RevitVersion = RevitVersionInfo.Version;
     }
 
     private void SaveConfig() {

@@ -45,6 +45,11 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- Адрес сервера коллизий. Правится рядом с установленным плагином, без пересборки. -->
+        <None Include="ClashServer.json" CopyToOutputDirectory="PreserveNewest"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <Resource Include="Resources\Icons\NavigatorIcon16Small.png"/>
         <Resource Include="Resources\Icons\NavigatorIcon32.png"/>
         <Resource Include="Resources\Icons\SettingsIcon16.png"/>

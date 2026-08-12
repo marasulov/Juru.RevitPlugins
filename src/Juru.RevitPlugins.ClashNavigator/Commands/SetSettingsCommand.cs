@@ -1,22 +1,16 @@
-using System.Globalization;
-using System.Reflection;
-
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.UI;
-
 using dosymep.Bim4Everyone;
-using dosymep.Bim4Everyone.ProjectConfigs;
-using dosymep.Bim4Everyone.SimpleServices;
 using dosymep.WpfCore.Ninject;
 using dosymep.WpfUI.Core.Ninject;
-
-using Ninject;
-
 using Juru.RevitPlugins.ClashNavigator.Models;
 using Juru.RevitPlugins.ClashNavigator.Models.GraphicView;
 using Juru.RevitPlugins.ClashNavigator.Models.Handlers;
 using Juru.RevitPlugins.ClashNavigator.ViewModels.Settings;
 using Juru.RevitPlugins.ClashNavigator.Views.Settings;
+using Ninject;
+using System.Globalization;
+using System.Reflection;
 
 namespace Juru.RevitPlugins.ClashNavigator.Commands;
 

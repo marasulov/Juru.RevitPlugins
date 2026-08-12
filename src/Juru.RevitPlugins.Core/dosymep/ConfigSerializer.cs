@@ -2,7 +2,8 @@ using System;
 using Newtonsoft.Json;
 using Autodesk.Revit.DB;
 
-using dosymep.Bim4Everyone.ProjectConfigs;
+using Juru.RevitPlugins.Core.ProjectConfigs;
+
 using dosymep.Revit;
 
 namespace dosymep.Serializers {

@@ -1,9 +1,9 @@
 using System;
 using System.IO;
-using System.Text.RegularExpressions;
+
+using Juru.RevitPlugins.Core.ProjectConfigs;
 
 using dosymep.Bim4Everyone;
-using dosymep.Bim4Everyone.ProjectConfigs;
 
 using Newtonsoft.Json;
 
@@ -27,32 +27,17 @@ internal class SettingsConfig : ProjectConfig {
     public int SectionBoxOffset { get; set; } = 3000;
 
     /// <summary>
-    /// Адрес сервера коллизий для загрузки отчётов через REST API (см. <see cref="RevitClashReport.ServerClashes.ClashServerClient"/>)
+    /// Адрес сервера коллизий для загрузки отчётов через REST API (см. <see cref="RevitClashReport.ServerClashes.ClashServerClient"/>).
+    /// Пустое значение означает адрес из <see cref="ClashServerOptions.DefaultUrl"/>.
     /// </summary>
     public string ClashServerUrl { get; set; } = string.Empty;
-
-
-    // Сериализатор конфигураций из dosymep.Bim4Everyone использует внутри себя pyRevitLabs.Json,
-    // а не Newtonsoft.Json. Это разные типы атрибутов JsonIgnore, поэтому [JsonIgnore] выше
-    // (из Newtonsoft.Json) им не учитывается, и свойство Serializer (интерфейс IConfigSerializer)
-    // иногда всё равно попадает в сохранённый файл. При следующей загрузке десериализация такого
-    // файла ломается с JsonSerializationException, так как интерфейс нельзя создать напрямую.
-    private static readonly Regex _serializerNodePattern = new(
-        @",?\s*""Serializer""\s*:\s*\{[^{}]*\}", RegexOptions.Compiled);
 
     public static SettingsConfig GetSettingsConfig(IConfigSerializer serializer) {
         try {
             return Build(serializer);
         } catch(Exception) {
+            // Файл настроек, сохранённый предыдущей версией плагина, может оказаться нечитаемым.
             string path = GetConfigFilePath();
-            if(TryRemoveSerializerNode(path)) {
-                try {
-                    return Build(serializer);
-                } catch(Exception) {
-                    // восстановление не помогло, сбрасываем файл настроек ниже
-                }
-            }
-
             if(File.Exists(path)) {
                 File.Delete(path);
             }
@@ -61,39 +46,19 @@ internal class SettingsConfig : ProjectConfig {
     }
 
     private static SettingsConfig Build(IConfigSerializer serializer) {
-        return new dosymep.Bim4Everyone.ProjectConfigs.ProjectConfigBuilder()
+        return new ProjectConfigBuilder()
             .SetSerializer(serializer)
             .SetPluginName(nameof(ClashNavigator))
-            .SetRevitVersion(ModuleEnvironment.RevitVersion)
+            .SetRevitVersion(RevitVersionInfo.Version)
             .SetProjectConfigName(nameof(SettingsConfig) + ".json")
             .Build<SettingsConfig>();
     }
 
     private static string GetConfigFilePath() {
         return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "dosymep",
-            ModuleEnvironment.RevitVersion,
+            RevitRepository.ProfilePath,
+            RevitVersionInfo.Version,
             nameof(ClashNavigator),
             nameof(SettingsConfig) + ".json");
-    }
-
-    private static bool TryRemoveSerializerNode(string path) {
-        if(!File.Exists(path)) {
-            return false;
-        }
-
-        try {
-            string json = File.ReadAllText(path);
-            string repaired = _serializerNodePattern.Replace(json, string.Empty);
-            if(repaired == json) {
-                return false;
-            }
-
-            File.WriteAllText(path, repaired);
-            return true;
-        } catch(Exception) {
-            return false;
-        }
     }
 }

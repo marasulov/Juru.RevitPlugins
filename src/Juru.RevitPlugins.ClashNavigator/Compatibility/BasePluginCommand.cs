@@ -6,7 +6,6 @@ using System.Windows;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 
-using dosymep.Bim4Everyone.ProjectConfigs;
 using dosymep.Bim4Everyone.SimpleServices;
 using dosymep.Serializers;
 using dosymep.WpfUI.Core.Ninject;
@@ -37,23 +36,16 @@ public abstract class BasePluginCommand : IExternalCommand {
             FromGui = isFromGui;
         }
 
-        // CreatePlatformServices() builds a ChildKernel whose parent is ServicesProvider.Instance.
-        // Instance stays null until something sets it, so without this every ChildKernel gets a
-        // null ParentResolutionRoot and later throws deep inside Ninject.Extensions.ChildKernel.
-        // We can't call the vendor's ServicesProvider.LoadInstance() for this - it binds
-        // IMessageBoxService via dosymep.Xpf.Core.Ninject, which wraps DevExpress.Xpf.Core; that
-        // library isn't vendored here (see MSI installer dependency isolation notes - the whole
-        // DevExpress tree was previously stripped out as impractical to ship). So we bind the
-        // small set of platform services our commands actually resolve from the parent kernel
-        // ourselves, using the same WpfUI-based services already used elsewhere in this plugin.
+        // RevitRepository.ShowErrorMessage resolves IMessageBoxService through the static
+        // ServicesProvider. The vendor's LoadInstance() binds that service through
+        // dosymep.Xpf.Core.Ninject, which wraps DevExpress; DevExpress is not vendored here.
+        // These bindings cover every service the plugin resolves statically.
         if(ServicesProvider.Instance is null) {
             var platformKernel = new StandardKernel();
-            platformKernel.Bind<IConfigSerializer>().To<ConfigSerializer>().InSingletonScope();
             platformKernel.UseWpfUIMessageBox();
             platformKernel.UseWpfUIProgressDialog();
 
-            // Instance's setter is non-public - LoadInstance() is the only sanctioned way to set it,
-            // but it requires DevExpress. Set the backing property directly instead.
+            // Instance has a non-public setter and LoadInstance() is its only sanctioned entry point.
             typeof(ServicesProvider)
                 .GetProperty(nameof(ServicesProvider.Instance), BindingFlags.Public | BindingFlags.Static)
                 .SetValue(null, platformKernel);

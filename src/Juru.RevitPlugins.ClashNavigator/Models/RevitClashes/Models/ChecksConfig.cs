@@ -1,6 +1,6 @@
 using Autodesk.Revit.DB;
+using Juru.RevitPlugins.Core.ProjectConfigs;
 using dosymep.Bim4Everyone;
-using dosymep.Bim4Everyone.ProjectConfigs;
 using dosymep.Serializers;
 using Newtonsoft.Json;
 using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
@@ -26,7 +26,7 @@ internal class ChecksConfig : ProjectConfig
             .SetSerializer(new RevitClashConfigSerializer(new RevitClashesSerializationBinder(), document))
             .SetPluginName(nameof(ClashNavigator))
             .SetRelativePath(revitFileName)
-            .SetRevitVersion(ModuleEnvironment.RevitVersion)
+            .SetRevitVersion(RevitVersionInfo.Version)
             .SetProjectConfigName(nameof(ChecksConfig) + ".json")
             .Build<ChecksConfig>();
     }
@@ -55,10 +55,10 @@ internal class RevitClashDetectiveConfig : ProjectConfig
 
     public static RevitClashDetectiveConfig GetRevitClashDetectiveConfig()
     {
-        return new dosymep.Bim4Everyone.ProjectConfigs.ProjectConfigBuilder()
+        return new ProjectConfigBuilder()
             .SetPluginName(nameof(ClashNavigator))
             .SetProjectConfigName(nameof(RevitClashDetectiveConfig))
-            .SetRevitVersion(ModuleEnvironment.RevitVersion)
+            .SetRevitVersion(RevitVersionInfo.Version)
             .SetSerializer(new ConfigSerializer())
             .Build<RevitClashDetectiveConfig>();
 

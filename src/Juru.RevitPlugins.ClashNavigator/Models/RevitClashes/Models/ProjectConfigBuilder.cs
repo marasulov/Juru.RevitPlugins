@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-using dosymep.Bim4Everyone.ProjectConfigs;
+using Juru.RevitPlugins.Core.ProjectConfigs;
 
 namespace Juru.RevitPlugins.ClashNavigator.Models;
 public class ProjectConfigBuilder {
@@ -59,15 +59,16 @@ public class ProjectConfigBuilder {
             throw new InvalidOperationException("Перед конструированием объекта, требуется установить наименование плагина.");
         }
 
-        if(string.IsNullOrEmpty(_relativePath)) {
-            throw new InvalidOperationException("Перед конструированием объекта, требуется установить путь к файлу конфигурации относительно папки плагина.");
-        }
-
         if(string.IsNullOrEmpty(_projectConfigName)) {
             throw new InvalidOperationException("Перед конструированием объекта, требуется установить наименование файла конфигурации проекта.");
         }
 
-        string projectConfigPath = GetConfigPath(Path.Combine(_pluginName, _relativePath), _projectConfigName, _revitVersion);
+        // Конфигурации уровня плагина обходятся без относительного пути и лежат прямо в папке плагина.
+        string pluginRelativePath = string.IsNullOrEmpty(_relativePath)
+            ? _pluginName
+            : Path.Combine(_pluginName, _relativePath);
+
+        string projectConfigPath = GetConfigPath(pluginRelativePath, _projectConfigName, _revitVersion);
         if(File.Exists(projectConfigPath)) {
             string fileContent = File.ReadAllText(projectConfigPath);
 

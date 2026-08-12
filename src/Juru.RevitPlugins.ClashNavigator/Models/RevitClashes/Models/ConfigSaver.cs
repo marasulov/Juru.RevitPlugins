@@ -3,7 +3,7 @@ using System.IO;
 
 using Autodesk.Revit.DB;
 
-using dosymep.Bim4Everyone.ProjectConfigs;
+using Juru.RevitPlugins.Core.ProjectConfigs;
 
 using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
 

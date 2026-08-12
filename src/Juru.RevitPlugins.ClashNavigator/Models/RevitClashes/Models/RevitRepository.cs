@@ -31,6 +31,10 @@ internal class RevitRepository {
     private readonly RevitEventHandler _revitEventHandler;
     private static readonly HashSet<string> _endings = ["_отсоединено", "_detached"];
     private const string _clashViewName = "BIM_Проверка на коллизии";
+    /// <summary>
+    /// Параметр проекта, задающий группу вида в браузере. Отсутствует в документах без стандарта Bim4Everyone.
+    /// </summary>
+    private const string _viewGroupParamName = "_Группа Видов";
     private readonly View3D _view;
     public const string FiltersNamePrefix = "BIM_коллизии_";
 
@@ -125,10 +129,13 @@ internal class RevitRepository {
                 .OfClass(typeof(View3D))
                 .Cast<View3D>()
                 .Where(item => !item.IsTemplate)
-                .Select(item => item.GetParamValueOrDefault<string>(ProjectParamsConfig.Instance.ViewGroup))
+                .Select(item => item.LookupParameter(_viewGroupParamName)?.AsString())
                 .FirstOrDefault(item => item != null && item.Contains("BIM"));
             if(bimGroup != null) {
-                view.SetParamValue(ProjectParamsConfig.Instance.ViewGroup, bimGroup);
+                var viewGroupParam = view.LookupParameter(_viewGroupParamName);
+                if(viewGroupParam is {IsReadOnly: false}) {
+                    viewGroupParam.Set(bimGroup);
+                }
             }
             view.DisplayStyle = DisplayStyle.FlatColors;
 
@@ -198,10 +205,28 @@ internal class RevitRepository {
     }
 
     public void InitializeDocInfos() {
+        // У выгруженной связи GetLinkDocument() возвращает null.
         DocInfos = GetRevitLinkInstances()
-           .Select(item => new DocInfo(GetDocumentName(item.GetLinkDocument()), item.GetLinkDocument(), item.GetTransform()))
+           .Select(item => new {Instance = item, Document = item.GetLinkDocument()})
+           .Where(item => item.Document is not null)
+           .Select(item => new DocInfo(
+               GetDocumentName(item.Document),
+               item.Document,
+               item.Instance.GetTransform()))
            .ToList();
         DocInfos.Add(new DocInfo(GetDocumentName(), Doc, Transform.Identity));
+    }
+
+    /// <summary>
+    /// Возвращает имена связей, которые присутствуют в документе, но не загружены.
+    /// </summary>
+    public List<string> GetUnloadedLinkNames() {
+        return GetRevitLinkInstances()
+            .Where(item => item.GetLinkDocument() is null)
+            .Select(item => item.Name)
+            .Distinct()
+            .OrderBy(item => item)
+            .ToList();
     }
 
     public List<Category> GetCategories() {

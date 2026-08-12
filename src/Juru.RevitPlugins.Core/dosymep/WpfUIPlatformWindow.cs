@@ -6,12 +6,12 @@ using System.IO;
 using System.Windows;
 using System.Windows.Interop;
 
+using Juru.RevitPlugins.Core;
+
 using dosymep.Bim4Everyone;
-using dosymep.Bim4Everyone.ProjectConfigs;
 using dosymep.Bim4Everyone.SimpleServices;
 using dosymep.Serializers;
 using dosymep.SimpleServices;
-using dosymep.WPF.Views;
 using dosymep.WpfCore.Behaviors;
 
 using Microsoft.Xaml.Behaviors;
@@ -79,7 +79,7 @@ namespace dosymep.WpfUI.Core {
                     SerializationService = SerializationService,
                     ConfigPath = Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                        "dosymep", ModuleEnvironment.RevitVersion, PluginName, ProjectConfigName + ".json"),
+                        "dosymep", RevitVersionInfo.Version, PluginName, ProjectConfigName + ".json"),
                 });
         }
     }

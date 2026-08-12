@@ -68,9 +68,25 @@ internal class ClashServerClient {
     }
 
     private async Task<T> GetAsync<T>(string relativeUrl) {
-        using var response = await _httpClient.GetAsync(relativeUrl).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-        return JsonConvert.DeserializeObject<T>(json);
+        string fullUrl = $"{BaseUrl}/{relativeUrl}";
+        try {
+            using var response = await _httpClient.GetAsync(relativeUrl).ConfigureAwait(false);
+            if(!response.IsSuccessStatusCode) {
+                throw new InvalidOperationException(
+                    $"Сервер коллизий вернул {(int) response.StatusCode} ({response.ReasonPhrase}): {fullUrl}");
+            }
+
+            string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            return JsonConvert.DeserializeObject<T>(json);
+        } catch(TaskCanceledException exception) {
+            // HttpClient сообщает о собственном таймауте через TaskCanceledException.
+            throw new TimeoutException(
+                $"Сервер коллизий не ответил за {_httpClient.Timeout.TotalSeconds:0} с: {fullUrl}. "
+                + "Проверьте адрес и порт в настройках плагина.", exception);
+        } catch(HttpRequestException exception) {
+            throw new InvalidOperationException(
+                $"Не удалось обратиться к серверу коллизий: {fullUrl}. "
+                + $"{exception.GetBaseException().Message}", exception);
+        }
     }
 }

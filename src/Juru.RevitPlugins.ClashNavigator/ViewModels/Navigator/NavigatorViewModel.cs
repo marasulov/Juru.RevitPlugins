@@ -129,7 +129,7 @@ internal class NavigatorViewModel : BaseViewModel {
     private void InitializeReports(string reportName = null) {
         string reportsDir = Path.Combine(
             RevitRepository.LocalProfilePath,
-            ModuleEnvironment.RevitVersion,
+            RevitVersionInfo.Version,
             nameof(Juru.RevitPlugins.ClashNavigator),
             _revitRepository.GetObjectName());
 
@@ -238,6 +238,7 @@ internal class NavigatorViewModel : BaseViewModel {
         int imported = Reports.Sum(report => report.ImportedClashesCount);
         int resolved = Reports.Sum(report => report.ResolvedClashesCount);
         Diagnostic = $"Загружено отчётов: {Reports.Count}; коллизий: {imported}; найдено пар в Revit: {resolved}.";
+        WarnAboutUnloadedLinks();
     }
 
     private void LoadFromServer() {
@@ -250,13 +251,17 @@ internal class NavigatorViewModel : BaseViewModel {
                 return;
             }
 
-            if(string.IsNullOrWhiteSpace(_settingsConfig.ClashServerUrl)) {
-                Diagnostic = "Не задан адрес сервера коллизий в настройках плагина.";
+            // Настройка пользователя переопределяет адрес из ClashServer.json рядом со сборкой.
+            string serverUrl = string.IsNullOrWhiteSpace(_settingsConfig.ClashServerUrl)
+                ? ClashServerOptions.DefaultUrl
+                : _settingsConfig.ClashServerUrl;
+            if(string.IsNullOrWhiteSpace(serverUrl)) {
+                Diagnostic = "Не задан адрес сервера коллизий: ни в настройках плагина, ни в файле ClashServer.json.";
                 MessageBox.Show(Diagnostic, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-            var client = new ClashServerClient(_settingsConfig.ClashServerUrl);
+            var client = new ClashServerClient(serverUrl);
             var report = ServerReportLoader.GetReportAsync(client, fileInfo, _revitRepository)
                 .ConfigureAwait(false).GetAwaiter().GetResult();
 
@@ -274,10 +279,31 @@ internal class NavigatorViewModel : BaseViewModel {
             SetReports(Reports.Where(r => r.Name != reportViewModel.Name).Append(reportViewModel));
 
             Diagnostic = $"Загружено с сервера коллизий: {reportViewModel.ImportedClashesCount}.";
+            WarnAboutUnloadedLinks();
         } catch(Exception exception) {
             Diagnostic = $"Ошибка загрузки с сервера: {exception.GetBaseException().Message}";
             MessageBox.Show(Diagnostic, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    /// <summary>
+    /// Сообщает о выгруженных связях. Элементы таких связей не открываются из отчёта:
+    /// репозиторий видит только загруженные документы.
+    /// </summary>
+    private void WarnAboutUnloadedLinks() {
+        var unloadedLinks = _revitRepository.GetUnloadedLinkNames();
+        if(unloadedLinks.Count == 0) {
+            return;
+        }
+
+        string names = string.Join(Environment.NewLine, unloadedLinks.Select(name => $"— {name}"));
+        MessageBoxService.Show(
+            $"Не загружены связи:{Environment.NewLine}{names}{Environment.NewLine}{Environment.NewLine}"
+            + "Коллизии с элементами этих связей открыть не получится. "
+            + "Загрузите связи через «Диспетчер связей» и включите их видимость на виде.",
+            "Навигатор коллизий",
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning);
     }
 
     private void SetReports(IEnumerable<ReportViewModel> reports) {

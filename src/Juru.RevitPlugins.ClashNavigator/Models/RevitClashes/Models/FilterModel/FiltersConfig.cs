@@ -3,8 +3,9 @@ using System.Collections.Generic;
 
 using Autodesk.Revit.DB;
 
+using Juru.RevitPlugins.Core.ProjectConfigs;
+
 using dosymep.Bim4Everyone;
-using dosymep.Bim4Everyone.ProjectConfigs;
 
 using Newtonsoft.Json;
 
@@ -23,7 +24,7 @@ internal class FiltersConfig : ProjectConfig {
             .SetSerializer(new RevitClashConfigSerializer(new RevitClashesSerializationBinder(), document))
             .SetPluginName(nameof(Juru.RevitPlugins.ClashNavigator))
             .SetRelativePath(revitFileName)
-            .SetRevitVersion(ModuleEnvironment.RevitVersion)
+            .SetRevitVersion(RevitVersionInfo.Version)
             .SetProjectConfigName(nameof(FiltersConfig) + ".json")
             .Build<FiltersConfig>();
     }

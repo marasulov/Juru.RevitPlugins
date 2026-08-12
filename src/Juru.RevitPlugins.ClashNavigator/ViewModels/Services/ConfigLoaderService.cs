@@ -1,6 +1,7 @@
 using System;
 
-using dosymep.Bim4Everyone.ProjectConfigs;
+using Juru.RevitPlugins.Core.ProjectConfigs;
+
 using dosymep.SimpleServices;
 
 using Juru.RevitPlugins.ClashNavigator.Models;

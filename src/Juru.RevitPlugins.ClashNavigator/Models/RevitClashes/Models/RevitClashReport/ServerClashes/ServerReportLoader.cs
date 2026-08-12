@@ -26,18 +26,19 @@ internal static class ServerReportLoader {
         if(revitRepository is null) { throw new ArgumentNullException(nameof(revitRepository)); }
 
         var projects = await client.GetProjectsAsync().ConfigureAwait(false);
-        var project = projects?.FirstOrDefault(
-            p => string.Equals(p.Name, fileInfo.ProjectCode, StringComparison.OrdinalIgnoreCase));
+        var project = projects?.FirstOrDefault(p => NamesMatch(p.Name, fileInfo.ProjectCode));
         if(project is null) {
-            throw new ArgumentException($"На сервере не найден проект \"{fileInfo.ProjectCode}\".");
+            throw new ArgumentException(
+                $"На сервере не найден проект \"{fileInfo.ProjectCode}\". "
+                + $"Проекты на сервере: {FormatNames(projects?.Select(p => p.Name))}.");
         }
 
         var objects = await client.GetObjectsAsync(project.Id).ConfigureAwait(false);
-        var obj = objects?.FirstOrDefault(
-            o => string.Equals(o.Name, fileInfo.ObjectName, StringComparison.OrdinalIgnoreCase));
+        var obj = objects?.FirstOrDefault(o => NamesMatch(o.Name, fileInfo.ObjectName));
         if(obj is null) {
             throw new ArgumentException(
-                $"На сервере не найден объект \"{fileInfo.ObjectName}\" в проекте \"{fileInfo.ProjectCode}\".");
+                $"На сервере не найден объект \"{fileInfo.ObjectName}\" в проекте \"{fileInfo.ProjectCode}\". "
+                + $"Объекты на сервере: {FormatNames(objects?.Select(o => o.Name))}.");
         }
 
         var clashes = await client.GetClashesAsync(obj.Id).ConfigureAwait(false);
@@ -50,6 +51,27 @@ internal static class ServerReportLoader {
 
         string reportName = $"{fileInfo.ProjectCode}-{fileInfo.ObjectName}-{disciplineCode} (сервер)";
         return new ReportModel(reportName, clashModels);
+    }
+
+    /// <summary>
+    /// Сравнивает имя из названия файла Revit с именем на сервере.
+    /// В названиях файлов пробел записывают подчёркиванием, в базе сервера имя хранится с пробелами.
+    /// </summary>
+    private static bool NamesMatch(string serverName, string fileName) {
+        return string.Equals(NormalizeName(serverName), NormalizeName(fileName), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeName(string name) {
+        if(string.IsNullOrWhiteSpace(name)) {
+            return string.Empty;
+        }
+
+        return string.Join(" ", name.Replace('_', ' ').Split([' '], StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    private static string FormatNames(IEnumerable<string> names) {
+        string joined = names is null ? string.Empty : string.Join(", ", names.Select(name => $"\"{name}\""));
+        return string.IsNullOrEmpty(joined) ? "список пуст" : joined;
     }
 
     private static bool ClashTestNameMatchesDiscipline(string clashTestName, string disciplineCode) {

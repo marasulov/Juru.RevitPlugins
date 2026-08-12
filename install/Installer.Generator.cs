@@ -9,7 +9,7 @@ public static partial class Generator
     /// <summary>
     ///     Generates Wix entities, features and directories for the installer.
     /// </summary>
-    public static WixEntity[] GenerateWixEntities(string[] args)
+    public static InstallerEntities GenerateWixEntities(string[] args)
     {
         var versionStorages = new Dictionary<string, List<WixEntity>>();
         var revitFeature = new Feature
@@ -27,11 +27,15 @@ public static partial class Generator
                 throw new Exception($"Could not parse version from directory name: {directoryInfo.FullName}");
             }
 
+            // Level 2 keeps the feature cleared; the condition drops it to the install level
+            // once AppSearch reports Revit of this version present.
             var feature = new Feature
             {
                 Name = fileVersion,
                 Description = $"Install add-in for Revit {fileVersion}",
-                ConfigurableDir = $"INSTALL{fileVersion}"
+                ConfigurableDir = $"INSTALL{fileVersion}",
+                AttributesDefinition = "Level=2",
+                Condition = new FeatureCondition(RevitDetectionPropertyName(fileVersion), 1)
             };
 
             revitFeature.Add(feature);
@@ -49,9 +53,36 @@ public static partial class Generator
             LogFeatureFiles(directory, fileVersion);
         }
 
-        return versionStorages
+        var directories = versionStorages
             .Select(storage => new Dir(new Id($"INSTALL{storage.Key}"), storage.Key, storage.Value.ToArray()))
             .Cast<WixEntity>()
+            .ToArray();
+
+        return new InstallerEntities(directories, versionStorages.Keys.ToArray());
+    }
+
+    /// <summary>
+    ///     Builds the property name holding the Revit detection result for the given version.
+    /// </summary>
+    public static string RevitDetectionPropertyName(string version)
+    {
+        return $"REVIT{version}INSTALLED";
+    }
+
+    /// <summary>
+    ///     Registry searches that set a property for every Revit version the package can install.
+    ///     Revit writes <c>Installed</c> under the RCL subkey of its versioned key; the key exists
+    ///     only in the 64-bit registry view.
+    /// </summary>
+    public static Property[] CreateRevitDetectionProperties(string[] versions)
+    {
+        return versions
+            .Select(version => (Property) new RegValueProperty(
+                RevitDetectionPropertyName(version),
+                RegistryHive.LocalMachine,
+                $@"SOFTWARE\Autodesk\Revit\{version}\RCL",
+                "Installed",
+                string.Empty))
             .ToArray();
     }
 
@@ -97,3 +128,7 @@ public static partial class Generator
     [GeneratedRegex(@"(\d+)(?!.*\d)")]
     private static partial Regex VersionRegex();
 }
+/// <summary>
+///     Directories to install and the Revit versions they target.
+/// </summary>
+public sealed record InstallerEntities(WixEntity[] Directories, string[] Versions);

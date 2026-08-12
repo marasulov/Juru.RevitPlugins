@@ -6,6 +6,7 @@
         xmlns:platform="clr-namespace:dosymep.WpfUI.Core;assembly=Juru.RevitPlugins.Core"
         Title="Навигатор коллизий" Height="650" Width="1200"
         WindowStartupLocation="CenterScreen"
+        ExtendsContentIntoTitleBar="True"
         Background="{ui:ThemeResource ApplicationBackgroundBrush}"
         Foreground="{ui:ThemeResource TextFillColorPrimaryBrush}">
     <platform:WpfUIPlatformWindow.Resources>
@@ -57,7 +58,17 @@
             </DockPanel>
         </DataTemplate>
     </platform:WpfUIPlatformWindow.Resources>
-    <Grid Margin="15">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- FluentWindow берёт область перетаскивания и кнопки окна из TitleBar. -->
+        <ui:TitleBar Grid.Row="0" Title="Навигатор коллизий"
+                     ShowMinimize="True" ShowMaximize="True" ShowClose="True"/>
+
+    <Grid Grid.Row="1" Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -69,7 +80,7 @@
         <DockPanel Margin="0,0,0,10">
             <TextBlock Text="Навигатор коллизий" FontSize="20" FontWeight="SemiBold" DockPanel.Dock="Left"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <ui:Button Content="Загрузить XML" Command="{Binding LoadCommand}" Appearance="Primary" Margin="0,0,8,0"/>
+                <ui:Button Content="Загрузить XML" Command="{Binding LoadCommand}"  Margin="0,0,8,0"/>
                 <ui:Button Content="Загрузить с сервера" Command="{Binding LoadFromServerCommand}" Margin="0,0,8,0"/>
                 <ui:Button Content="Сохранить все" Command="{Binding SaveAllReportsCommand}"/>
             </StackPanel>
@@ -120,5 +131,6 @@
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
             <ui:Button Content="Закрыть" Click="ButtonCancel_Click"/>
         </StackPanel>
+    </Grid>
     </Grid>
 </platform:WpfUIPlatformWindow>

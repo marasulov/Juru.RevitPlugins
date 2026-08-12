@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 
+using Juru.RevitPlugins.Core.ProjectConfigs;
+
 using dosymep.Bim4Everyone;
-using dosymep.Bim4Everyone.ProjectConfigs;
 using dosymep.Serializers;
 
 using Newtonsoft.Json;
@@ -19,7 +20,7 @@ internal class ClashesConfig : ProjectConfig {
             .SetPluginName(nameof(Juru.RevitPlugins.ClashNavigator))
             .SetProfilePath(RevitRepository.LocalProfilePath)
             .SetRelativePath(revitObjectName)
-            .SetRevitVersion(ModuleEnvironment.RevitVersion)
+            .SetRevitVersion(RevitVersionInfo.Version)
             .SetProjectConfigName(configName + ".json")
             .Build<ClashesConfig>();
     }
