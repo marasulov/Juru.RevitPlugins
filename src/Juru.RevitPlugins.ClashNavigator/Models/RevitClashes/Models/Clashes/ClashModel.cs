@@ -51,6 +51,13 @@ internal class ClashModel : IEquatable<ClashModel> {
     public long? ServerId { get; set; }
 
     /// <summary>
+    /// Статус коллизии в базе сервера: new, active, approved или resolved.
+    /// Сохраняется вместе с отчётом, чтобы после перезапуска Ревита было видно,
+    /// какие статусы пользователь изменил, но ещё не отправил.
+    /// </summary>
+    public string ServerStatus { get; set; }
+
+    /// <summary>
     /// Учётная запись, изменившая статус коллизии последней, по данным сервера.
     /// </summary>
     public string StatusChangedBy { get; set; }

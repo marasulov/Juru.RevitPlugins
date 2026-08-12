@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -82,6 +83,9 @@ internal class NavigatorViewModel : BaseViewModel {
             RelayCommand.Create<ReportsMergeViewModel>(AcceptReportsMerge, CanAcceptReportsMerge);
         CancelReportsMergeCommand = RelayCommand.Create(CancelReportsMerge);
         SaveAllReportsCommand = RelayCommand.Create(SaveAllReports, CanSaveAllReports);
+        // Кнопка активна при любом открытом отчёте, даже когда отправлять нечего: иначе объяснение,
+        // почему статусы не уходят (отчёт не с сервера), пользователю негде получить.
+        SendStatusesCommand = RelayCommand.Create(SendStatuses, () => Reports.Count > 0);
         AskForSaveCommand = RelayCommand.Create(AskForSave);
     }
 
@@ -93,6 +97,7 @@ internal class NavigatorViewModel : BaseViewModel {
     public ICommand LoadFromServerOnStartupCommand { get; }
     public ICommand DeleteCommand { get; }
     public ICommand SaveAllReportsCommand { get; }
+    public ICommand SendStatusesCommand { get; }
     public ICommand AskForSaveCommand { get; }
     public ICommand EditCommentsCommand { get; }
     public ICommand ShowCommentsCommand { get; }
@@ -123,6 +128,19 @@ internal class NavigatorViewModel : BaseViewModel {
     /// работает ли пересобранный код или процесс держит прежний.
     /// </summary>
     public string Title { get; } = BuildTitle();
+
+    /// <summary>
+    /// Сколько изменений статусов ждёт отправки в базу по всем отчётам.
+    /// </summary>
+    public int UnsentStatusesCount => Reports?.Sum(report => report.UnsentStatusesCount) ?? 0;
+
+    /// <summary>
+    /// Надпись на кнопке отправки статусов: количество на кнопке отвечает на вопрос
+    /// "когда это уйдёт на сервер" без чтения строки состояния.
+    /// </summary>
+    public string SendStatusesTitle => UnsentStatusesCount == 0
+        ? "Отправить статусы"
+        : $"Отправить статусы ({UnsentStatusesCount})";
 
     public string Diagnostic {
         get => _diagnostic;
@@ -215,9 +233,47 @@ internal class NavigatorViewModel : BaseViewModel {
     }
 
     /// <summary>
+    /// Отправляет в базу статусы, изменённые во всех отчётах, и всегда сообщает результат диалогом:
+    /// отправка по кнопке - осознанное действие пользователя, молчать в ответ нельзя.
+    /// </summary>
+    private void SendStatuses() {
+        var messages = new List<string>();
+        bool hasError = false;
+        foreach(var report in Reports) {
+            (string? message, bool isError) = report.SendStatuses();
+            if(message is not null) {
+                messages.Add(Reports.Count > 1 ? $"{report.Name}: {message}" : message);
+            }
+            hasError |= isError;
+        }
+
+        if(messages.Count == 0) {
+            // Разбираем по отчётам, а не общей фразой: в списке одновременно бывают отчёт с сервера
+            // и отчёт из файла, и "изменений нет" про весь список вводило в заблуждение.
+            var localReports = Reports.Where(report => !report.IsFromServer).Select(report => report.Name).ToArray();
+            messages.Add(localReports.Length == 0
+                ? "Изменений статусов нет: статусы в таблице совпадают с базой."
+                : "Изменений для отправки нет." + Environment.NewLine + Environment.NewLine
+                    + "У этих отчётов нет связи с базой (нет Id коллизий), статусы из них не отправляются:"
+                    + Environment.NewLine
+                    + string.Join(Environment.NewLine, localReports.Select(name => $"— {name}"))
+                    + Environment.NewLine + Environment.NewLine
+                    + "Чтобы менять статусы в базе, нажмите «Загрузить с сервера» и работайте "
+                    + "с отчётом, который загрузится.");
+        }
+
+        string text = string.Join(Environment.NewLine, messages);
+        Diagnostic = text.Replace(Environment.NewLine, " ");
+        RaiseUnsentStatusesChanged();
+
+        MessageBox.Show(text, "Отправка статусов", MessageBoxButton.OK,
+            hasError ? MessageBoxImage.Error : MessageBoxImage.Information);
+    }
+
+    /// <summary>
     /// Есть изменения статусов, не отправленные на сервер коллизий.
     /// </summary>
-    private bool HasUnsentStatuses => Reports.Any(report => report.UnsentStatusesCount > 0);
+    private bool HasUnsentStatuses => UnsentStatusesCount > 0;
 
     private void AskForSave() {
         // Спрашиваем только когда есть что терять: без изменений статусов диалог при закрытии мешает.
@@ -361,7 +417,7 @@ internal class NavigatorViewModel : BaseViewModel {
                 _contentDialogService,
                 _settingsConfig,
                 _clashStatusService,
-                report.Clashes?.ToArray() ?? []);
+                KeepUnsentStatuses(report));
 
             SetReports(Reports.Where(r => r.Name != reportViewModel.Name).Append(reportViewModel));
 
@@ -375,6 +431,45 @@ internal class NavigatorViewModel : BaseViewModel {
             ShowError(Diagnostic, silent);
             return false;
         }
+    }
+
+    /// <summary>
+    /// Переносит в загруженный с сервера отчёт статусы, которые пользователь изменил, но не отправил.
+    /// Без этого загрузка с сервера (в том числе автоматическая при открытии окна) молча
+    /// затирала правки статусов: они пропадали из таблицы вместе с прежним отчётом.
+    /// </summary>
+    /// <param name="report">Отчёт, загруженный с сервера</param>
+    /// <returns>Коллизии отчёта с восстановленными неотправленными статусами</returns>
+    private ICollection<ClashModel> KeepUnsentStatuses(ReportModel report) {
+        var clashes = report.Clashes?.ToArray() ?? [];
+        var previous = Reports.FirstOrDefault(item => item.Name == report.Name);
+        if(previous is null) {
+            return clashes;
+        }
+
+        // Ключ - Id коллизии в базе: только по нему прежний и новый отчёты сопоставимы.
+        var unsentStatuses = previous.GetClashes()
+            .Where(clash => clash.HasUnsentStatus)
+            .GroupBy(clash => clash.Clash.ServerId!.Value)
+            .ToDictionary(group => group.Key, group => group.First().ClashStatus);
+        if(unsentStatuses.Count == 0) {
+            return clashes;
+        }
+
+        int restored = 0;
+        foreach(var clash in clashes) {
+            if(clash.ServerId is not null
+                && unsentStatuses.TryGetValue(clash.ServerId.Value, out var status)) {
+                // ServerStatus остаётся серверным, поэтому статус так и числится неотправленным.
+                clash.ClashStatus = status;
+                restored++;
+            }
+        }
+
+        if(restored > 0) {
+            Diagnostic = $"Сохранены неотправленные изменения статусов: {restored}.";
+        }
+        return clashes;
     }
 
     private void ShowError(string message, bool silent) {
@@ -406,9 +501,30 @@ internal class NavigatorViewModel : BaseViewModel {
     }
 
     private void SetReports(IEnumerable<ReportViewModel> reports) {
+        foreach(var report in Reports) {
+            report.PropertyChanged -= OnReportPropertyChanged;
+        }
+
         Reports = new ObservableCollection<ReportViewModel>(reports.OrderBy(r => r.Name));
+        // Счётчик на кнодке отправки должен считать изменения во всех отчётах, а не только в выбранном.
+        foreach(var report in Reports) {
+            report.PropertyChanged += OnReportPropertyChanged;
+        }
+
         SelectedReport = null;
         SelectedReport = Reports.FirstOrDefault();
+        RaiseUnsentStatusesChanged();
+    }
+
+    private void OnReportPropertyChanged(object sender, PropertyChangedEventArgs e) {
+        if(e.PropertyName == nameof(ReportViewModel.UnsentStatusesCount)) {
+            RaiseUnsentStatusesChanged();
+        }
+    }
+
+    private void RaiseUnsentStatusesChanged() {
+        RaisePropertyChanged(nameof(UnsentStatusesCount));
+        RaisePropertyChanged(nameof(SendStatusesTitle));
     }
 
     private void Delete() {

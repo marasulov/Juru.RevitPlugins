@@ -14,6 +14,7 @@ using dosymep.SimpleServices;
 using Juru.RevitPlugins.ClashNavigator.Models;
 using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.ClashNavigator.Models.Extensions;
+using Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport.ServerClashes;
 
 namespace Juru.RevitPlugins.ClashNavigator.ViewModels.Navigator;
 internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<ClashViewModel> {
@@ -22,7 +23,6 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
     private string _clashName;
     private string _statusChangedBy;
     private string _statusChangedAt;
-    private bool _hasUnsentStatus;
     private readonly Action _statusChanged;
     private readonly RevitRepository _revitRepository;
     private readonly ILocalizationService _localizationService;
@@ -38,11 +38,13 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
         RevitRepository revitRepository,
         ClashModel clash,
         ILocalizationService localizationService,
+        IReadOnlyCollection<ClashStatusViewModel> statuses = null,
         Action statusChanged = null) {
 
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _revitRepository = revitRepository;
         _statusChanged = statusChanged;
+        Statuses = statuses ?? [];
 
         ClashName = clash.Name;
         Comments = [..clash.Comments?.Select(c => new ClashCommentViewModel(_revitRepository, c)) ?? []];
@@ -71,8 +73,6 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
         ClashStatus = clash.ClashStatus;
         Clash = clash;
         Clash.SetRevitRepository(_revitRepository);
-        // Статус, прочитанный из отчёта, отправлять не нужно: он уже такой на сервере,
-        // поэтому SetStatusAuthor здесь же снимает признак неотправленного изменения.
         SetStatusAuthor(clash.StatusChangedBy, clash.StatusChangedAt);
 
         AddCommentCommand = RelayCommand.Create(AddComment);
@@ -89,7 +89,8 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
             if(value != ClashStatus.Imaginary && value != _clashStatus) {
                 RaiseAndSetIfChanged(ref _clashStatus, value);
                 RaisePropertyChanged(nameof(ClashStatusName));
-                HasUnsentStatus = true;
+                RaisePropertyChanged(nameof(HasUnsentStatus));
+                RaisePropertyChanged(nameof(StatusAuthorInfo));
                 _statusChanged?.Invoke();
             }
         }
@@ -99,12 +100,36 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
     /// Статус изменён пользователем, но ещё не отправлен на сервер коллизий.
     /// Отправка идёт по кнопке сохранения отчёта.
     /// </summary>
-    public bool HasUnsentStatus {
-        get => _hasUnsentStatus;
-        private set => RaiseAndSetIfChanged(ref _hasUnsentStatus, value);
+    /// <summary>
+    /// Статус отличается от того, что известно о коллизии на сервере, то есть ждёт отправки.
+    /// Считается по данным модели, а не по флагу в памяти: флаг терялся при сохранении отчёта
+    /// и перезапуске Ревита, и правки пользователя становилось нечем отличить от статусов из базы.
+    /// </summary>
+    public bool HasUnsentStatus => Clash?.ServerId is not null
+        && ServerClashStatus.ToClashStatus(Clash.ServerStatus) != ClashStatus;
+
+    /// <summary>
+    /// Содержимое колонки "Кем изменён". Заполнено всегда: по строке должно быть видно,
+    /// ждёт ли статус отправки, кто его изменил в базе или что связи с базой нет вовсе.
+    /// Пустая ячейка не позволяла отличить эти состояния друг от друга.
+    /// </summary>
+    public string StatusAuthorInfo {
+        get {
+            if(HasUnsentStatus) {
+                return $"{WindowsUser.DisplayName} — не отправлено";
+            }
+            if(!string.IsNullOrWhiteSpace(StatusChangedBy)) {
+                return StatusChangedBy;
+            }
+            return Clash?.ServerId is null
+                ? "нет связи с базой"
+                : $"в базе: {Clash.ServerStatus ?? "неизвестно"}";
+        }
     }
 
     public string ClashStatusName => ClashStatus.GetDisplayName();
+
+    public IReadOnlyCollection<ClashStatusViewModel> Statuses { get; }
 
     /// <summary>
     /// Статус реальной коллизии пользователь меняет прямо в таблице.
@@ -113,7 +138,10 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
 
     public string StatusChangedBy {
         get => _statusChangedBy;
-        private set => RaiseAndSetIfChanged(ref _statusChangedBy, value);
+        private set {
+            RaiseAndSetIfChanged(ref _statusChangedBy, value);
+            RaisePropertyChanged(nameof(StatusAuthorInfo));
+        }
     }
 
     public string StatusChangedAt {
@@ -216,25 +244,24 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
     }
 
     /// <summary>
-    /// Запоминает автора и время изменения статуса, принятые сервером.
+    /// Запоминает, что сервер принял текущий статус коллизии: с этого момента статус
+    /// считается отправленным, а в колонках показываются автор и время изменения.
     /// </summary>
     /// <param name="changedBy">Учётная запись Windows автора изменения</param>
     /// <param name="changedAt">Момент изменения в UTC</param>
-    public void SetStatusAuthor(string changedBy, DateTime? changedAt) {
-        ClearUnsentStatus();
+    public void MarkStatusSent(string changedBy, DateTime? changedAt) {
+        Clash.ServerStatus = ServerClashStatus.ToServerStatus(ClashStatus);
+        SetStatusAuthor(changedBy, changedAt);
+        RaisePropertyChanged(nameof(HasUnsentStatus));
+    }
+
+    private void SetStatusAuthor(string changedBy, DateTime? changedAt) {
         Clash.StatusChangedBy = changedBy;
         Clash.StatusChangedAt = changedAt;
         StatusChangedBy = changedBy ?? string.Empty;
         StatusChangedAt = changedAt is null
             ? string.Empty
             : changedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
-    }
-
-    /// <summary>
-    /// Снимает признак неотправленного статуса: сервер принял статус либо отправлять его некуда.
-    /// </summary>
-    public void ClearUnsentStatus() {
-        HasUnsentStatus = false;
     }
 
     public ElementModel GetFirstElement() {

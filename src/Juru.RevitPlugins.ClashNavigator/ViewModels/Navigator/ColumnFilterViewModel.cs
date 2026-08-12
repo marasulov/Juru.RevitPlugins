@@ -95,6 +95,18 @@ internal class ColumnFilterViewModel : BaseViewModel {
         RaisePropertyChanged(nameof(FilteredOptions));
     }
 
+    /// <summary>
+    /// Снимает фильтр: все значения отмечены, текст поиска пуст.
+    /// Таблицу при этом не перефильтровывает - это делает вызывающий, один раз для всех колонок.
+    /// </summary>
+    public void Reset() {
+        _searchText = string.Empty;
+        SetAll(true);
+        RaisePropertyChanged(nameof(SearchText));
+        RaisePropertyChanged(nameof(FilteredOptions));
+        RaisePropertyChanged(nameof(IsActive));
+    }
+
     private void SetAll(bool isChecked) {
         foreach(var option in Options) {
             option.IsChecked = isChecked;

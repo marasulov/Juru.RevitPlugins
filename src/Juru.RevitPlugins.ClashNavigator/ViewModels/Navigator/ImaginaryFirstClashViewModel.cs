@@ -73,10 +73,14 @@ internal class ImaginaryFirstClashViewModel
 
     public string ClashStatusName { get; }
 
+    public IReadOnlyCollection<ClashStatusViewModel> Statuses { get; } = [];
+
     // "Нет пересечения" - результат локального пересчёта геометрии, статус такой коллизии не меняют.
     public bool CanChangeStatus => false;
 
     public string StatusChangedBy => string.Empty;
+
+    public string StatusAuthorInfo => string.Empty;
 
     public string StatusChangedAt => string.Empty;
 

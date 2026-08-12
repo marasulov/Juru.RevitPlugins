@@ -89,6 +89,23 @@
             </Setter>
         </Style>
 
+        <!-- Панель всплывающего списка. Содержимое Popup живёт в отдельном визуальном дереве,
+             поэтому фон и цвет текста берём из темы явно: раньше панель была жёстко белой,
+             а элементы WPF-UI в тёмной теме Windows рисовали светлый текст - на белом его не было видно. -->
+        <Style x:Key="PopupPanelStyle" TargetType="Border">
+            <Setter Property="Background" Value="{ui:ThemeResource ApplicationBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{ui:ThemeResource ControlElevationBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="TextBlock.Foreground" Value="{ui:ThemeResource TextFillColorPrimaryBrush}" />
+        </Style>
+
+        <!-- Флажкам цвет задаём отдельно: их собственный стиль WPF-UI перекрывает наследование от панели. -->
+        <Style x:Key="PopupCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{ui:ThemeResource TextFillColorPrimaryBrush}" />
+            <Setter Property="Margin" Value="0,2" />
+        </Style>
+
         <DataTemplate x:Key="FilterHeaderTemplate">
             <DockPanel LastChildFill="False">
                 <TextBlock Text="{Binding}" VerticalAlignment="Center" />
@@ -103,12 +120,13 @@
                     <Button x:Name="FilterButton" Content="▼" Padding="5,0" Margin="4,0,0,0"
                             Tag="{Binding RelativeSource={RelativeSource AncestorType=DataGridColumnHeader}, Path=Column.SortMemberPath}"
                             Command="{Binding OpenCommand}" />
+                    <!-- StaysOpen=False закрывает фильтр по щелчку вне него; двусторонняя привязка IsOpen
+                         сообщает об этом модели, а Closed применяет отмеченное - иначе выбор пользователя
+                         остался бы в галочках, но не в таблице. -->
                     <Popup IsOpen="{Binding IsOpen, Mode=TwoWay}" PlacementTarget="{Binding ElementName=FilterButton}"
-                           Placement="Bottom" StaysOpen="True" AllowsTransparency="False">
-                        <Border Background="White"
-                                BorderBrush="Gray"
-                                TextElement.Foreground="Black"
-                                BorderThickness="1" Padding="8" MinWidth="200">
+                           Placement="Bottom" StaysOpen="False" AllowsTransparency="False"
+                           Closed="FilterPopup_Closed">
+                        <Border Style="{StaticResource PopupPanelStyle}" MinWidth="200">
                             <DockPanel>
                                 <ui:TextBox DockPanel.Dock="Top" Margin="0,0,0,6"
                                             PlaceholderText="Поиск..."
@@ -123,7 +141,8 @@
                                     <ItemsControl ItemsSource="{Binding FilteredOptions}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <CheckBox Content="{Binding Value}" IsChecked="{Binding IsChecked}" Margin="0,2" />
+                                                <CheckBox Content="{Binding Value}" IsChecked="{Binding IsChecked}"
+                                                          Style="{StaticResource PopupCheckBoxStyle}" />
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -164,22 +183,31 @@
                 <CheckBox Content="При открытии" IsChecked="{Binding AutoLoadFromServer}"
                           VerticalAlignment="Center" Margin="0,0,8,0"
                           ToolTip="Загружать отчёт с сервера сразу при открытии навигатора"/>
+                <!-- Отдельная кнопка отправки: количество в надписи отвечает на вопрос,
+                     сколько изменений ждёт сервера, а результат всегда показывается диалогом. -->
+                <!-- Без Appearance=Primary: акцентная кисть WPF-UI в этом окне не подхватывается,
+                     и кнопка выходила белым текстом на белом фоне - надписи не было видно. -->
+                <ui:Button Content="{Binding SendStatusesTitle}" Command="{Binding SendStatusesCommand}"
+                           FontWeight="SemiBold" Margin="0,0,8,0"
+                           Foreground="{ui:ThemeResource TextFillColorPrimaryBrush}"
+                           ToolTip="Отправить изменённые статусы коллизий на сервер"/>
                 <ui:Button Content="Сохранить все" Command="{Binding SaveAllReportsCommand}" Margin="0,0,8,0"/>
                 <!-- ClickMode=Press: иначе клик по кнопке при открытом Popup перехватывается им,
                      и кнопка остаётся нажатой при закрытом списке. -->
+                <ui:Button Content="Сбросить фильтры" Command="{Binding SelectedReport.ResetFiltersCommand}"
+                           Margin="0,0,8,0"
+                           ToolTip="Снять фильтры со всех колонок таблицы"/>
                 <ToggleButton x:Name="ColumnsToggle" Content="Колонки" ClickMode="Press"
                               ToolTip="Показать или скрыть колонки таблицы"/>
                 <Popup IsOpen="{Binding IsChecked, ElementName=ColumnsToggle}"
                        PlacementTarget="{Binding ElementName=ColumnsToggle}"
                        Placement="Bottom" StaysOpen="False" AllowsTransparency="False">
-                    <Border Background="White"
-                            BorderBrush="Gray"
-                            TextElement.Foreground="Black"
-                            BorderThickness="1" Padding="8" MinWidth="180">
+                    <Border Style="{StaticResource PopupPanelStyle}" MinWidth="180">
                         <ItemsControl ItemsSource="{Binding Columns, ElementName=ClashesGrid}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <CheckBox Content="{Binding Header}" Margin="0,2"
+                                    <CheckBox Content="{Binding Header}"
+                                              Style="{StaticResource PopupCheckBoxStyle}"
                                               IsChecked="{Binding Visibility, Mode=TwoWay,
                                                   Converter={StaticResource VisibilityToBooleanConverter}}" />
                                 </DataTemplate>
@@ -198,12 +226,19 @@
                        Text="{Binding SelectedReport.ImportedClashesCount, StringFormat=Импортировано коллизий: {0}}" />
             <TextBlock Margin="12,4,0,0" Foreground="MediumVioletRed"
                        Text="{Binding SelectedReport.ResolvedClashesCount, StringFormat=Найдено пар в Revit: {0}}" />
+            <!-- Сколько строк осталось после фильтра. Пусто, когда фильтров нет. -->
+            <TextBlock Margin="12,4,0,0" FontWeight="SemiBold"
+                       Foreground="{ui:ThemeResource TextFillColorPrimaryBrush}"
+                       Text="{Binding SelectedReport.FilterInfo}" />
         </DockPanel>
 
+        <!-- VirtualizationMode=Standard вместо принятого в DataGrid Recycling: переиспользование строк
+             отдаёт списку статусов ячейку от другой коллизии, и выбор уходит не в ту строку. -->
         <DataGrid x:Name="ClashesGrid" Grid.Row="3" ItemsSource="{Binding SelectedReport.GuiClashes}"
                   SelectedItem="{Binding SelectedReport.SelectedGuiClash}" AutoGenerateColumns="False"
                   CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column"
                   CanUserResizeColumns="True" CanUserResizeRows="False" MinColumnWidth="40"
+                  VirtualizingPanel.VirtualizationMode="Standard"
                   ColumnHeaderStyle="{StaticResource ResizableColumnHeaderStyle}"
                   Loaded="ClashesGrid_Loaded"
                   GridLinesVisibility="Horizontal" BorderThickness="1"
@@ -224,13 +259,20 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid>
+                                <!-- Список статусов берём из самой коллизии, а не через окно-предок:
+                                     привязка через окно срабатывала позже установки выбранного значения,
+                                     и выбор пользователя не доходил до модели - статус менялся только на вид. -->
+                                <!-- Выбранный статус пишем в модель из обработчика SelectionChanged,
+                                     а не двусторонней привязкой: в ячейке DataGrid запись SelectedValue
+                                     в источник не доходила, статус менялся только на вид. -->
                                 <ComboBox x:Name="StatusBox"
-                                    ItemsSource="{Binding DataContext.SelectedReport.ClashStatuses, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    ItemsSource="{Binding Statuses}"
                                     DisplayMemberPath="Name"
                                     SelectedValuePath="Status"
-                                    SelectedValue="{Binding ClashStatus, Mode=TwoWay}"
+                                    SelectedValue="{Binding ClashStatus, Mode=OneWay}"
+                                    SelectionChanged="StatusBox_SelectionChanged"
                                     Margin="0,2"
-                                    ToolTip="Новый статус уйдёт на сервер коллизий по кнопке «Сохранить все»" />
+                                    ToolTip="Новый статус уйдёт в базу по кнопке «Отправить статусы»" />
                                 <!-- У коллизии "Нет пересечения" статус не выбирают: показываем его текстом. -->
                                 <TextBlock x:Name="StatusText" Text="{Binding ClashStatusName}"
                                            VerticalAlignment="Center" Visibility="Collapsed" />
@@ -244,7 +286,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Кем изменён" Binding="{Binding StatusChangedBy}" SortMemberPath="StatusChangedBy" Width="140" />
+                <DataGridTextColumn Header="Кем изменён" Binding="{Binding StatusAuthorInfo}" SortMemberPath="StatusAuthorInfo" Width="180" />
                 <DataGridTextColumn Header="Когда изменён" Binding="{Binding StatusChangedAt}" SortMemberPath="StatusChangedAt" Width="120" />
                 <DataGridTemplateColumn Header="Снимок" Width="145">
                     <DataGridTemplateColumn.CellTemplate>
@@ -273,6 +315,9 @@
                        Text="{Binding SelectedReport.Message}" />
             <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" TextTrimming="CharacterEllipsis"
                        FontWeight="SemiBold" Text="{Binding SelectedReport.UnsentStatusesMessage}" />
+            <!-- Предупреждение об отчёте без связи с базой: постоянное, до правки статусов. -->
+            <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" TextTrimming="CharacterEllipsis"
+                       Foreground="OrangeRed" Text="{Binding SelectedReport.ServerLinkInfo}" />
             <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" TextTrimming="CharacterEllipsis"
                        Foreground="MediumVioletRed" Text="{Binding Diagnostic}" />
         </DockPanel>

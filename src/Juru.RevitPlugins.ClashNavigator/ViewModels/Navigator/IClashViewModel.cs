@@ -14,6 +14,13 @@ internal interface IClashViewModel : INotifyPropertyChanged, ICommentable {
     string ClashStatusName { get; }
 
     /// <summary>
+    /// Статусы, доступные для выбора в таблице. Список принадлежит самой коллизии,
+    /// чтобы список в ячейке не искал источник через окно: такая привязка срабатывает позже
+    /// установки выбранного значения, и выбор пользователя терялся
+    /// </summary>
+    IReadOnlyCollection<ClashStatusViewModel> Statuses { get; }
+
+    /// <summary>
     /// Статус коллизии можно изменить в таблице навигатора
     /// </summary>
     bool CanChangeStatus { get; }
@@ -23,6 +30,12 @@ internal interface IClashViewModel : INotifyPropertyChanged, ICommentable {
     /// Пустая строка, если статус ни разу не меняли из Ревита
     /// </summary>
     string StatusChangedBy { get; }
+
+    /// <summary>
+    /// Содержимое колонки "Кем изменён". У неотправленного изменения статуса сообщает об этом,
+    /// чтобы правку пользователя было видно в строке
+    /// </summary>
+    string StatusAuthorInfo { get; }
 
     /// <summary>
     /// Время последнего изменения статуса в часовом поясе пользователя

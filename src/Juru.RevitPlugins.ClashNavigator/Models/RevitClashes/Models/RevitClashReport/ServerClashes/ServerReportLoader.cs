@@ -90,6 +90,7 @@ internal static class ServerReportLoader {
             Name = dto.ClashTestName,
             ServerId = dto.Id,
             ClashStatus = ServerClashStatus.ToClashStatus(dto.Status),
+            ServerStatus = dto.Status,
             StatusChangedBy = dto.StatusChangedBy,
             StatusChangedAt = dto.StatusChangedAt,
             ClashPoint = ToClashPoint(dto),

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -12,6 +13,7 @@ using dosymep.SimpleServices;
 using dosymep.WpfUI.Core;
 
 using Juru.RevitPlugins.ClashNavigator.Models;
+using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.ClashNavigator.ViewModels.Navigator;
 
 using Visibility = System.Windows.Visibility;
@@ -78,6 +80,41 @@ namespace Juru.RevitPlugins.ClashNavigator.Views.Navigator
                 }
 
                 column.Visibility = columnSettings.IsVisible ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        // Закрытие фильтра щелчком вне него применяет отмеченные значения: без этого галочки
+        // оставались снятыми, а таблица - неотфильтрованной, и фильтр выглядел неработающим.
+        private void FilterPopup_Closed(object sender, EventArgs e)
+        {
+            if (sender is Popup popup
+                && popup.DataContext is ColumnFilterViewModel filter
+                && filter.ApplyCommand.CanExecute(null))
+            {
+                filter.ApplyCommand.Execute(null);
+            }
+        }
+
+        // Статус коллизии пишем в модель здесь, а не двусторонней привязкой SelectedValue:
+        // в шаблоне ячейки DataGrid запись в источник не доходила, и выбранный статус оставался
+        // только в самом списке - счётчик изменений и колонка "Кем изменён" его не видели.
+        private void StatusBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is not ComboBox box
+                || box.DataContext is not IClashViewModel clash
+                || box.SelectedValue is not ClashStatus status
+                || clash.ClashStatus == status)
+            {
+                return;
+            }
+
+            clash.ClashStatus = status;
+
+            // Если модель выбор не приняла, возвращаем список к её значению: пусть расхождение
+            // будет видно сразу, а не оборачивается молчаливым "статус изменён, но никуда не идёт".
+            if (clash.ClashStatus != status)
+            {
+                box.SelectedValue = clash.ClashStatus;
             }
         }
 
