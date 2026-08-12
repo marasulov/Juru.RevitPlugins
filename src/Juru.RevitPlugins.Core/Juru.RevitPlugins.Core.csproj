@@ -5,6 +5,14 @@
         <Configurations>$(Configurations);Release.R23;Release.R24;Release.R25;Release.R26;Release.R27</Configurations>
 		<UseWPF>true</UseWPF>
 		<DefineConstants>REVIT_2023_OR_LESS</DefineConstants>
+        <!-- HintPath обязан побеждать. SDK-проект превращает все .dll внутри папки проекта в
+             CandidateAssemblyFiles, а этот путь поиска у RAR идёт раньше HintPath: для
+             dosymep.Revit/dosymep.Bim4Everyone выигрывала libs\2020 (первая одноимённая папка),
+             и сборка компилировалась против версии 2020.2.4.0, тогда как в выход копируется
+             2024.2.4.0. В процессе Ревита это давало
+             "Could not load file or assembly 'dosymep.Revit, Version=2020.2.4.0'"
+             при первом обращении к типу из dosymep.Revit - например при сохранении отчёта. -->
+        <AssemblySearchPaths>{HintPathFromItem};$(AssemblySearchPaths)</AssemblySearchPaths>
     </PropertyGroup>
 
     <ItemGroup>

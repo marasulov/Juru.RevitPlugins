@@ -18,6 +18,17 @@ internal static class ClashServerOptions {
     /// </summary>
     public static string DefaultUrl { get; } = ReadDefaultUrl();
 
+    /// <summary>
+    /// Адрес сервера коллизий: настройка пользователя переопределяет <see cref="DefaultUrl"/>.
+    /// Пустая строка, если адрес не задан ни там, ни там.
+    /// </summary>
+    /// <param name="settingsConfig">Настройки плагина</param>
+    public static string ResolveUrl(SettingsConfig settingsConfig) {
+        return string.IsNullOrWhiteSpace(settingsConfig?.ClashServerUrl)
+            ? DefaultUrl
+            : settingsConfig.ClashServerUrl;
+    }
+
     private static string ReadDefaultUrl() {
         try {
             string directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);

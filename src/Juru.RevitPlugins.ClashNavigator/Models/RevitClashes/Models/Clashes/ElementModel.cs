@@ -63,6 +63,12 @@ internal class ElementModel : IEquatable<ElementModel> {
     /// </summary>
     public string FamilyName { get; set; }
     public string Category { get; set; }
+    /// <summary>
+    /// Имя объекта коллизии из отчёта (Navisworks или сервер коллизий).
+    /// Хранится отдельно от <see cref="Name"/>, потому что для сопоставленного элемента
+    /// <see cref="Name"/> берётся из Revit и имя из отчёта было бы потеряно.
+    /// </summary>
+    public string ObjectName { get; set; }
     public string Level { get; set; }
     public string DocumentName { get; set; }
     public TransformModel TransformModel { get; set; } = new TransformModel(Transform.Identity);

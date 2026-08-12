@@ -38,6 +38,7 @@ internal class ImaginaryFirstClashViewModel
         FirstElementVolume = firstElement.ElementVolume;
 
         FirstId = _firstElement.Element.Id;
+        FirstObjectName = _firstElement.Element.ObjectName;
         FirstCategory = _firstElement.Element.Category;
         FirstTypeName = _firstElement.Element.Name;
         FirstFamilyName = _firstElement.Element.FamilyName;
@@ -72,9 +73,18 @@ internal class ImaginaryFirstClashViewModel
 
     public string ClashStatusName { get; }
 
+    // "Нет пересечения" - результат локального пересчёта геометрии, статус такой коллизии не меняют.
+    public bool CanChangeStatus => false;
+
+    public string StatusChangedBy => string.Empty;
+
+    public string StatusChangedAt => string.Empty;
+
     public string ClashName { get => string.Empty; set { return; } }
 
     public ElementId FirstId { get; }
+
+    public string FirstObjectName { get; }
 
     public string FirstTypeName { get; }
 
@@ -87,6 +97,8 @@ internal class ImaginaryFirstClashViewModel
     public string FirstCategory { get; }
 
     public ElementId SecondId => ElementId.InvalidElementId;
+
+    public string SecondObjectName => string.Empty;
 
     public ExpandoObject FirstElementParams { get; }
 

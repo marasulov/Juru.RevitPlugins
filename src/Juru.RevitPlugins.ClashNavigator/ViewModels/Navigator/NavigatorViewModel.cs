@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
 
@@ -18,6 +19,7 @@ using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport;
 using Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport.ServerClashes;
 using Juru.RevitPlugins.ClashNavigator.Commands;
+using Juru.RevitPlugins.ClashNavigator.Services.ClashStatuses;
 using Juru.RevitPlugins.ClashNavigator.Services.ReportsMerging;
 using Juru.RevitPlugins.ClashNavigator.Services.RevitViewSettings;
 
@@ -34,6 +36,7 @@ internal class NavigatorViewModel : BaseViewModel {
     private readonly ILocalizationService _localizationService;
     private readonly IContentDialogService _contentDialogService;
     private readonly SettingsConfig _settingsConfig;
+    private readonly IClashStatusService _clashStatusService;
     private bool _openFromClashDetector;
     private ReportViewModel _selectedFile;
     private ObservableCollection<ReportViewModel> _reports;
@@ -58,6 +61,7 @@ internal class NavigatorViewModel : BaseViewModel {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _contentDialogService = contentDialogService ?? throw new ArgumentNullException(nameof(contentDialogService));
         _settingsConfig = settingsConfig ?? throw new ArgumentNullException(nameof(settingsConfig));
+        _clashStatusService = new ServerClashStatusService(_settingsConfig);
         Reports = [];
 
         if(reportName == null) {
@@ -69,6 +73,7 @@ internal class NavigatorViewModel : BaseViewModel {
         OpenClashDetectorCommand = RelayCommand.Create(OpenClashDetector, CanOpenClashDetector);
         LoadCommand = RelayCommand.Create(Load);
         LoadFromServerCommand = RelayCommand.Create(LoadFromServer);
+        LoadFromServerOnStartupCommand = RelayCommand.Create(LoadFromServerOnStartup);
         DeleteCommand = RelayCommand.Create(Delete, CanDelete);
         SelectClashCommand = RelayCommand.Create<IClashViewModel>(SelectClash, CanSelectClash);
         EditCommentsCommand = RelayCommand.Create<ICommentable>(ShowCommentsEditor, CanEditComments);
@@ -85,6 +90,7 @@ internal class NavigatorViewModel : BaseViewModel {
     public ICommand OpenClashDetectorCommand { get; }
     public ICommand LoadCommand { get; }
     public ICommand LoadFromServerCommand { get; }
+    public ICommand LoadFromServerOnStartupCommand { get; }
     public ICommand DeleteCommand { get; }
     public ICommand SaveAllReportsCommand { get; }
     public ICommand AskForSaveCommand { get; }
@@ -111,6 +117,13 @@ internal class NavigatorViewModel : BaseViewModel {
         set => RaiseAndSetIfChanged(ref _reports, value);
     }
 
+    /// <summary>
+    /// Заголовок окна со временем сборки загруженной сборки плагина.
+    /// Ревит не умеет подменять уже загруженную сборку, поэтому по этой дате видно,
+    /// работает ли пересобранный код или процесс держит прежний.
+    /// </summary>
+    public string Title { get; } = BuildTitle();
+
     public string Diagnostic {
         get => _diagnostic;
         private set => RaiseAndSetIfChanged(ref _diagnostic, value);
@@ -124,6 +137,47 @@ internal class NavigatorViewModel : BaseViewModel {
     public ReportViewModel SelectedReport {
         get => _selectedFile;
         set => RaiseAndSetIfChanged(ref _selectedFile, value);
+    }
+
+    /// <summary>
+    /// Загружать отчёт с сервера коллизий сразу при открытии навигатора.
+    /// </summary>
+    public bool AutoLoadFromServer {
+        get => _settingsConfig.AutoLoadFromServer;
+        set {
+            if(_settingsConfig.AutoLoadFromServer != value) {
+                _settingsConfig.AutoLoadFromServer = value;
+                _settingsConfig.SaveProjectConfig();
+                RaisePropertyChanged(nameof(AutoLoadFromServer));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Возвращает сохранённые настройки колонок таблицы коллизий, ключ - заголовок колонки.
+    /// </summary>
+    public IReadOnlyDictionary<string, ClashColumnSettings> GetColumnSettings() {
+        return _settingsConfig.NavigatorColumns ?? [];
+    }
+
+    /// <summary>
+    /// Сохраняет настройки колонок таблицы коллизий, чтобы восстановить их при следующем открытии окна.
+    /// </summary>
+    /// <param name="columns">Настройки колонок, ключ - заголовок колонки</param>
+    public void SaveColumnSettings(IReadOnlyDictionary<string, ClashColumnSettings> columns) {
+        if(columns is null) { throw new ArgumentNullException(nameof(columns)); }
+
+        _settingsConfig.NavigatorColumns = columns.ToDictionary(item => item.Key, item => item.Value);
+        _settingsConfig.SaveProjectConfig();
+    }
+
+    private static string BuildTitle() {
+        try {
+            string location = Assembly.GetExecutingAssembly().Location;
+            return $"Навигатор коллизий (сборка {File.GetLastWriteTime(location):dd.MM.yyyy HH:mm})";
+        } catch(Exception) {
+            return "Навигатор коллизий";
+        }
     }
 
     private void InitializeReports(string reportName = null) {
@@ -160,7 +214,17 @@ internal class NavigatorViewModel : BaseViewModel {
         return OpenFromClashDetector;
     }
 
+    /// <summary>
+    /// Есть изменения статусов, не отправленные на сервер коллизий.
+    /// </summary>
+    private bool HasUnsentStatuses => Reports.Any(report => report.UnsentStatusesCount > 0);
+
     private void AskForSave() {
+        // Спрашиваем только когда есть что терять: без изменений статусов диалог при закрытии мешает.
+        if(!HasUnsentStatuses) {
+            return;
+        }
+
         if(MessageBoxService.Show(_localizationService.GetLocalizedString("Navigator.SavePrompt"),
             _localizationService.GetLocalizedString("BIM"),
             MessageBoxButton.YesNo,
@@ -185,6 +249,7 @@ internal class NavigatorViewModel : BaseViewModel {
                 MessageBoxService,
                 _contentDialogService,
                 _settingsConfig,
+                _clashStatusService,
                 r.Clashes?.ToArray() ?? []))
             .ToArray();
     }
@@ -241,24 +306,45 @@ internal class NavigatorViewModel : BaseViewModel {
         WarnAboutUnloadedLinks();
     }
 
+    /// <summary>
+    /// Загружает отчёт с сервера при открытии окна, если это включено пользователем.
+    /// В отличие от загрузки по кнопке, ошибки не показываются диалогом: открытие навигатора
+    /// не должно упираться в недоступный сервер, о проблеме сообщает строка состояния.
+    /// </summary>
+    private void LoadFromServerOnStartup() {
+        // При открытии из ClashDetective навигатор показывает конкретный отчёт проверки,
+        // подмешивать к нему серверный отчёт не нужно.
+        if(!AutoLoadFromServer || OpenFromClashDetector) {
+            return;
+        }
+
+        LoadFromServer(silent: true);
+    }
+
     private void LoadFromServer() {
+        // Включаем автозагрузку после первой успешной загрузки, чтобы не нажимать кнопку каждый раз.
+        if(LoadFromServer(silent: false)) {
+            AutoLoadFromServer = true;
+        }
+    }
+
+    /// <returns>True, если отчёт загружен с сервера.</returns>
+    private bool LoadFromServer(bool silent) {
         try {
             string fileName = _revitRepository.GetDocumentName();
             if(!RevitFileNameInfo.TryParse(fileName, out var fileInfo)) {
                 Diagnostic = $"Имя файла \"{fileName}\" не соответствует стандарту наименования " +
                     "(Проект-Объект-Дисциплина-vXX).";
-                MessageBox.Show(Diagnostic, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                ShowError(Diagnostic, silent);
+                return false;
             }
 
             // Настройка пользователя переопределяет адрес из ClashServer.json рядом со сборкой.
-            string serverUrl = string.IsNullOrWhiteSpace(_settingsConfig.ClashServerUrl)
-                ? ClashServerOptions.DefaultUrl
-                : _settingsConfig.ClashServerUrl;
+            string serverUrl = ClashServerOptions.ResolveUrl(_settingsConfig);
             if(string.IsNullOrWhiteSpace(serverUrl)) {
                 Diagnostic = "Не задан адрес сервера коллизий: ни в настройках плагина, ни в файле ClashServer.json.";
-                MessageBox.Show(Diagnostic, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                ShowError(Diagnostic, silent);
+                return false;
             }
 
             var client = new ClashServerClient(serverUrl);
@@ -274,16 +360,29 @@ internal class NavigatorViewModel : BaseViewModel {
                 MessageBoxService,
                 _contentDialogService,
                 _settingsConfig,
+                _clashStatusService,
                 report.Clashes?.ToArray() ?? []);
 
             SetReports(Reports.Where(r => r.Name != reportViewModel.Name).Append(reportViewModel));
 
             Diagnostic = $"Загружено с сервера коллизий: {reportViewModel.ImportedClashesCount}.";
-            WarnAboutUnloadedLinks();
+            if(!silent) {
+                WarnAboutUnloadedLinks();
+            }
+            return true;
         } catch(Exception exception) {
             Diagnostic = $"Ошибка загрузки с сервера: {exception.GetBaseException().Message}";
-            MessageBox.Show(Diagnostic, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
+            ShowError(Diagnostic, silent);
+            return false;
         }
+    }
+
+    private void ShowError(string message, bool silent) {
+        if(silent) {
+            return;
+        }
+
+        MessageBox.Show(message, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
     /// <summary>
@@ -344,8 +443,24 @@ internal class NavigatorViewModel : BaseViewModel {
     }
 
     private void SaveAllReports() {
-        foreach(var report in Reports) {
-            report.SaveCommand.Execute(default);
+        // Кнопка обязана давать видимый результат: без этой сводки нажатие выглядело как
+        // "ничего не произошло", когда отправлять на сервер было нечего.
+        try {
+            int unsent = Reports.Sum(report => report.UnsentStatusesCount);
+            foreach(var report in Reports) {
+                report.SaveCommand.Execute(default);
+            }
+
+            // Разделяем локальную запись и отправку в базу: раньше сообщение "Сохранено отчётов"
+            // читалось как "отправлено на сервер", хотя на сервер могло не уйти ничего.
+            Diagnostic = unsent == 0
+                ? $"Отчётов записано в файлы: {Reports.Count}. Статусы не менялись, "
+                    + "на сервер ничего не отправлялось."
+                : $"Отчётов записано в файлы: {Reports.Count}. Статусов к отправке: {unsent} "
+                    + "(результат отправки - в строке слева).";
+        } catch(Exception exception) {
+            Diagnostic = $"Ошибка сохранения: {exception.GetBaseException().Message}";
+            MessageBox.Show(Diagnostic, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

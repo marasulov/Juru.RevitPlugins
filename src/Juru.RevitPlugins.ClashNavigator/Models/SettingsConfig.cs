@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 using Juru.RevitPlugins.Core.ProjectConfigs;
@@ -31,6 +32,18 @@ internal class SettingsConfig : ProjectConfig {
     /// Пустое значение означает адрес из <see cref="ClashServerOptions.DefaultUrl"/>.
     /// </summary>
     public string ClashServerUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Загружать отчёт с сервера коллизий сразу при открытии навигатора.
+    /// Включается автоматически после первой успешной загрузки с сервера.
+    /// </summary>
+    public bool AutoLoadFromServer { get; set; }
+
+    /// <summary>
+    /// Ширина и видимость колонок таблицы навигатора коллизий, ключ - заголовок колонки.
+    /// Колонки, которых здесь нет, показываются с настройками из разметки окна.
+    /// </summary>
+    public Dictionary<string, ClashColumnSettings> NavigatorColumns { get; set; } = [];
 
     public static SettingsConfig GetSettingsConfig(IConfigSerializer serializer) {
         try {

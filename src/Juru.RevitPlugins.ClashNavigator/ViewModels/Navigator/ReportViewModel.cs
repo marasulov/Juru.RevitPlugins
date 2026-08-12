@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -18,6 +19,7 @@ using Juru.RevitPlugins.ClashNavigator.Models;
 using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
 using Juru.RevitPlugins.ClashNavigator.Models.Interfaces;
+using Juru.RevitPlugins.ClashNavigator.Services.ClashStatuses;
 using Juru.RevitPlugins.ClashNavigator.ViewModels.ClashDetective;
 using Juru.RevitPlugins.ClashNavigator.ViewModels.Services;
 
@@ -25,6 +27,8 @@ using Wpf.Ui;
 
 namespace Juru.RevitPlugins.ClashNavigator.ViewModels.Navigator;
 internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportViewModel> {
+    private const string _savedMessage = "Отчёт сохранён.";
+
     private RevitRepository _revitRepository;
 
     private string _name;
@@ -43,13 +47,16 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     private readonly ILocalizationService _localization;
     private readonly IContentDialogService _contentDialogService;
     private readonly SettingsConfig _settingsConfig;
+    private readonly IClashStatusService _clashStatusService;
 
     private static readonly string[] _filterableColumns = [
         nameof(IClashViewModel.ClashName),
         nameof(IClashViewModel.FirstDocumentName),
         nameof(IClashViewModel.FirstId),
+        nameof(IClashViewModel.FirstObjectName),
         nameof(IClashViewModel.SecondDocumentName),
         nameof(IClashViewModel.SecondId),
+        nameof(IClashViewModel.SecondObjectName),
         nameof(IClashViewModel.ClashStatusName)
     ];
 
@@ -61,6 +68,7 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         IMessageBoxService messageBoxService,
         IContentDialogService contentDialogService,
         SettingsConfig settingsConfig,
+        IClashStatusService clashStatusService,
         ICollection<ClashModel> clashes) {
 
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
@@ -69,12 +77,14 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         MessageBoxService = messageBoxService ?? throw new ArgumentNullException(nameof(messageBoxService));
         _contentDialogService = contentDialogService ?? throw new ArgumentNullException(nameof(contentDialogService));
         _settingsConfig = settingsConfig ?? throw new ArgumentNullException(nameof(settingsConfig));
+        _clashStatusService = clashStatusService ?? throw new ArgumentNullException(nameof(clashStatusService));
 
+        // "Нет пересечения" пользователь не назначает: этот статус выставляет пересчёт геометрии,
+        // а <see cref="ClashViewModel.ClashStatus"/> его присвоение и не примет.
         ClashStatuses = new ReadOnlyCollection<ClashStatusViewModel>([
             new ClashStatusViewModel(_localization, ClashStatus.Active),
             new ClashStatusViewModel(_localization, ClashStatus.Analized),
             new ClashStatusViewModel(_localization, ClashStatus.Solved),
-            new ClashStatusViewModel(_localization, ClashStatus.Imaginary),
         ]);
 
         ColumnFilters = _filterableColumns.ToDictionary(
@@ -128,6 +138,18 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     }
 
     public int ImportedClashesCount => _allClashes?.Count ?? 0;
+
+    /// <summary>
+    /// Количество коллизий, статус которых изменён, но ещё не отправлен на сервер.
+    /// </summary>
+    public int UnsentStatusesCount => _allClashes?.Count(c => c.HasUnsentStatus) ?? 0;
+
+    /// <summary>
+    /// Подсказка о неотправленных изменениях статуса. Пустая строка, если всё отправлено.
+    /// </summary>
+    public string UnsentStatusesMessage => UnsentStatusesCount == 0
+        ? string.Empty
+        : $"Изменено статусов: {UnsentStatusesCount}. Нажмите «Сохранить все», чтобы отправить на сервер.";
 
     public int ResolvedClashesCount => _allClashes?.Count(c => c.IsResolved) ?? 0;
 
@@ -215,6 +237,8 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         SetIntersectionPercentage(GuiClashes);
         RaisePropertyChanged(nameof(ImportedClashesCount));
         RaisePropertyChanged(nameof(ResolvedClashesCount));
+        RaisePropertyChanged(nameof(UnsentStatusesCount));
+        RaisePropertyChanged(nameof(UnsentStatusesMessage));
         RefreshColumnFilters();
     }
 
@@ -236,8 +260,21 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     }
 
     private void Save() {
+        // Статусы уходят на сервер здесь, а не сразу при выборе в таблице: запрос синхронный,
+        // и на каждый клик по списку окно подвисало бы на время ответа сервера.
+        (string? serverMessage, bool isError) = SendStatusesToServer();
         GetUpdatedConfig().SaveProjectConfig();
-        Message = _localization.GetLocalizedString("Navigator.SuccessSave");
+
+        // Текст задан здесь, а не через ILocalizationService: файла локализации в плагине нет,
+        // GetLocalizedString возвращает пустую строку - строка состояния оставалась пустой.
+        Message = serverMessage is null ? _savedMessage : $"{_savedMessage} {serverMessage}";
+        if(isError) {
+            // Ошибку отправки в базу диалогом: строку состояния внизу окна легко не заметить.
+            MessageBoxService.Show(
+                serverMessage!, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
         RefreshMessage();
     }
 
@@ -245,12 +282,13 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         var config = GetUpdatedConfig();
         var saver = new ConfigSaverService(_revitRepository, SaveFileDialogService);
         saver.Save(config);
-        Message = _localization.GetLocalizedString("Navigator.SuccessSave");
+        Message = _savedMessage;
         RefreshMessage();
     }
 
     private void InitializeClashes(IEnumerable<ClashModel> clashModels) {
-        ResetClashes(clashModels.Select(item => new ClashViewModel(_revitRepository, item, _localization)));
+        ResetClashes(clashModels.Select(item =>
+            new ClashViewModel(_revitRepository, item, _localization, RaiseUnsentStatusesChanged)));
     }
 
     private void SetIntersectionPercentage(ICollection<IClashViewModel> clashes) {
@@ -423,7 +461,63 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
                     prop.SetValue(item, newValue);
                 }
             }
+
+            RaiseUnsentStatusesChanged();
         }
+    }
+
+    /// <summary>
+    /// Отправляет в базу статусы, изменённые с последнего сохранения, и запоминает автора изменения.
+    /// Признак неотправленного изменения снимается только с принятых сервером коллизий,
+    /// поэтому следующее сохранение повторит отправку неудавшихся.
+    /// </summary>
+    /// <returns>Текст для строки состояния (null, если отправлять было нечего) и признак ошибки.</returns>
+    private (string? Message, bool IsError) SendStatusesToServer() {
+        var changedClashes = GetUnsentClashes();
+        if(changedClashes.Length == 0) {
+            return (null, false);
+        }
+
+        var sendable = changedClashes.Where(c => _clashStatusService.CanUpdate(c.GetClashModel())).ToArray();
+        if(sendable.Length == 0) {
+            // Отчёт из XML Нависа, из проверки Ревита или сохранённый до появления отправки статусов:
+            // Id коллизии в базе неизвестен, отправлять некуда. Признак снимаем, иначе окно
+            // будет спрашивать о неотправленных изменениях при каждом закрытии.
+            foreach(var clash in changedClashes) {
+                clash.ClearUnsentStatus();
+            }
+            RaiseUnsentStatusesChanged();
+            return ("В базу не отправлено: коллизии загружены не с сервера. "
+                + "Нажмите «Загрузить с сервера», чтобы работать со статусами базы.", false);
+        }
+
+        var result = _clashStatusService.UpdateStatuses(
+            sendable.Select(c => c.GetClashModel()).ToArray());
+        if(!result.RequestDelivered) {
+            return ($"Статусы не отправлены на сервер: {result.ErrorMessage}", true);
+        }
+
+        var accepted = sendable.Where(c => !result.FailedClashIds.Contains(c.Clash.ServerId!.Value));
+        foreach(var clash in accepted) {
+            clash.SetStatusAuthor(result.ChangedBy, result.ChangedAt);
+        }
+        RaiseUnsentStatusesChanged();
+
+        if(result.HasError) {
+            // Часть статусов записана: повторная отправка уйдёт только по непринятым коллизиям.
+            return ($"Отправлено статусов: {result.Updated}, но {result.ErrorMessage}", true);
+        }
+
+        return ($"Статусов отправлено на сервер: {result.Updated}, автор: {result.ChangedBy}.", false);
+    }
+
+    private ClashViewModel[] GetUnsentClashes() {
+        return [.. GetClashes().Where(c => c.HasUnsentStatus)];
+    }
+
+    private void RaiseUnsentStatusesChanged() {
+        RaisePropertyChanged(nameof(UnsentStatusesCount));
+        RaisePropertyChanged(nameof(UnsentStatusesMessage));
     }
 
     private void PickFirstElements() {

@@ -203,6 +203,14 @@ internal class NavisXmlClashesLoader : BaseClashesLoader, IClashesLoader {
     }
 
     private ElementModel GetElementModelFromNavisworks(XElement clashObject) {
+        var elementModel = ResolveElementModelFromNavisworks(clashObject);
+        // Имя объекта из отчёта показываем в таблице как есть, независимо от того,
+        // удалось ли сопоставить элемент с моделью Revit.
+        elementModel.ObjectName = GetSmartTagValue(clashObject, "Item Name");
+        return elementModel;
+    }
+
+    private ElementModel ResolveElementModelFromNavisworks(XElement clashObject) {
         var idValue = clashObject.Elements("objectattribute")
             .FirstOrDefault(attribute => string.Equals(
                 (string)attribute.Element("name"), "Element ID", StringComparison.OrdinalIgnoreCase))

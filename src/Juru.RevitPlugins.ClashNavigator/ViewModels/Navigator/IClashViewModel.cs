@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using System.Dynamic;
 
@@ -13,9 +13,30 @@ internal interface IClashViewModel : INotifyPropertyChanged, ICommentable {
 
     string ClashStatusName { get; }
 
+    /// <summary>
+    /// Статус коллизии можно изменить в таблице навигатора
+    /// </summary>
+    bool CanChangeStatus { get; }
+
+    /// <summary>
+    /// Учётная запись Windows, изменившая статус коллизии последней.
+    /// Пустая строка, если статус ни разу не меняли из Ревита
+    /// </summary>
+    string StatusChangedBy { get; }
+
+    /// <summary>
+    /// Время последнего изменения статуса в часовом поясе пользователя
+    /// </summary>
+    string StatusChangedAt { get; }
+
     string ClashName { get; set; }
 
     ElementId FirstId { get; }
+
+    /// <summary>
+    /// Имя первого объекта коллизии из отчёта (колонка "Элемент А")
+    /// </summary>
+    string FirstObjectName { get; }
 
     string FirstTypeName { get; }
 
@@ -28,6 +49,11 @@ internal interface IClashViewModel : INotifyPropertyChanged, ICommentable {
     string FirstCategory { get; }
 
     ElementId SecondId { get; }
+
+    /// <summary>
+    /// Имя второго объекта коллизии из отчёта (колонка "Элемент B")
+    /// </summary>
+    string SecondObjectName { get; }
 
     string SecondTypeName { get; }
 

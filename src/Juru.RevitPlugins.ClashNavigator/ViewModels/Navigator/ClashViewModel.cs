@@ -20,21 +20,36 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
     public const string ElementParamFieldName = "Field";
     private ClashStatus _clashStatus;
     private string _clashName;
+    private string _statusChangedBy;
+    private string _statusChangedAt;
+    private bool _hasUnsentStatus;
+    private readonly Action _statusChanged;
     private readonly RevitRepository _revitRepository;
     private readonly ILocalizationService _localizationService;
     private bool _clashDataIsValid;
     private ClashCommentViewModel _selectedComment;
     private bool _canEditComments = true;
 
-    public ClashViewModel(RevitRepository revitRepository, ClashModel clash, ILocalizationService localizationService) {
+    /// <param name="statusChanged">
+    /// Вызывается, когда пользователь изменил статус коллизии. Отчёт по этому вызову обновляет счётчик
+    /// неотправленных изменений: подписка только на выделенную коллизию его пропускала.
+    /// </param>
+    public ClashViewModel(
+        RevitRepository revitRepository,
+        ClashModel clash,
+        ILocalizationService localizationService,
+        Action statusChanged = null) {
+
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _revitRepository = revitRepository;
+        _statusChanged = statusChanged;
 
         ClashName = clash.Name;
         Comments = [..clash.Comments?.Select(c => new ClashCommentViewModel(_revitRepository, c)) ?? []];
         SelectedComment = Comments.FirstOrDefault();
 
         FirstId = clash.MainElement.Id;
+        FirstObjectName = clash.MainElement.ObjectName;
         FirstCategory = clash.MainElement.Category;
         FirstTypeName = clash.MainElement.Name;
         FirstFamilyName = clash.MainElement.FamilyName;
@@ -43,6 +58,7 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
         FirstElementParams = new ExpandoObject();
 
         SecondId = clash.OtherElement.Id;
+        SecondObjectName = clash.OtherElement.ObjectName;
         SecondCategory = clash.OtherElement.Category;
         SecondTypeName = clash.OtherElement.Name;
         SecondFamilyName = clash.OtherElement.FamilyName;
@@ -55,6 +71,9 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
         ClashStatus = clash.ClashStatus;
         Clash = clash;
         Clash.SetRevitRepository(_revitRepository);
+        // Статус, прочитанный из отчёта, отправлять не нужно: он уже такой на сервере,
+        // поэтому SetStatusAuthor здесь же снимает признак неотправленного изменения.
+        SetStatusAuthor(clash.StatusChangedBy, clash.StatusChangedAt);
 
         AddCommentCommand = RelayCommand.Create(AddComment);
         RemoveCommentCommand = RelayCommand.Create<ClashCommentViewModel>(RemoveComment, CanRemoveComment);
@@ -67,14 +86,40 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
     public ClashStatus ClashStatus {
         get => _clashStatus;
         set {
-            if(value != ClashStatus.Imaginary) {
+            if(value != ClashStatus.Imaginary && value != _clashStatus) {
                 RaiseAndSetIfChanged(ref _clashStatus, value);
                 RaisePropertyChanged(nameof(ClashStatusName));
+                HasUnsentStatus = true;
+                _statusChanged?.Invoke();
             }
         }
     }
 
+    /// <summary>
+    /// Статус изменён пользователем, но ещё не отправлен на сервер коллизий.
+    /// Отправка идёт по кнопке сохранения отчёта.
+    /// </summary>
+    public bool HasUnsentStatus {
+        get => _hasUnsentStatus;
+        private set => RaiseAndSetIfChanged(ref _hasUnsentStatus, value);
+    }
+
     public string ClashStatusName => ClashStatus.GetDisplayName();
+
+    /// <summary>
+    /// Статус реальной коллизии пользователь меняет прямо в таблице.
+    /// </summary>
+    public bool CanChangeStatus => true;
+
+    public string StatusChangedBy {
+        get => _statusChangedBy;
+        private set => RaiseAndSetIfChanged(ref _statusChangedBy, value);
+    }
+
+    public string StatusChangedAt {
+        get => _statusChangedAt;
+        private set => RaiseAndSetIfChanged(ref _statusChangedAt, value);
+    }
 
     public string CommentsTitle => ClashName;
 
@@ -108,6 +153,8 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
 
     public ElementId FirstId { get; }
 
+    public string FirstObjectName { get; }
+
     public string FirstTypeName { get; }
 
     public string FirstFamilyName { get; }
@@ -119,6 +166,8 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
     public string FirstCategory { get; }
 
     public ElementId SecondId { get; }
+
+    public string SecondObjectName { get; }
 
     public string SecondTypeName { get; }
 
@@ -164,6 +213,28 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
         Clash.Name = ClashName;
         Clash.Comments = Comments.Select(c => c.GetComment()).ToHashSet();
         return Clash;
+    }
+
+    /// <summary>
+    /// Запоминает автора и время изменения статуса, принятые сервером.
+    /// </summary>
+    /// <param name="changedBy">Учётная запись Windows автора изменения</param>
+    /// <param name="changedAt">Момент изменения в UTC</param>
+    public void SetStatusAuthor(string changedBy, DateTime? changedAt) {
+        ClearUnsentStatus();
+        Clash.StatusChangedBy = changedBy;
+        Clash.StatusChangedAt = changedAt;
+        StatusChangedBy = changedBy ?? string.Empty;
+        StatusChangedAt = changedAt is null
+            ? string.Empty
+            : changedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
+    }
+
+    /// <summary>
+    /// Снимает признак неотправленного статуса: сервер принял статус либо отправлять его некуда.
+    /// </summary>
+    public void ClearUnsentStatus() {
+        HasUnsentStatus = false;
     }
 
     public ElementModel GetFirstElement() {

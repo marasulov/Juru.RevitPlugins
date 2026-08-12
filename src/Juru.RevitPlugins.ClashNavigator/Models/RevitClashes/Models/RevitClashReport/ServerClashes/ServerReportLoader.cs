@@ -88,7 +88,10 @@ internal static class ServerReportLoader {
     private static ClashModel ToClashModel(ClashViewDto dto, ClashServerClient client, RevitRepository revitRepository) {
         var clash = new ClashModel {
             Name = dto.ClashTestName,
-            ClashStatus = ToClashStatus(dto.Status),
+            ServerId = dto.Id,
+            ClashStatus = ServerClashStatus.ToClashStatus(dto.Status),
+            StatusChangedBy = dto.StatusChangedBy,
+            StatusChangedAt = dto.StatusChangedAt,
             ClashPoint = ToClashPoint(dto),
             ImagePath = client.GetImageUrl(dto.ImagePath),
             MainElement = ToElementModel(dto.ObjectAName, dto.ElementIdA, revitRepository),
@@ -98,6 +101,16 @@ internal static class ServerReportLoader {
     }
 
     private static ElementModel ToElementModel(string name, string elementIdString, RevitRepository revitRepository) {
+        var element = ResolveElementModel(name, elementIdString, revitRepository);
+        // Имя объекта из базы показываем в таблице как есть, независимо от того,
+        // удалось ли сопоставить элемент с моделью Revit.
+        element.ObjectName = name ?? string.Empty;
+        return element;
+    }
+
+    private static ElementModel ResolveElementModel(
+        string name, string elementIdString, RevitRepository revitRepository) {
+
         var id = BaseClashesLoader.ParseElementId(elementIdString);
         if(id == ElementId.InvalidElementId) {
             return ToElementModel(name);
@@ -135,15 +148,6 @@ internal static class ServerReportLoader {
             Name = name ?? string.Empty,
             // Сервер не хранит Id элемента и файл-источник, поэтому подсветка/зум в Revit для таких коллизий недоступны.
             DocumentName = "<загружено с сервера>"
-        };
-    }
-
-    private static ClashStatus ToClashStatus(string status) {
-        return status?.ToLowerInvariant() switch {
-            "new" or "active" => ClashStatus.Active,
-            "approved" => ClashStatus.Analized,
-            "resolved" => ClashStatus.Solved,
-            _ => ClashStatus.Active
         };
     }
 }

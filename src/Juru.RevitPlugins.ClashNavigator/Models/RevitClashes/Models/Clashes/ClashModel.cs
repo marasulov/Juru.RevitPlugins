@@ -43,6 +43,23 @@ internal class ClashModel : IEquatable<ClashModel> {
 
     public string Name { get; set; }
     public ClashStatus ClashStatus { get; set; }
+
+    /// <summary>
+    /// Id коллизии в базе сервера. Null у коллизий из отчёта Navisworks или из проверки Ревита:
+    /// для них изменение статуса на сервер не отправляется.
+    /// </summary>
+    public long? ServerId { get; set; }
+
+    /// <summary>
+    /// Учётная запись, изменившая статус коллизии последней, по данным сервера.
+    /// </summary>
+    public string StatusChangedBy { get; set; }
+
+    /// <summary>
+    /// Момент последнего изменения статуса по данным сервера.
+    /// </summary>
+    public DateTime? StatusChangedAt { get; set; }
+
     public ElementModel MainElement { get; set; }
     public ElementModel OtherElement { get; set; }
     /// <summary>Точка коллизии из отчёта Navisworks, в метрах.</summary>

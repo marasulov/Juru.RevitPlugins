@@ -25,4 +25,9 @@ internal class ClashViewDto {
     public string ImagePath { get; set; }
     public DateTime FirstSeenAt { get; set; }
     public DateTime LastSeenAt { get; set; }
+    /// <summary>
+    /// Учётная запись, изменившая статус последней. Null, если статус ни разу не меняли из Ревита.
+    /// </summary>
+    public string StatusChangedBy { get; set; }
+    public DateTime? StatusChangedAt { get; set; }
 }

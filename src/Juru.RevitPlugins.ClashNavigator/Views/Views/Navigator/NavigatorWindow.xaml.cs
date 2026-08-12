@@ -1,11 +1,20 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 using dosymep.Bim4Everyone.SimpleServices;
 using dosymep.SimpleServices;
 using dosymep.WpfUI.Core;
+
+using Juru.RevitPlugins.ClashNavigator.Models;
+using Juru.RevitPlugins.ClashNavigator.ViewModels.Navigator;
+
+using Visibility = System.Windows.Visibility;
 
 namespace Juru.RevitPlugins.ClashNavigator.Views.Navigator
 {
@@ -13,6 +22,8 @@ namespace Juru.RevitPlugins.ClashNavigator.Views.Navigator
     {
         private Window _imagePreviewWindow;
         private Image _imagePreviewImage;
+        private bool _columnSettingsApplied;
+        private bool _startupLoadRequested;
 
         public NavigatorWindow(
             ILoggerService loggerService,
@@ -39,6 +50,127 @@ namespace Juru.RevitPlugins.ClashNavigator.Views.Navigator
         private void ButtonCancel_Click(object sender, RoutedEventArgs e)
         {
             Close();
+        }
+
+        // Ширину и видимость колонок восстанавливаем на Loaded: DataContext на устаревшем пути
+        // (CheckViewModel.ShowClashes) назначается уже после конструктора окна.
+        private void ClashesGrid_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (_columnSettingsApplied || DataContext is not NavigatorViewModel viewModel)
+            {
+                return;
+            }
+
+            _columnSettingsApplied = true;
+            var settings = viewModel.GetColumnSettings();
+            foreach (var column in ClashesGrid.Columns)
+            {
+                if (GetColumnKey(column) is not string key || !settings.TryGetValue(key, out var columnSettings))
+                {
+                    continue;
+                }
+
+                if (columnSettings.Width > 0)
+                {
+                    column.Width = new DataGridLength(columnSettings.Width, columnSettings.IsStarWidth
+                        ? DataGridLengthUnitType.Star
+                        : DataGridLengthUnitType.Pixel);
+                }
+
+                column.Visibility = columnSettings.IsVisible ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (_startupLoadRequested || DataContext is not NavigatorViewModel viewModel)
+            {
+                return;
+            }
+
+            _startupLoadRequested = true;
+
+            // Загрузка с сервера синхронная и на большом отчёте заметно долгая, поэтому запускаем её
+            // фоновым приоритетом: окно успевает отрисоваться до того, как поток UI будет занят.
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                Mouse.OverrideCursor = Cursors.Wait;
+                try
+                {
+                    if (viewModel.LoadFromServerOnStartupCommand.CanExecute(null))
+                    {
+                        viewModel.LoadFromServerOnStartupCommand.Execute(null);
+                    }
+                }
+                finally
+                {
+                    Mouse.OverrideCursor = null;
+                }
+            }), DispatcherPriority.Background);
+        }
+
+        // Изменённые статусы уходят на сервер по кнопке сохранения, поэтому перед закрытием
+        // предлагаем сохранить: иначе правки пользователя потерялись бы молча.
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            if (DataContext is not NavigatorViewModel viewModel)
+            {
+                return;
+            }
+
+            if (viewModel.AskForSaveCommand.CanExecute(null))
+            {
+                viewModel.AskForSaveCommand.Execute(null);
+            }
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            if (DataContext is not NavigatorViewModel viewModel)
+            {
+                return;
+            }
+
+            var saved = viewModel.GetColumnSettings();
+            var settings = new Dictionary<string, ClashColumnSettings>();
+            foreach (var column in ClashesGrid.Columns)
+            {
+                if (GetColumnKey(column) is not string key)
+                {
+                    continue;
+                }
+
+                bool isStarWidth = column.Width.IsStar;
+                double width = isStarWidth ? column.Width.Value : column.ActualWidth;
+                if (width <= 0 && saved.TryGetValue(key, out var previous))
+                {
+                    // У скрытой колонки ActualWidth равен нулю - сохраняем ширину с прошлого раза.
+                    isStarWidth = previous.IsStarWidth;
+                    width = previous.Width;
+                }
+
+                settings[key] = new ClashColumnSettings
+                {
+                    Width = width,
+                    IsStarWidth = isStarWidth,
+                    IsVisible = column.Visibility == Visibility.Visible
+                };
+            }
+
+            try
+            {
+                viewModel.SaveColumnSettings(settings);
+            }
+            catch (Exception)
+            {
+                // Настройки колонок - удобство отображения: ошибка записи файла не должна ломать закрытие окна.
+            }
+        }
+
+        private static string GetColumnKey(DataGridColumn column)
+        {
+            string header = column.Header?.ToString();
+            return string.IsNullOrWhiteSpace(header) ? null : header;
         }
 
         private void ClashImage_Click(object sender, MouseButtonEventArgs e)

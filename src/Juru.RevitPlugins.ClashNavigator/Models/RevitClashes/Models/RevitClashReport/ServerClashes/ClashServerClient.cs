@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 
 using Newtonsoft.Json;
@@ -61,23 +62,48 @@ internal class ClashServerClient {
     }
 
     /// <summary>
+    /// Отправляет на сервер новые статусы коллизий вместе с автором изменения.
+    /// </summary>
+    /// <param name="request">Изменённые коллизии и автор изменения</param>
+    /// <returns>Результат записи в базу</returns>
+    public Task<ClashStatusUpdateResultDto> UpdateClashStatusesAsync(ClashStatusUpdateDto request) {
+        if(request is null) {
+            throw new ArgumentNullException(nameof(request));
+        }
+
+        return PostAsync<ClashStatusUpdateResultDto>("api/clashes/status", request);
+    }
+
+    /// <summary>
     /// Строит полный url картинки коллизии из относительного пути, возвращённого сервером.
     /// </summary>
     public string GetImageUrl(string imagePath) {
         return string.IsNullOrWhiteSpace(imagePath) ? null : $"{BaseUrl}{imagePath}";
     }
 
-    private async Task<T> GetAsync<T>(string relativeUrl) {
+    private Task<T> GetAsync<T>(string relativeUrl) {
+        return SendAsync<T>(relativeUrl, () => _httpClient.GetAsync(relativeUrl));
+    }
+
+    private Task<T> PostAsync<T>(string relativeUrl, object body) {
+        string json = JsonConvert.SerializeObject(body);
+        return SendAsync<T>(relativeUrl, () => _httpClient.PostAsync(
+            relativeUrl,
+            new StringContent(json, Encoding.UTF8, "application/json")));
+    }
+
+    private async Task<T> SendAsync<T>(string relativeUrl, Func<Task<HttpResponseMessage>> send) {
         string fullUrl = $"{BaseUrl}/{relativeUrl}";
         try {
-            using var response = await _httpClient.GetAsync(relativeUrl).ConfigureAwait(false);
+            using var response = await send().ConfigureAwait(false);
+            string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             if(!response.IsSuccessStatusCode) {
                 throw new InvalidOperationException(
-                    $"Сервер коллизий вернул {(int) response.StatusCode} ({response.ReasonPhrase}): {fullUrl}");
+                    $"Сервер коллизий вернул {(int) response.StatusCode} ({response.ReasonPhrase}): {fullUrl}"
+                    + (string.IsNullOrWhiteSpace(content) ? string.Empty : $". {Shorten(content)}"));
             }
 
-            string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonConvert.DeserializeObject<T>(json);
+            return JsonConvert.DeserializeObject<T>(content);
         } catch(TaskCanceledException exception) {
             // HttpClient сообщает о собственном таймауте через TaskCanceledException.
             throw new TimeoutException(
@@ -88,5 +114,14 @@ internal class ClashServerClient {
                 $"Не удалось обратиться к серверу коллизий: {fullUrl}. "
                 + $"{exception.GetBaseException().Message}", exception);
         }
+    }
+
+    /// <summary>
+    /// Обрезает тело ответа: в сообщение об ошибке попадает только начало,
+    /// иначе страница ошибки сервера целиком уезжает в диалог пользователя.
+    /// </summary>
+    private static string Shorten(string content) {
+        content = content.Trim();
+        return content.Length <= 300 ? content : content.Substring(0, 300) + "...";
     }
 }
