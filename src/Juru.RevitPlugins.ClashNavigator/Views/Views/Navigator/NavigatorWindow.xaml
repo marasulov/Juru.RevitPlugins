@@ -55,15 +55,19 @@
                                     Padding="{TemplateBinding Padding}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <ContentPresenter
+                                    <!-- Указатель сортировки слева от названия и мельче: рядом с кнопкой
+                                         фильтра он выглядел парной стрелкой, и заголовок читался
+                                         как ещё одна колонка, которую пробовали тянуть. -->
+                                    <TextBlock x:Name="SortIcon" Text="▲" FontSize="9"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                               Margin="0,0,4,0" VerticalAlignment="Center"
+                                               Visibility="Collapsed" />
+                                    <ContentPresenter Grid.Column="1"
                                         HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                         VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-                                    <TextBlock x:Name="SortIcon" Grid.Column="1" Text="▲"
-                                               Margin="4,0,0,0" VerticalAlignment="Center"
-                                               Visibility="Collapsed" />
                                 </Grid>
                             </Border>
                             <Thumb x:Name="PART_LeftHeaderGripper" HorizontalAlignment="Left"
@@ -117,9 +121,16 @@
                             <Binding ElementName="FilterButton" Path="Tag" />
                         </MultiBinding>
                     </Grid.DataContext>
-                    <Button x:Name="FilterButton" Content="▼" Padding="5,0" Margin="4,0,0,0"
+                    <!-- Воронка вместо треугольника: иначе кнопка фильтра не отличалась от указателя
+                         сортировки. Глиф из Segoe MDL2 Assets - шрифт есть в самой Windows,
+                         иконки WPF-UI сюда тянуть незачем. -->
+                    <Button x:Name="FilterButton" Padding="5,0" Margin="4,0,0,0"
+                            ToolTip="Отобрать значения в этой колонке"
                             Tag="{Binding RelativeSource={RelativeSource AncestorType=DataGridColumnHeader}, Path=Column.SortMemberPath}"
-                            Command="{Binding OpenCommand}" />
+                            Command="{Binding OpenCommand}">
+                        <TextBlock Text="&#xE71C;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   VerticalAlignment="Center" />
+                    </Button>
                     <!-- StaysOpen=False закрывает фильтр по щелчку вне него; двусторонняя привязка IsOpen
                          сообщает об этом модели, а Closed применяет отмеченное - иначе выбор пользователя
                          остался бы в галочках, но не в таблице. -->
