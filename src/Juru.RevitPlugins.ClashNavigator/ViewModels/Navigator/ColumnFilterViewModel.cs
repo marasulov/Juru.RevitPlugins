@@ -81,18 +81,20 @@ internal class ColumnFilterViewModel : BaseViewModel {
     /// Обновляет список доступных значений, сохраняя текущий выбор для значений, которые остались.
     /// </summary>
     public void SetOptions(IEnumerable<string> values) {
-        var previouslyChecked = Options.Count == 0
-            ? null
-            : Options.Where(o => o.IsChecked).Select(o => o.Value).ToHashSet();
+        // Запоминаем снятые отметки, а не выставленные: значение, которого раньше не было,
+        // должно оказаться видимым. Иначе строка, у которой статус только что изменили,
+        // пропадала из таблицы - её нового значения в списке фильтра ещё не было.
+        var unchecked_ = Options.Where(o => !o.IsChecked).Select(o => o.Value).ToHashSet();
 
         Options.Clear();
         foreach(string value in values.Distinct().OrderBy(v => v, StringComparer.CurrentCultureIgnoreCase)) {
             Options.Add(new ColumnFilterOptionViewModel {
                 Value = value,
-                IsChecked = previouslyChecked is null || previouslyChecked.Contains(value)
+                IsChecked = !unchecked_.Contains(value)
             });
         }
         RaisePropertyChanged(nameof(FilteredOptions));
+        RaisePropertyChanged(nameof(IsActive));
     }
 
     /// <summary>

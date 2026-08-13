@@ -23,7 +23,7 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
     private string _clashName;
     private string _statusChangedBy;
     private string _statusChangedAt;
-    private readonly Action _statusChanged;
+    private Action _statusChanged;
     private readonly RevitRepository _revitRepository;
     private readonly ILocalizationService _localizationService;
     private bool _clashDataIsValid;
@@ -43,7 +43,6 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
 
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _revitRepository = revitRepository;
-        _statusChanged = statusChanged;
         Statuses = statuses ?? [];
 
         ClashName = clash.Name;
@@ -77,6 +76,10 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
 
         AddCommentCommand = RelayCommand.Create(AddComment);
         RemoveCommentCommand = RelayCommand.Create<ClashCommentViewModel>(RemoveComment, CanRemoveComment);
+
+        // Обработчик назначаем последним: статус из отчёта присваивается выше, и до конца
+        // построения коллизий отчёт ещё не собрал таблицу, по которой обработчик пересчитывает фильтры.
+        _statusChanged = statusChanged;
     }
 
     public ICommand AddCommentCommand { get; }

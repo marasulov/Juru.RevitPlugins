@@ -286,8 +286,8 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Кем изменён" Binding="{Binding StatusAuthorInfo}" SortMemberPath="StatusAuthorInfo" Width="180" />
-                <DataGridTextColumn Header="Когда изменён" Binding="{Binding StatusChangedAt}" SortMemberPath="StatusChangedAt" Width="120" />
+                <DataGridTextColumn Header="Кем изменён" Binding="{Binding StatusAuthorInfo}" SortMemberPath="StatusAuthorInfo" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="180" />
+                <DataGridTextColumn Header="Когда изменён" Binding="{Binding StatusChangedAt}" SortMemberPath="StatusChangedAt" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="130" />
                 <DataGridTemplateColumn Header="Снимок" Width="145">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

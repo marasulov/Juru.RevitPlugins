@@ -57,7 +57,20 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         nameof(IClashViewModel.SecondDocumentName),
         nameof(IClashViewModel.SecondId),
         nameof(IClashViewModel.SecondObjectName),
-        nameof(IClashViewModel.ClashStatusName)
+        nameof(IClashViewModel.ClashStatusName),
+        nameof(IClashViewModel.StatusAuthorInfo),
+        nameof(IClashViewModel.StatusChangedAt)
+    ];
+
+    /// <summary>
+    /// Колонки, значения которых зависят от статуса коллизии: их списки значений в фильтрах
+    /// приходится обновлять после каждой правки статуса, иначе фильтр начинает скрывать строки
+    /// с новым, ещё не известным ему значением.
+    /// </summary>
+    private static readonly string[] _statusDependentColumns = [
+        nameof(IClashViewModel.ClashStatusName),
+        nameof(IClashViewModel.StatusAuthorInfo),
+        nameof(IClashViewModel.StatusChangedAt)
     ];
 
     public ReportViewModel(RevitRepository revitRepository,
@@ -182,7 +195,7 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     /// </summary>
     public string UnsentStatusesMessage => UnsentStatusesCount == 0
         ? string.Empty
-        : $"Изменено статусов: {UnsentStatusesCount}. Нажмите «Сохранить все», чтобы отправить на сервер.";
+        : $"Изменено статусов: {UnsentStatusesCount}. Нажмите «Отправить статусы», чтобы записать их в базу.";
 
     public int ResolvedClashesCount => _allClashes?.Count(c => c.IsResolved) ?? 0;
 
@@ -298,8 +311,9 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     }
 
     /// <summary>
-    /// Отправляет в базу статусы, изменённые с последнего сохранения.
-    /// Вызывается кнопкой "Отправить статусы" и сохранением отчёта.
+    /// Отправляет в базу статусы, отличающиеся от известных серверу.
+    /// Вызывается только кнопкой "Отправить статусы": сохранение отчёта пишет файлы и в базу не лезет,
+    /// иначе две кнопки делали бы одно и то же.
     /// </summary>
     /// <returns>Текст результата (null, если отправлять было нечего) и признак ошибки.</returns>
     public (string? Message, bool IsError) SendStatuses() {
@@ -311,29 +325,20 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         return result;
     }
 
+    /// <summary>
+    /// Записывает отчёт в файл профиля. В базу ничего не отправляет: это дело кнопки
+    /// "Отправить статусы". Неотправленные статусы сохраняются в файле и остаются в очереди.
+    /// </summary>
     private void Save() {
-        // Статусы уходят на сервер здесь, а не сразу при выборе в таблице: запрос синхронный,
-        // и на каждый клик по списку окно подвисало бы на время ответа сервера.
-        (string? serverMessage, bool isError) = SendStatuses();
         GetUpdatedConfig().SaveProjectConfig();
 
-        if(isError) {
-            // Неудачную отправку показываем диалогом и здесь: строку состояния внизу окна
-            // пользователь при нажатии "Сохранить все" не читает.
-            Message = $"{_savedMessage} {serverMessage}";
-            MessageBoxService.Show(
-                serverMessage!, "Отправка статусов", MessageBoxButton.OK, MessageBoxImage.Error);
-            return;
-        }
-
-        if(serverMessage is null) {
-            // Текст задан здесь, а не через ILocalizationService: файла локализации в плагине нет,
-            // GetLocalizedString возвращает пустую строку - строка состояния оставалась пустой.
-            Message = _savedMessage;
-            RefreshMessage();
-        } else {
-            Message = $"{_savedMessage} {serverMessage}";
-        }
+        // Текст задан здесь, а не через ILocalizationService: файла локализации в плагине нет,
+        // GetLocalizedString возвращает пустую строку - строка состояния оставалась пустой.
+        Message = UnsentStatusesCount == 0
+            ? _savedMessage
+            : $"{_savedMessage} Статусов ждёт отправки: {UnsentStatusesCount} "
+                + "- нажмите «Отправить статусы».";
+        RefreshMessage();
     }
 
     private void SaveAs() {
@@ -346,7 +351,7 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
 
     private void InitializeClashes(IEnumerable<ClashModel> clashModels) {
         ResetClashes(clashModels.Select(item => new ClashViewModel(
-            _revitRepository, item, _localization, ClashStatuses, RaiseUnsentStatusesChanged)));
+            _revitRepository, item, _localization, ClashStatuses, OnClashStatusChanged)));
     }
 
     private void SetIntersectionPercentage(ICollection<IClashViewModel> clashes) {
@@ -576,6 +581,27 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
 
     private ClashViewModel[] GetUnsentClashes() {
         return [.. GetClashes().Where(c => c.HasUnsentStatus)];
+    }
+
+    /// <summary>
+    /// Реакция на правку статуса пользователем: пересчитывает счётчик неотправленных
+    /// и обновляет значения фильтров по колонкам, зависящим от статуса.
+    /// </summary>
+    private void OnClashStatusChanged() {
+        RaiseUnsentStatusesChanged();
+        if(GuiClashes is null) {
+            return;
+        }
+
+        var filters = _statusDependentColumns
+            .Where(ColumnFilters.ContainsKey)
+            .Select(name => ColumnFilters[name])
+            .ToArray();
+        foreach(var filter in filters) {
+            var property = typeof(IClashViewModel).GetProperty(filter.PropertyName);
+            filter.SetOptions(GuiClashes.Select(clash => GetPropertyStringValue(property, clash)));
+        }
+        ApplyColumnFilters();
     }
 
     private void RaiseUnsentStatusesChanged() {

@@ -281,10 +281,17 @@ internal class NavigatorViewModel : BaseViewModel {
             return;
         }
 
-        if(MessageBoxService.Show(_localizationService.GetLocalizedString("Navigator.SavePrompt"),
-            _localizationService.GetLocalizedString("BIM"),
+        // Текст задан здесь: файла локализации в плагине нет, и GetLocalizedString возвращала
+        // пустую строку - при закрытии окна выходил диалог без вопроса.
+        var answer = MessageBoxService.Show(
+            $"Статусов изменено, но не отправлено в базу: {UnsentStatusesCount}."
+            + $"{Environment.NewLine}{Environment.NewLine}"
+            + "Отправить их в базу и сохранить отчёты перед закрытием?",
+            "Навигатор коллизий",
             MessageBoxButton.YesNo,
-            MessageBoxImage.Question) == MessageBoxResult.Yes) {
+            MessageBoxImage.Question);
+        if(answer == MessageBoxResult.Yes) {
+            SendStatuses();
             SaveAllReports();
         }
     }
@@ -567,13 +574,11 @@ internal class NavigatorViewModel : BaseViewModel {
                 report.SaveCommand.Execute(default);
             }
 
-            // Разделяем локальную запись и отправку в базу: раньше сообщение "Сохранено отчётов"
-            // читалось как "отправлено на сервер", хотя на сервер могло не уйти ничего.
+            // Сохранение только пишет файлы: в базу статусы уходят кнопкой "Отправить статусы".
             Diagnostic = unsent == 0
-                ? $"Отчётов записано в файлы: {Reports.Count}. Статусы не менялись, "
-                    + "на сервер ничего не отправлялось."
-                : $"Отчётов записано в файлы: {Reports.Count}. Статусов к отправке: {unsent} "
-                    + "(результат отправки - в строке слева).";
+                ? $"Отчётов записано в файлы: {Reports.Count}."
+                : $"Отчётов записано в файлы: {Reports.Count}. "
+                    + $"Статусов ждёт отправки в базу: {unsent}.";
         } catch(Exception exception) {
             Diagnostic = $"Ошибка сохранения: {exception.GetBaseException().Message}";
             MessageBox.Show(Diagnostic, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
