@@ -396,8 +396,9 @@ internal class NavigatorViewModel : BaseViewModel {
         try {
             string fileName = _revitRepository.GetDocumentName();
             if(!RevitFileNameInfo.TryParse(fileName, out var fileInfo)) {
-                Diagnostic = $"Имя файла \"{fileName}\" не соответствует стандарту наименования " +
-                    "(Проект-Объект-Дисциплина-vXX).";
+                Diagnostic = $"Имя файла \"{fileName}\" не соответствует стандарту наименования "
+                    + "(Проект-Объект-Дисциплина-vXX). "
+                    + "Дисциплина - одно из: ARC, STR, WSS, ELE, HVC, FAD.";
                 ShowError(Diagnostic, silent);
                 return false;
             }

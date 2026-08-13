@@ -6,11 +6,14 @@ namespace Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport.ServerClashes
 
 /// <summary>
 /// Компоненты имени файла Revit, разобранные по стандарту наименования организации:
-/// Проект(5 символов)-Название_объекта-Дисциплина(3 символа)-v24(версия ревита).rvt
+/// Проект-Название_объекта-Дисциплина(3 символа)-v24(версия ревита).rvt
 /// </summary>
 internal class RevitFileNameInfo {
+    // Длину кода проекта не проверяем: кодов ровно в 5 символов стандарт не гарантирует
+    // (на сервере есть и "BASH2", и "O&M", и "DEMO"). Существование проекта всё равно
+    // проверяется по списку с сервера - см. ServerReportLoader.
     private static readonly Regex _pattern = new(
-        @"^(?<project>[^-]{5})-(?<object>.+)-(?<discipline>ARC|STR|WSS|ELE|HVC|FAD)-v(?<version>\d+)$",
+        @"^(?<project>[^-]+)-(?<object>.+)-(?<discipline>ARC|STR|WSS|ELE|HVC|FAD)-v(?<version>\d+)$",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private RevitFileNameInfo(string projectCode, string objectName, Discipline discipline, int revitVersion) {
