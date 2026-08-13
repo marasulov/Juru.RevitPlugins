@@ -29,5 +29,10 @@ internal class ClashViewDto {
     /// Учётная запись, изменившая статус последней. Null, если статус ни разу не меняли из Ревита.
     /// </summary>
     public string StatusChangedBy { get; set; }
+    /// <summary>
+    /// Имя сотрудника, изменившего статус ("Yusuf Marasulov"). Null, если сервер его не хранит:
+    /// тогда в таблице показывается учётная запись из <see cref="StatusChangedBy"/>.
+    /// </summary>
+    public string StatusChangedByName { get; set; }
     public DateTime? StatusChangedAt { get; set; }
 }

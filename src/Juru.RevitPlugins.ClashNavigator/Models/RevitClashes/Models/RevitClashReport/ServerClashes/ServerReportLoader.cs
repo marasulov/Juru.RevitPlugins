@@ -92,6 +92,7 @@ internal static class ServerReportLoader {
             ClashStatus = ServerClashStatus.ToClashStatus(dto.Status),
             ServerStatus = dto.Status,
             StatusChangedBy = dto.StatusChangedBy,
+            StatusChangedByName = dto.StatusChangedByName,
             StatusChangedAt = dto.StatusChangedAt,
             ClashPoint = ToClashPoint(dto),
             ImagePath = client.GetImageUrl(dto.ImagePath),

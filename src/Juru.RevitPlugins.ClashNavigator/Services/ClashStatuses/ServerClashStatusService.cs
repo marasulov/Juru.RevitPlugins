@@ -52,7 +52,8 @@ internal class ServerClashStatusService : IClashStatusService {
         var changedAt = DateTime.UtcNow;
         var request = new ClashStatusUpdateDto {
             ChangedBy = WindowsUser.Name,
-            ChangedByDisplayName = WindowsUser.DisplayName,
+            // В базу отправляем чистое имя сотрудника, без учётной записи в скобках.
+            ChangedByDisplayName = WindowsUser.FullName,
             ChangedAt = changedAt,
             Source = _source,
             Items = items

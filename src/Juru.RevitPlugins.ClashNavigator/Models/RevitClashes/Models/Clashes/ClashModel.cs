@@ -63,6 +63,12 @@ internal class ClashModel : IEquatable<ClashModel> {
     public string StatusChangedBy { get; set; }
 
     /// <summary>
+    /// Имя сотрудника, изменившего статус ("Yusuf Marasulov"), если сервер его вернул.
+    /// В таблице показываем его, а не учётную запись.
+    /// </summary>
+    public string StatusChangedByName { get; set; }
+
+    /// <summary>
     /// Момент последнего изменения статуса по данным сервера.
     /// </summary>
     public DateTime? StatusChangedAt { get; set; }

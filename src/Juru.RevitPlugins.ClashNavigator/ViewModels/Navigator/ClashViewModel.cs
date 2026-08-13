@@ -118,6 +118,10 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
             if(HasUnsentStatus) {
                 return $"{WindowsUser.DisplayName} — не отправлено";
             }
+            // Имя сотрудника нужнее логина, но если сервер имени не вернул - показываем учётную запись.
+            if(!string.IsNullOrWhiteSpace(Clash?.StatusChangedByName)) {
+                return Clash.StatusChangedByName;
+            }
             if(!string.IsNullOrWhiteSpace(StatusChangedBy)) {
                 return StatusChangedBy;
             }
@@ -251,6 +255,8 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
     /// <param name="changedAt">Момент изменения в UTC</param>
     public void MarkStatusSent(string changedBy, DateTime? changedAt) {
         Clash.ServerStatus = ServerClashStatus.ToServerStatus(ClashStatus);
+        // Имя отправили вместе со статусом, поэтому показываем его не дожидаясь перезагрузки отчёта.
+        Clash.StatusChangedByName = WindowsUser.FullName;
         SetStatusAuthor(changedBy, changedAt);
         RaisePropertyChanged(nameof(HasUnsentStatus));
     }
