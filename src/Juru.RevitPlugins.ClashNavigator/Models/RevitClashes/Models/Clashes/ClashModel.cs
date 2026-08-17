@@ -188,12 +188,15 @@ internal class ClashModel : IEquatable<ClashModel> {
     }
 }
 
+// Подписи совпадают с названиями статусов в веб-интерфейсе сервера коллизий
+// ("Согласованные", "Устранённые"): один и тот же статус не должен называться по-разному
+// в двух местах. Имена элементов перечисления - часть формата сохранённых отчётов, их не меняем.
 internal enum ClashStatus {
     [Display(Name = "Активно")]
     Active,
-    [Display(Name = "Проанализировано")]
+    [Display(Name = "Согласовано")]
     Analized,
-    [Display(Name = "Исправлено")]
+    [Display(Name = "Устранено")]
     Solved,
     [Display(Name = "Нет пересечения")]
     Imaginary
