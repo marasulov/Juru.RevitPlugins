@@ -200,10 +200,9 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
             return $"У элемента {label} нет Id элемента в отчёте — показать его нечем";
         }
         if(element.GetElement(_revitRepository.DocInfos) is null) {
-            // Сервер не сообщает файл-источник элемента, поэтому Id ищется во всех загруженных
-            // документах: не найден - значит нужный файл не открыт и не загружен как связь.
-            return $"Элемент {label} (Id {element.Id}) не найден ни в открытом документе, ни в связях — "
-                + "загрузите файл, которому он принадлежит";
+            // В DocumentName у несопоставленного элемента лежит причина: файл дисциплины не загружен
+            // либо элемента с таким Id в нём уже нет.
+            return $"Элемент {label} (Id {element.Id}): {element.DocumentName}";
         }
         return null;
     }

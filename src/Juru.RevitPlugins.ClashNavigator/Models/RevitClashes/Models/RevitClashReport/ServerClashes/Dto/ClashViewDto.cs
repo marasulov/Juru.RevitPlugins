@@ -15,6 +15,12 @@ internal class ClashViewDto {
     /// </summary>
     public string ElementIdA { get; set; }
     public string ElementIdB { get; set; }
+    /// <summary>
+    /// Дисциплина элемента A (ARC, STR, WSS, ELE, HVC, FAD). По ней определяется файл,
+    /// в котором нужно искать элемент: Id элемента уникален внутри файла, а не между файлами.
+    /// </summary>
+    public string DisciplineA { get; set; }
+    public string DisciplineB { get; set; }
     public decimal? CoordX { get; set; }
     public decimal? CoordY { get; set; }
     public decimal? CoordZ { get; set; }
