@@ -185,6 +185,15 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     /// Предупреждение о том, что статусы этого отчёта в базу не уйдут. Пустая строка у отчёта с сервера.
     /// Показывается постоянно: пользователь должен видеть это до того, как начнёт менять статусы.
     /// </summary>
+    /// <summary>
+    /// Предупреждение о том, что ни один элемент отчёта не найден в открытом документе, —
+    /// тогда кнопки «Показать» неактивны, и без объяснения это выглядит поломкой.
+    /// </summary>
+    public string UnresolvedInfo => ImportedClashesCount > 0 && ResolvedClashesCount == 0
+        ? $"Элементы этого отчёта не найдены в открытом документе ({GetReportDocumentNames()}). "
+            + "Откройте нужный файл или загрузите связь - иначе показать коллизию в Ревите нельзя."
+        : string.Empty;
+
     public string ServerLinkInfo => IsFromServer
         ? string.Empty
         : "Отчёт не с сервера: у коллизий нет Id в базе, статусы не отправляются. "
@@ -289,6 +298,7 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         RaisePropertyChanged(nameof(UnsentStatusesMessage));
         RaisePropertyChanged(nameof(IsFromServer));
         RaisePropertyChanged(nameof(ServerLinkInfo));
+        RaisePropertyChanged(nameof(UnresolvedInfo));
         RefreshColumnFilters();
     }
 
@@ -602,6 +612,20 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
             filter.SetOptions(GuiClashes.Select(clash => GetPropertyStringValue(property, clash)));
         }
         ApplyColumnFilters();
+    }
+
+    /// <summary>
+    /// Файлы, к которым относятся коллизии отчёта. Больше трёх не показываем: строка состояния
+    /// не должна разрастаться на весь список связей.
+    /// </summary>
+    private string GetReportDocumentNames() {
+        var names = (_allClashes ?? [])
+            .SelectMany(clash => new[] { clash.FirstDocumentName, clash.SecondDocumentName })
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct()
+            .Take(3)
+            .ToArray();
+        return names.Length == 0 ? "файл не указан" : string.Join(", ", names);
     }
 
     private void RaiseUnsentStatusesChanged() {

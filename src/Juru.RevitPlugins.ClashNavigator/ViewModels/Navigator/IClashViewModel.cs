@@ -38,6 +38,11 @@ internal interface IClashViewModel : INotifyPropertyChanged, ICommentable {
     string StatusAuthorInfo { get; }
 
     /// <summary>
+    /// Подсказка к кнопке показа коллизии в Ревите. Если показать нельзя, объясняет причину
+    /// </summary>
+    string RevitHint { get; }
+
+    /// <summary>
     /// Время последнего изменения статуса в часовом поясе пользователя
     /// </summary>
     string StatusChangedAt { get; }

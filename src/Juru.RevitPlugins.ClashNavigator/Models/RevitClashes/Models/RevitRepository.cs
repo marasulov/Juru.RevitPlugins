@@ -644,10 +644,16 @@ internal class RevitRepository {
             return;
         }
 
-        using var t = Doc.StartTransaction("Подрезка");
         double halfSize = Math.Abs(additionalSize / 2);
         bb.Max += new XYZ(halfSize, halfSize, halfSize);
         bb.Min -= new XYZ(halfSize, halfSize, halfSize);
+        // Вывернутый бокс Ревит не принимает: "Bounding box cannot be empty". Такое приходит,
+        // когда элементы коллизии не пересекаются, и подрезку в этом случае просто не ставим.
+        if(!bb.IsNotEmpty()) {
+            return;
+        }
+
+        using var t = Doc.StartTransaction("Подрезка");
         view.SetSectionBox(bb);
         var uiView = _uiDocument.GetOpenUIViews().FirstOrDefault(item => item.ViewId == view.Id);
         uiView?.ZoomAndCenterRectangle(bb.Min, bb.Max);

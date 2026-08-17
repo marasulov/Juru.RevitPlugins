@@ -115,7 +115,7 @@ internal static class ServerReportLoader {
 
         var id = BaseClashesLoader.ParseElementId(elementIdString);
         if(id == ElementId.InvalidElementId) {
-            return ToElementModel(name);
+            return ToElementModel(name, id);
         }
 
         // Сервер не сообщает файл-источник элемента, поэтому ищем элемент с этим Id
@@ -129,7 +129,7 @@ internal static class ServerReportLoader {
             return new ElementModel(match.Element, new TransformModel(match.Info.Transform), computeLevel: false);
         }
 
-        return ToElementModel(name);
+        return ToElementModel(name, id);
     }
 
     private static XYZModel ToClashPoint(ClashViewDto dto) {
@@ -144,12 +144,23 @@ internal static class ServerReportLoader {
         };
     }
 
-    private static ElementModel ToElementModel(string name) {
+    /// <summary>
+    /// Модель для элемента, который не удалось найти в загруженных документах.
+    /// </summary>
+    /// <param name="name">Имя объекта из отчёта</param>
+    /// <param name="id">
+    /// Id элемента из отчёта. Сохраняем как есть, даже когда элемент не найден: в таблице по нему видно,
+    /// что отчёт этот Id знает, а ненайден элемент из-за незагруженного файла. Раньше здесь всегда
+    /// стоял InvalidElementId, и колонка Id показывала -1, будто отчёт пришёл без Id.
+    /// </param>
+    private static ElementModel ToElementModel(string name, ElementId id) {
         return new ElementModel {
-            Id = ElementId.InvalidElementId,
+            Id = id,
             Name = name ?? string.Empty,
-            // Сервер не хранит Id элемента и файл-источник, поэтому подсветка/зум в Revit для таких коллизий недоступны.
-            DocumentName = "<загружено с сервера>"
+            // Сервер не сообщает файл-источник элемента, поэтому назвать файл здесь нечем.
+            DocumentName = id == ElementId.InvalidElementId
+                ? "<в отчёте нет Id>"
+                : "<файл не загружен>"
         };
     }
 }

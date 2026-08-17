@@ -59,7 +59,25 @@ internal static class BoundingBoxExtensions {
     }
 
     public static BoundingBoxXYZ GetCommonBoundingBox(this IEnumerable<BoundingBoxXYZ> bbs) {
-        return bbs.IsIntersected() ? bbs.GetIntersectedBb() : bbs.GetUnitedBb();
+        var boxes = bbs as ICollection<BoundingBoxXYZ> ?? bbs.ToArray();
+
+        // Пересечение подходит только если оно непустое. У коллизии из отчёта элементы могут
+        // не пересекаться - например, если элемент сопоставился по Id не с тем элементом другого
+        // файла, - и тогда "пересечение" выходит вывернутым: Min больше Max. Ревит на такой бокс
+        // отвечает "Bounding box cannot be empty" и валит команду показа коллизии.
+        var intersection = boxes.IsIntersected() ? boxes.GetIntersectedBb() : null;
+        return intersection.IsNotEmpty() ? intersection : boxes.GetUnitedBb();
+    }
+
+    /// <summary>
+    /// Проверяет, что бокс существует и имеет положительный размер по всем осям.
+    /// Ревит не принимает пустой или вывернутый бокс в качестве области подрезки.
+    /// </summary>
+    public static bool IsNotEmpty(this BoundingBoxXYZ bb) {
+        return bb is not null
+            && bb.Max.X > bb.Min.X
+            && bb.Max.Y > bb.Min.Y
+            && bb.Max.Z > bb.Min.Z;
     }
 
     private static BoundingBoxXYZ GetIntersectedBb(this IEnumerable<BoundingBoxXYZ> bbs) {

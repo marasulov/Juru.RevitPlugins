@@ -82,6 +82,8 @@ internal class ImaginaryFirstClashViewModel
 
     public string StatusAuthorInfo => string.Empty;
 
+    public string RevitHint => "Мнимая коллизия: второго элемента нет, показывать нечего";
+
     public string StatusChangedAt => string.Empty;
 
     public string ClashName { get => string.Empty; set { return; } }

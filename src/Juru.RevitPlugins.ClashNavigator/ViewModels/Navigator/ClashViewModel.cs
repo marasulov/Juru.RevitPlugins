@@ -170,6 +170,44 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
         set => RaiseAndSetIfChanged(ref _clashDataIsValid, value);
     }
 
+    /// <summary>
+    /// Подсказка к кнопке показа коллизии. Если показать нельзя, объясняет почему:
+    /// неактивная кнопка без объяснения выглядит поломкой плагина.
+    /// </summary>
+    public string RevitHint {
+        get {
+            if(IsResolved) {
+                return "Показать коллизию в Ревите";
+            }
+
+            string[] reasons = [
+                GetUnresolvedReason("А", GetFirstElement()),
+                GetUnresolvedReason("B", GetSecondElement())
+            ];
+            string reason = string.Join(Environment.NewLine, reasons.Where(r => r is not null));
+            return string.IsNullOrEmpty(reason) ? "Показать коллизию в Ревите нельзя" : reason;
+        }
+    }
+
+    /// <returns>Причина, по которой элемент не найден, или null, если он найден.</returns>
+    private string GetUnresolvedReason(string label, ElementModel element) {
+        if(element is null) {
+            return $"Элемент {label} в отчёте отсутствует";
+        }
+        if(element.Id == ElementId.InvalidElementId) {
+            // Navisworks не всегда сопоставляет объект со элементом Ревита: у нативной геометрии
+            // Id элемента нет, и отчёт приходит с пустым значением.
+            return $"У элемента {label} нет Id элемента в отчёте — показать его нечем";
+        }
+        if(element.GetElement(_revitRepository.DocInfos) is null) {
+            // Сервер не сообщает файл-источник элемента, поэтому Id ищется во всех загруженных
+            // документах: не найден - значит нужный файл не открыт и не загружен как связь.
+            return $"Элемент {label} (Id {element.Id}) не найден ни в открытом документе, ни в связях — "
+                + "загрузите файл, которому он принадлежит";
+        }
+        return null;
+    }
+
     /// <summary>Both object IDs were resolved in the active model or a loaded link.</summary>
     public bool IsResolved => GetFirstElement()?.GetElement(_revitRepository.DocInfos) is not null
         && GetSecondElement()?.GetElement(_revitRepository.DocInfos) is not null;

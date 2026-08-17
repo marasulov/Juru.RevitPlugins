@@ -310,7 +310,10 @@
                 <DataGridTemplateColumn Header="Revit" Width="110">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
+                            <!-- ShowOnDisabled: подсказка нужна именно у выключенной кнопки -
+                                 иначе причина, по которой коллизию не показать, остаётся неизвестной. -->
                             <ui:Button Content="Показать" IsEnabled="{Binding IsResolved}"
+                                ToolTip="{Binding RevitHint}" ToolTipService.ShowOnDisabled="True"
                                 Command="{Binding DataContext.SelectClashCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}" />
                         </DataTemplate>
@@ -329,6 +332,9 @@
             <!-- Предупреждение об отчёте без связи с базой: постоянное, до правки статусов. -->
             <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" TextTrimming="CharacterEllipsis"
                        Foreground="OrangeRed" Text="{Binding SelectedReport.ServerLinkInfo}" />
+            <!-- Почему кнопки «Показать» неактивны. -->
+            <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" TextTrimming="CharacterEllipsis"
+                       Foreground="OrangeRed" Text="{Binding SelectedReport.UnresolvedInfo}" />
             <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" TextTrimming="CharacterEllipsis"
                        Foreground="MediumVioletRed" Text="{Binding Diagnostic}" />
         </DockPanel>

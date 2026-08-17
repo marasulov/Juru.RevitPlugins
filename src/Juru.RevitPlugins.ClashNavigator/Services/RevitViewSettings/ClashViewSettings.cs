@@ -3,6 +3,7 @@ using System;
 using Autodesk.Revit.DB;
 
 using Juru.RevitPlugins.ClashNavigator.Models;
+using Juru.RevitPlugins.ClashNavigator.Models.Extensions;
 using Juru.RevitPlugins.ClashNavigator.Models.Interfaces;
 using Juru.RevitPlugins.ClashNavigator.ViewModels.Navigator;
 
@@ -30,9 +31,18 @@ internal sealed class ClashViewSettings : IView3DSetting {
         if(bounds is null) return;
 
         double offset = _settings.SectionBoxOffset / 2d / 304.8d;
-        var min = bounds.Min - new XYZ(offset, offset, offset);
-        var max = bounds.Max + new XYZ(offset, offset, offset);
-        view3D.SetSectionBox(new BoundingBoxXYZ { Min = min, Max = max });
+        var sectionBox = new BoundingBoxXYZ {
+            Min = bounds.Min - new XYZ(offset, offset, offset),
+            Max = bounds.Max + new XYZ(offset, offset, offset)
+        };
+
+        // Подрезка - удобство, а не смысл команды: если бокс вырожденный, показываем коллизию
+        // без подрезки, а не роняем показ исключением из Ревита.
+        if(!sectionBox.IsNotEmpty()) {
+            return;
+        }
+
+        view3D.SetSectionBox(sectionBox);
         view3D.IsSectionBoxActive = true;
     }
 }

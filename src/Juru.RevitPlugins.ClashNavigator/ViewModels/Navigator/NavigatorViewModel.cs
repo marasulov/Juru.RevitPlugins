@@ -76,7 +76,10 @@ internal class NavigatorViewModel : BaseViewModel {
         LoadFromServerCommand = RelayCommand.Create(LoadFromServer);
         LoadFromServerOnStartupCommand = RelayCommand.Create(LoadFromServerOnStartup);
         DeleteCommand = RelayCommand.Create(Delete, CanDelete);
-        SelectClashCommand = RelayCommand.Create<IClashViewModel>(SelectClash, CanSelectClash);
+        // Без проверки CanExecute: у кнопки в шаблоне ячейки CommandParameter привязывается позже
+        // самой команды, CanExecute успевает отработать с null и выключает кнопку навсегда -
+        // доступность кнопки задаёт привязка IsEnabled к IsResolved, а сам метод проверяет коллизию.
+        SelectClashCommand = RelayCommand.Create<IClashViewModel>(SelectClash);
         EditCommentsCommand = RelayCommand.Create<ICommentable>(ShowCommentsEditor, CanEditComments);
         ShowCommentsCommand = RelayCommand.Create<ICommentable>(ShowComments, CanEditComments);
         AcceptReportsMergeCommand =
@@ -427,7 +430,10 @@ internal class NavigatorViewModel : BaseViewModel {
                 _clashStatusService,
                 KeepUnsentStatuses(report));
 
-            SetReports(Reports.Where(r => r.Name != reportViewModel.Name).Append(reportViewModel));
+            // Выбираем именно загруженный отчёт: он относится к открытому файлу.
+            SetReports(
+                Reports.Where(r => r.Name != reportViewModel.Name).Append(reportViewModel),
+                reportViewModel);
 
             Diagnostic = $"Загружено с сервера коллизий: {reportViewModel.ImportedClashesCount}.";
             if(!silent) {
@@ -508,7 +514,10 @@ internal class NavigatorViewModel : BaseViewModel {
             MessageBoxImage.Warning);
     }
 
-    private void SetReports(IEnumerable<ReportViewModel> reports) {
+    /// <param name="selected">
+    /// Отчёт, который нужно выбрать. Если не задан, выбирается первый по алфавиту.
+    /// </param>
+    private void SetReports(IEnumerable<ReportViewModel> reports, ReportViewModel selected = null) {
         foreach(var report in Reports) {
             report.PropertyChanged -= OnReportPropertyChanged;
         }
@@ -520,7 +529,12 @@ internal class NavigatorViewModel : BaseViewModel {
         }
 
         SelectedReport = null;
-        SelectedReport = Reports.FirstOrDefault();
+        // Первый по алфавиту - не то же самое, что нужный: в списке лежат сохранённые отчёты
+        // других дисциплин, и после загрузки с сервера выбранным оказывался отчёт чужого файла,
+        // где ни один элемент не находится в открытом документе.
+        SelectedReport = selected is not null && Reports.Contains(selected)
+            ? selected
+            : Reports.FirstOrDefault();
         RaiseUnsentStatusesChanged();
     }
 
@@ -557,13 +571,15 @@ internal class NavigatorViewModel : BaseViewModel {
     }
 
     private void SelectClash(IClashViewModel clash) {
+        if(clash is not ClashViewModel resolvable || !resolvable.IsResolved) {
+            // Показывать нечего: элементы коллизии не найдены в открытом документе и связях.
+            // Причина видна в подсказке кнопки, диалогом не мешаем.
+            return;
+        }
+
         var settings = new ClashViewSettings(_revitRepository, _localizationService, clash, _settingsConfig);
         var elements = clash.GetElements();
         _revitRepository.QueueSelectAndShowElement(elements, settings);
-    }
-
-    private bool CanSelectClash(IClashViewModel p) {
-        return p is ClashViewModel clash && clash.IsResolved;
     }
 
     private void SaveAllReports() {
