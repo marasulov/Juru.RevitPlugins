@@ -435,13 +435,20 @@ internal class NavigatorViewModel : BaseViewModel {
                 Reports.Where(r => r.Name != reportViewModel.Name).Append(reportViewModel),
                 reportViewModel);
 
-            Diagnostic = $"Загружено с сервера коллизий: {reportViewModel.ImportedClashesCount}.";
+            // Адрес обязательно называем: настройка пользователя перекрывает адрес из ClashServer.json,
+            // и разбор "почему статусы не те" однажды свёлся к тому, что плагин молча читал
+            // другой сервер. Из строки состояния это видно сразу.
+            Diagnostic = $"Загружено с сервера коллизий: {reportViewModel.ImportedClashesCount} "
+                + $"({client.BaseUrl}).";
             if(!silent) {
                 WarnAboutUnloadedLinks();
             }
             return true;
         } catch(Exception exception) {
-            Diagnostic = $"Ошибка загрузки с сервера: {exception.GetBaseException().Message}";
+            // Адрес берём заново: переменная из try в catch не видна, а знать, к какому серверу
+            // не удалось обратиться, важнее всего именно в сообщении об ошибке.
+            Diagnostic = $"Ошибка загрузки с сервера ({ClashServerOptions.ResolveUrl(_settingsConfig)}): "
+                + $"{exception.GetBaseException().Message}";
             ShowError(Diagnostic, silent);
             return false;
         }
