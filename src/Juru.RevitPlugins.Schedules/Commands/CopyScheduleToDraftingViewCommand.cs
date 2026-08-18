@@ -34,7 +34,8 @@ public sealed class CopyScheduleToDraftingViewCommand : ExternalCommand
             return;
         }
 
-        var glossary = Glossary.Load(Glossary.DefaultPath);
+        var config = SchedulesConfig.Load();
+        var glossary = Glossary.Load(config.ResolveGlossaryPath());
 
         // Проверка значений параметров показывает модальное окно, которое обрывает отрисовку на середине.
         using var dialogSuppression = RevitContext.BeginDialogSuppressionScope(TaskDialogResult.Ok);
@@ -101,7 +102,7 @@ public sealed class CopyScheduleToDraftingViewCommand : ExternalCommand
 
     private static string FirstMisses(Glossary glossary)
     {
-        return string.Join("», «", glossary.Misses.Take(3).Select(Shorten));
+        return string.Join("», «", glossary.Misses.Keys.Take(3).Select(Shorten));
     }
 
     private static string Shorten(string text)

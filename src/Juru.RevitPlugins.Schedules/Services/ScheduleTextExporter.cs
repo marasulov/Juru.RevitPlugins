@@ -16,8 +16,7 @@ namespace Juru.RevitPlugins.Schedules.Services;
 /// </summary>
 public sealed class ScheduleTextExporter
 {
-    private const string FieldDelimiter = "\t";
-    private const char Qualifier = '"';
+    private const char FieldDelimiter = '\t';
 
     static ScheduleTextExporter()
     {
@@ -42,7 +41,7 @@ public sealed class ScheduleTextExporter
         var options = new ViewScheduleExportOptions
         {
             ColumnHeaders = ExportColumnHeaders.OneRow,
-            FieldDelimiter = FieldDelimiter,
+            FieldDelimiter = FieldDelimiter.ToString(),
             TextQualifier = ExportTextQualifier.DoubleQuote,
             Title = false,
             HeadersFootersBlanks = true
@@ -53,7 +52,7 @@ public sealed class ScheduleTextExporter
             Directory.CreateDirectory(workingDirectory);
             schedule.Export(workingDirectory, fileName, options);
 
-            return ParseRows(ReadText(filePath));
+            return DelimitedText.Parse(ReadText(filePath), FieldDelimiter);
         }
         catch (RevitException exception)
         {
@@ -99,67 +98,6 @@ public sealed class ScheduleTextExporter
     private static bool HasUtf8Mark(byte[] bytes)
     {
         return bytes.Length >= 3 && bytes[0] is 0xEF && bytes[1] is 0xBB && bytes[2] is 0xBF;
-    }
-
-    /// <summary>
-    ///     Разбирает выгрузку посимвольно: ячейка с переносами строк заключена в кавычки и занимает несколько
-    ///     физических строк файла.
-    /// </summary>
-    private static IReadOnlyList<IReadOnlyList<string>> ParseRows(string content)
-    {
-        var rows = new List<IReadOnlyList<string>>();
-        var cells = new List<string>();
-        var cell = new StringBuilder();
-        var inQualifier = false;
-
-        for (var index = 0; index < content.Length; index++)
-        {
-            var symbol = content[index];
-
-            if (symbol == Qualifier)
-            {
-                if (inQualifier && index + 1 < content.Length && content[index + 1] == Qualifier)
-                {
-                    cell.Append(Qualifier);
-                    index++;
-                    continue;
-                }
-
-                inQualifier = !inQualifier;
-                continue;
-            }
-
-            if (!inQualifier && symbol is '\t')
-            {
-                cells.Add(cell.ToString());
-                cell.Clear();
-                continue;
-            }
-
-            if (!inQualifier && symbol is '\r' or '\n')
-            {
-                if (symbol is '\r' && index + 1 < content.Length && content[index + 1] is '\n')
-                {
-                    index++;
-                }
-
-                cells.Add(cell.ToString());
-                cell.Clear();
-                rows.Add(cells.ToList());
-                cells.Clear();
-                continue;
-            }
-
-            cell.Append(symbol);
-        }
-
-        if (cell.Length > 0 || cells.Count > 0)
-        {
-            cells.Add(cell.ToString());
-            rows.Add(cells.ToList());
-        }
-
-        return rows;
     }
 
     private static string SanitizeFileName(string scheduleName)

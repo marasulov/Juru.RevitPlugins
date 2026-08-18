@@ -1,22 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace Juru.RevitPlugins.Schedules.Services;
 
 /// <summary>
-///     Русско-английский словарь, заполняемый переводчиком в том же CSV, который выдаёт аудит.
-///     Ключ — исходная строка, значение — перевод.
+///     Русско-английский словарь, заполняемый переводчиком в том же CSV, который выдаёт сбор глоссария.
+///     Подстановка идёт по точному совпадению: изменённая в модели строка перестаёт совпадать и попадает
+///     в непереведённые, поэтому устаревший перевод не остаётся незамеченным.
 /// </summary>
 public sealed class Glossary
 {
-    private const char Separator = ';';
-    private const int SourceColumn = 0;
-    private const int TranslationColumn = 1;
-
     private readonly Dictionary<string, string> translations;
-    private readonly HashSet<string> misses = new(StringComparer.CurrentCulture);
+    private readonly Dictionary<string, int> misses = new(StringComparer.CurrentCulture);
 
     private Glossary(Dictionary<string, string> translations, string? sourcePath)
     {
@@ -32,8 +28,8 @@ public sealed class Glossary
         get { return translations.Count; }
     }
 
-    /// <summary>Русские строки, которых не оказалось в словаре.</summary>
-    public IReadOnlyCollection<string> Misses
+    /// <summary>Русские строки, которых не оказалось в словаре, и сколько раз они встретились.</summary>
+    public IReadOnlyDictionary<string, int> Misses
     {
         get { return misses; }
     }
@@ -57,29 +53,7 @@ public sealed class Glossary
             return new Glossary([], null);
         }
 
-        var translations = new Dictionary<string, string>(StringComparer.CurrentCulture);
-
-        foreach (var line in File.ReadAllLines(path, Encoding.UTF8))
-        {
-            var cells = ParseCsvLine(line);
-
-            if (cells.Count <= TranslationColumn)
-            {
-                continue;
-            }
-
-            var source = cells[SourceColumn].Trim();
-            var translation = cells[TranslationColumn].Trim();
-
-            if (source.Length is 0 || translation.Length is 0)
-            {
-                continue;
-            }
-
-            translations[source] = translation;
-        }
-
-        return new Glossary(translations, path);
+        return new Glossary(GlossaryFile.Read(path), path);
     }
 
     /// <summary>
@@ -97,47 +71,19 @@ public sealed class Glossary
 
         if (RussianText.ContainsCyrillic(key))
         {
-            misses.Add(key);
+            misses.TryGetValue(key, out var count);
+            misses[key] = count + 1;
         }
 
         return text;
     }
 
-    private static IReadOnlyList<string> ParseCsvLine(string line)
+    /// <summary>
+    ///     Ищет перевод, не записывая промах: используется при пересборке глоссария, чтобы перенести уже
+    ///     сделанные переводы.
+    /// </summary>
+    public bool TryFind(string key, out string translation)
     {
-        var cells = new List<string>();
-        var cell = new StringBuilder();
-        var inQuotes = false;
-
-        for (var index = 0; index < line.Length; index++)
-        {
-            var symbol = line[index];
-
-            if (symbol is '"')
-            {
-                if (inQuotes && index + 1 < line.Length && line[index + 1] is '"')
-                {
-                    cell.Append('"');
-                    index++;
-                    continue;
-                }
-
-                inQuotes = !inQuotes;
-                continue;
-            }
-
-            if (symbol == Separator && !inQuotes)
-            {
-                cells.Add(cell.ToString());
-                cell.Clear();
-                continue;
-            }
-
-            cell.Append(symbol);
-        }
-
-        cells.Add(cell.ToString());
-
-        return cells;
+        return translations.TryGetValue(key.Trim(), out translation!);
     }
 }

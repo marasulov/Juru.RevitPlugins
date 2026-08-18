@@ -24,7 +24,8 @@ public sealed class CopySheetSchedulesCommand : ExternalCommand
     {
         var uiDocument = Application.ActiveUIDocument;
         var document = uiDocument.Document;
-        var glossary = Glossary.Load(Glossary.DefaultPath);
+        var config = SchedulesConfig.Load();
+        var glossary = Glossary.Load(config.ResolveGlossaryPath());
 
         // Проверки значений показывают модальные окна, которые обрывают пакетный прогон.
         using var dialogSuppression = RevitContext.BeginDialogSuppressionScope(TaskDialogResult.Ok);
@@ -41,6 +42,7 @@ public sealed class CopySheetSchedulesCommand : ExternalCommand
         }
 
         var reportPath = SheetScheduleCopyReportWriter.Write(copies, document.Title, glossary, runStamp);
+        var untranslatedPath = UntranslatedWriter.Write(glossary, dumpDirectory);
 
         var failed = copies.Count(copy => copy.Error is not null);
         var skippedCells = copies.Sum(copy => copy.SkippedCellCount);
@@ -53,6 +55,7 @@ public sealed class CopySheetSchedulesCommand : ExternalCommand
                            Ошибок: {failed}, не размещено ячеек: {skippedCells}
 
                            {reportPath}
+                           {(untranslatedPath is null ? "Непереведённых строк нет." : $"Непереведённые строки: {untranslatedPath}")}
                            """,
             CommonButtons = TaskDialogCommonButtons.Close
         };

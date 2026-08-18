@@ -25,4 +25,9 @@
         <PackageReference Include="Polyfill" Version="10.5.1" PrivateAssets="all" />
     </ItemGroup>
 
+    <ItemGroup>
+        <!-- Настройки правятся рядом с установленным плагином, без пересборки. -->
+        <None Include="Schedules.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
 </Project>

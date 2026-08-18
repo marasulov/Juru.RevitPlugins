@@ -40,8 +40,8 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
 
         var originalView = uiDocument.ActiveView;
 
-        var copies = CollectSheetSchedules()
-            .OrderBy(entry => entry.Schedule.Name, StringComparer.CurrentCulture)
+        var copies = new SheetScheduleFinder(document)
+            .Find()
             .Select(entry => Copy(entry.Schedule, entry.Placements, glossary, cellDumpDirectory))
             .ToList();
 
@@ -50,52 +50,9 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
         return copies;
     }
 
-    /// <summary>
-    ///     Находит спецификации, размещённые на листах, вместе с точками их размещения.
-    /// </summary>
-    private IEnumerable<(ViewSchedule Schedule, IReadOnlyList<SchedulePlacement> Placements)> CollectSheetSchedules()
-    {
-        var placementsBySchedule = new Dictionary<ElementId, List<SchedulePlacement>>();
-
-        var instances = new FilteredElementCollector(document)
-            .OfClass(typeof(ScheduleSheetInstance))
-            .Cast<ScheduleSheetInstance>()
-            .Where(instance => !instance.IsTitleblockRevisionSchedule);
-
-        foreach (var instance in instances)
-        {
-            if (document.GetElement(instance.OwnerViewId) is not ViewSheet sheet)
-            {
-                continue;
-            }
-
-            if (!placementsBySchedule.TryGetValue(instance.ScheduleId, out var placements))
-            {
-                placements = [];
-                placementsBySchedule[instance.ScheduleId] = placements;
-            }
-
-            placements.Add(new SchedulePlacement(sheet.Id, sheet.SheetNumber, instance.Point));
-        }
-
-        foreach (var pair in placementsBySchedule)
-        {
-            if (document.GetElement(pair.Key) is not ViewSchedule schedule)
-            {
-                continue;
-            }
-
-            var ordered = pair.Value
-                .OrderBy(placement => placement.SheetNumber, StringComparer.CurrentCulture)
-                .ToList();
-
-            yield return (schedule, ordered);
-        }
-    }
-
     private SheetScheduleCopy Copy(
         ViewSchedule schedule,
-        IReadOnlyList<SchedulePlacement> placements,
+        IReadOnlyList<SheetPlacement> placements,
         Glossary glossary,
         string? cellDumpDirectory)
     {
@@ -166,7 +123,7 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
     ///     Вставляет копию на первый лист оригинала правее него. Чертёжный вид размещается только на одном
     ///     листе, поэтому остальные листы возвращаются как пропущенные.
     /// </summary>
-    private PlacementResult Place(DraftingTableResult result, IReadOnlyList<SchedulePlacement> placements)
+    private PlacementResult Place(DraftingTableResult result, IReadOnlyList<SheetPlacement> placements)
     {
         if (placements.Count is 0)
         {
@@ -294,8 +251,6 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
 
         return string.IsNullOrWhiteSpace(heading) ? field.GetName() : heading;
     }
-
-    private sealed record SchedulePlacement(ElementId SheetId, string SheetNumber, XYZ Point);
 
     private sealed record PlacementResult(
         string? SheetNumber,
