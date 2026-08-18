@@ -68,7 +68,8 @@ public static class GlossarySeedBuilder
         GlossarySeedOrigin origin,
         string usage)
     {
-        if (string.IsNullOrWhiteSpace(sourceText))
+        // Коды, номера и уже английский текст переводить не нужно.
+        if (!RussianText.ContainsCyrillic(sourceText))
         {
             return;
         }

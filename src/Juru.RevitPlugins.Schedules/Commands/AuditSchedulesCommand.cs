@@ -16,7 +16,7 @@ namespace Juru.RevitPlugins.Schedules.Commands;
 ///     Разбирает все спецификации модели и сохраняет отчёт с заготовкой глоссария. Модель не изменяется.
 /// </summary>
 [UsedImplicitly]
-[Transaction(TransactionMode.ReadOnly)]
+[Transaction(TransactionMode.Manual)]
 public sealed class AuditSchedulesCommand : ExternalCommand
 {
     public override void Execute()

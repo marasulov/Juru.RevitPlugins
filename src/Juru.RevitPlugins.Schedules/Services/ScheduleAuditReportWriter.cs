@@ -40,46 +40,20 @@ public static class ScheduleAuditReportWriter
             throw new ArgumentNullException(nameof(glossarySeed));
         }
 
-        var reportDirectory = CreateReportDirectory(report);
+        var reportDirectory = ReportLocation.Create("ScheduleAudit", report.ModelName, report.CreatedAt);
 
         File.WriteAllText(
             Path.Combine(reportDirectory, "schedules.json"),
             JsonSerializer.Serialize(report, JsonOptions),
-            new UTF8Encoding(true));
+            new UTF8Encoding(false));
 
+        // Excel читает CSV как ANSI, пока в начале файла нет метки UTF-8.
         File.WriteAllText(
             Path.Combine(reportDirectory, "glossary.csv"),
             BuildGlossaryCsv(glossarySeed),
             new UTF8Encoding(true));
 
         return reportDirectory;
-    }
-
-    private static string CreateReportDirectory(ScheduleAuditReport report)
-    {
-        var folderName = $"{SanitizeFolderName(report.ModelName)}_{report.CreatedAt:yyyyMMdd_HHmmss}";
-
-        var reportDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "JuruPlugins",
-            "ScheduleAudit",
-            folderName);
-
-        Directory.CreateDirectory(reportDirectory);
-
-        return reportDirectory;
-    }
-
-    private static string SanitizeFolderName(string modelName)
-    {
-        var sanitized = new StringBuilder(modelName.Length);
-
-        foreach (var symbol in modelName)
-        {
-            sanitized.Append(Path.GetInvalidFileNameChars().Contains(symbol) ? '_' : symbol);
-        }
-
-        return sanitized.ToString();
     }
 
     private static string BuildGlossaryCsv(IReadOnlyList<GlossarySeedEntry> glossarySeed)

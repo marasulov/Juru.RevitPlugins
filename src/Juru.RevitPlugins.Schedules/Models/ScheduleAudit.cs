@@ -16,6 +16,9 @@ public sealed record ScheduleAudit
     /// <summary>Сколько раз спецификация размещена на листах: приоритет перевода.</summary>
     public required int SheetPlacementCount { get; init; }
 
+    /// <summary>Сколько элементов попало в спецификацию и дало значения колонок.</summary>
+    public required int ElementCount { get; init; }
+
     public required IReadOnlyList<ScheduleFieldAudit> Fields { get; init; }
 
     /// <summary>Поля сортировки и группировки: в английской версии должны ссылаться на En-поля.</summary>

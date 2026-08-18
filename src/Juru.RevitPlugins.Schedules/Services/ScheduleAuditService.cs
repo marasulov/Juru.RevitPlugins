@@ -17,6 +17,8 @@ namespace Juru.RevitPlugins.Schedules.Services;
 public sealed class ScheduleAuditService(Document document)
 {
     private const int MaxReportedValuesPerField = 200;
+    private const int MaxSampledElementsPerSchedule = 2000;
+    private const string MultiCategoryName = "<несколько категорий>";
 
     public ScheduleAuditReport Audit()
     {
@@ -83,11 +85,12 @@ public sealed class ScheduleAuditService(Document document)
             .Select(definition.GetField)
             .ToList();
 
-        var cellValues = HarvestCellValues(schedule, fields, out var warning);
-        var valuesHarvested = warning is null;
+        var elements = CollectScheduledElements(schedule, out var warning);
+        var fieldValues = HarvestFieldValues(fields, elements);
+        HarvestOverriddenCells(schedule, fields, fieldValues);
 
         var fieldAudits = fields
-            .Select((field, position) => AuditField(field, position, cellValues, valuesHarvested))
+            .Select((field, position) => AuditField(field, position, fieldValues))
             .ToList();
 
         sheetPlacements.TryGetValue(schedule.Id, out var placementCount);
@@ -98,11 +101,272 @@ public sealed class ScheduleAuditService(Document document)
             CategoryName = ResolveCategoryName(definition),
             IsKeySchedule = definition.IsKeySchedule,
             SheetPlacementCount = placementCount,
+            ElementCount = elements.Count,
             Fields = fieldAudits,
             SortGroupFieldNames = ResolveSortGroupFieldNames(definition),
             Filters = AuditFilters(definition),
             ValueHarvestWarning = warning
         };
+    }
+
+    /// <summary>
+    ///     Возвращает элементы, попадающие в спецификацию. Значения читаются с них, а не из таблицы вида:
+    ///     тело спецификации не пересчитывается, пока вид закрыт, и отдаёт устаревшие строки.
+    /// </summary>
+    private IReadOnlyList<Element> CollectScheduledElements(ViewSchedule schedule, out string? warning)
+    {
+        warning = null;
+
+        try
+        {
+            var scheduled = new FilteredElementCollector(document, schedule.Id)
+                .WhereElementIsNotElementType()
+                .Take(MaxSampledElementsPerSchedule)
+                .ToList();
+
+            if (scheduled.Count > 0)
+            {
+                return scheduled;
+            }
+
+            var byCategory = CollectByCategory(schedule.Definition.CategoryId);
+
+            if (byCategory.Count > 0)
+            {
+                warning = "Вид не отдал элементы: значения собраны по всей категории, без фильтров спецификации.";
+                return byCategory;
+            }
+
+            warning = "Элементы не найдены ни по виду, ни по категории.";
+            return [];
+        }
+        catch (RevitException exception)
+        {
+            warning = $"Элементы спецификации недоступны: {exception.Message}";
+            return [];
+        }
+    }
+
+    private IReadOnlyList<Element> CollectByCategory(ElementId categoryId)
+    {
+        if (categoryId == ElementId.InvalidElementId)
+        {
+            return [];
+        }
+
+        return new FilteredElementCollector(document)
+            .OfCategoryId(categoryId)
+            .WhereElementIsNotElementType()
+            .Take(MaxSampledElementsPerSchedule)
+            .ToList();
+    }
+
+    private Dictionary<int, HashSet<string>> HarvestFieldValues(
+        IReadOnlyList<ScheduleField> fields,
+        IReadOnlyList<Element> elements)
+    {
+        var values = new Dictionary<int, HashSet<string>>();
+
+        var sources = new List<FieldParameterSource>();
+        for (var position = 0; position < fields.Count; position++)
+        {
+            sources.AddRange(ResolveParameterSources(fields[position], position));
+        }
+
+        if (sources.Count is 0)
+        {
+            return values;
+        }
+
+        foreach (var element in elements)
+        {
+            var elementType = document.GetElement(element.GetTypeId());
+
+            foreach (var source in sources)
+            {
+                var text = ReadParameterText(element, elementType, source);
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    continue;
+                }
+
+                if (!values.TryGetValue(source.Position, out var collected))
+                {
+                    collected = new HashSet<string>(StringComparer.CurrentCulture);
+                    values[source.Position] = collected;
+                }
+
+                collected.Add(text!.Trim());
+            }
+        }
+
+        return values;
+    }
+
+    /// <summary>
+    ///     Добавляет текст ячеек, вписанный поверх данных вручную. Он не хранится ни в одном параметре,
+    ///     а спецификации-таблицы вроде ведомости ссылочных документов состоят из него целиком.
+    /// </summary>
+    private static void HarvestOverriddenCells(
+        ViewSchedule schedule,
+        IReadOnlyList<ScheduleField> fields,
+        Dictionary<int, HashSet<string>> values)
+    {
+        var visiblePositions = new List<int>();
+        for (var position = 0; position < fields.Count; position++)
+        {
+            if (!fields[position].IsHidden)
+            {
+                visiblePositions.Add(position);
+            }
+        }
+
+        try
+        {
+            var body = schedule.GetTableData().GetSectionData(SectionType.Body);
+
+            if (body.NumberOfColumns != visiblePositions.Count)
+            {
+                return;
+            }
+
+            for (var column = 0; column < body.NumberOfColumns; column++)
+            {
+                for (var row = 0; row < body.NumberOfRows; row++)
+                {
+                    if (!body.IsCellOverridden(row, column))
+                    {
+                        continue;
+                    }
+
+                    var text = body.GetCellText(row, column);
+                    if (string.IsNullOrWhiteSpace(text))
+                    {
+                        continue;
+                    }
+
+                    var position = visiblePositions[column];
+
+                    if (!values.TryGetValue(position, out var collected))
+                    {
+                        collected = new HashSet<string>(StringComparer.CurrentCulture);
+                        values[position] = collected;
+                    }
+
+                    collected.Add(text.Trim());
+                }
+            }
+        }
+        catch (RevitException)
+        {
+            // Таблица недоступна: значения параметров уже собраны, переопределений не будет.
+        }
+    }
+
+    /// <summary>
+    ///     Раскладывает колонку на параметры, значения которых можно прочитать с элемента. Комбинированная
+    ///     колонка даёт несколько параметров, вычисляемое значение — ни одного.
+    /// </summary>
+    private IEnumerable<FieldParameterSource> ResolveParameterSources(ScheduleField field, int position)
+    {
+        if (field.FieldType is ScheduleFieldType.CombinedParameter)
+        {
+            foreach (var part in ReadCombinedParameters(field))
+            {
+                var source = CreateParameterSource(part.ParamId, position);
+                if (source is not null)
+                {
+                    yield return source;
+                }
+            }
+
+            yield break;
+        }
+
+        if (field.FieldType is ScheduleFieldType.Formula)
+        {
+            yield break;
+        }
+
+        if (IsNumericField(field.FieldType))
+        {
+            yield break;
+        }
+
+        var fieldSource = CreateParameterSource(field.ParameterId, position);
+        if (fieldSource is not null)
+        {
+            yield return fieldSource;
+        }
+    }
+
+    private FieldParameterSource? CreateParameterSource(ElementId parameterId, int position)
+    {
+        if (parameterId == ElementId.InvalidElementId)
+        {
+            return null;
+        }
+
+        if (IsBuiltInParameter(parameterId))
+        {
+            return new FieldParameterSource
+            {
+                Position = position,
+                BuiltInParameter = (BuiltInParameter)(int)GetIdValue(parameterId)
+            };
+        }
+
+        if (document.GetElement(parameterId) is not ParameterElement parameterElement)
+        {
+            return null;
+        }
+
+        return new FieldParameterSource
+        {
+            Position = position,
+            Definition = parameterElement.GetDefinition()
+        };
+    }
+
+    /// <summary>
+    ///     Читает значение параметра с экземпляра, а при его отсутствии — с типа. Числа пропускаются:
+    ///     переводу подлежат только строки и ссылки на именованные элементы.
+    /// </summary>
+    private static string? ReadParameterText(Element element, Element? elementType, FieldParameterSource source)
+    {
+        var parameter = FindParameter(element, source) ?? FindParameter(elementType, source);
+
+        if (parameter is null)
+        {
+            return null;
+        }
+
+        return parameter.StorageType switch
+        {
+            StorageType.String => parameter.AsString(),
+            StorageType.ElementId => parameter.AsValueString(),
+            _ => null
+        };
+    }
+
+    private static Parameter? FindParameter(Element? element, FieldParameterSource source)
+    {
+        if (element is null)
+        {
+            return null;
+        }
+
+        if (source.BuiltInParameter is { } builtInParameter)
+        {
+            return element.get_Parameter(builtInParameter);
+        }
+
+        if (source.Definition is null)
+        {
+            return null;
+        }
+
+        return element.get_Parameter(source.Definition);
     }
 
     private string ResolveCategoryName(ScheduleDefinition definition)
@@ -117,8 +381,6 @@ public sealed class ScheduleAuditService(Document document)
             return MultiCategoryName;
         }
     }
-
-    private const string MultiCategoryName = "<несколько категорий>";
 
     private static IReadOnlyList<string> ResolveSortGroupFieldNames(ScheduleDefinition definition)
     {
@@ -165,69 +427,12 @@ public sealed class ScheduleAuditService(Document document)
         }
     }
 
-    /// <summary>
-    ///     Собирает напечатанный текст ячеек по колонкам. Колонки тела таблицы соответствуют видимым полям
-    ///     в порядке следования; при расхождении значения не собираются.
-    /// </summary>
-    private static Dictionary<int, HashSet<string>> HarvestCellValues(
-        ViewSchedule schedule,
-        IReadOnlyList<ScheduleField> fields,
-        out string? warning)
-    {
-        warning = null;
-        var values = new Dictionary<int, HashSet<string>>();
-
-        var visiblePositions = new List<int>();
-        for (var position = 0; position < fields.Count; position++)
-        {
-            if (!fields[position].IsHidden)
-            {
-                visiblePositions.Add(position);
-            }
-        }
-
-        try
-        {
-            var body = schedule.GetTableData().GetSectionData(SectionType.Body);
-
-            if (body.NumberOfColumns != visiblePositions.Count)
-            {
-                warning = $"Колонок в таблице {body.NumberOfColumns}, видимых полей {visiblePositions.Count}: значения ячеек не собраны.";
-                return values;
-            }
-
-            for (var column = 0; column < body.NumberOfColumns; column++)
-            {
-                var collected = new HashSet<string>(StringComparer.CurrentCulture);
-
-                for (var row = 0; row < body.NumberOfRows; row++)
-                {
-                    var text = body.GetCellText(row, column);
-                    if (!string.IsNullOrWhiteSpace(text))
-                    {
-                        collected.Add(text.Trim());
-                    }
-                }
-
-                values[visiblePositions[column]] = collected;
-            }
-        }
-        catch (RevitException exception)
-        {
-            warning = $"Значения ячеек недоступны: {exception.Message}";
-            values.Clear();
-        }
-
-        return values;
-    }
-
     private ScheduleFieldAudit AuditField(
         ScheduleField field,
         int position,
-        IReadOnlyDictionary<int, HashSet<string>> cellValues,
-        bool valuesHarvested)
+        IReadOnlyDictionary<int, HashSet<string>> fieldValues)
     {
-        var distinctValues = cellValues.TryGetValue(position, out var collected)
+        var distinctValues = fieldValues.TryGetValue(position, out var collected)
             ? collected
             : new HashSet<string>(StringComparer.CurrentCulture);
 
@@ -253,7 +458,7 @@ public sealed class ScheduleAuditService(Document document)
             FieldType = field.FieldType.ToString(),
             IsHidden = field.IsHidden,
             MirroringKind = mirroringKind,
-            RequiresTranslation = RequiresTranslation(mirroringKind, distinctValues, valuesHarvested),
+            RequiresTranslation = RequiresTranslation(mirroringKind, distinctValues),
             ParameterName = ResolveParameterName(field.ParameterId),
             IsBuiltInParameter = IsBuiltInParameter(field.ParameterId),
             CombinedParameterNames = combinedParameterNames,
@@ -303,58 +508,50 @@ public sealed class ScheduleAuditService(Document document)
 #endif
     }
 
-    private static bool RequiresTranslation(
-        ScheduleMirroringKind mirroringKind,
-        IReadOnlyCollection<string> distinctValues,
-        bool valuesHarvested)
+    /// <summary>
+    ///     Вычисляемое значение помечается всегда: его формулу API не отдаёт, и колонку в любом случае
+    ///     разбирает человек.
+    /// </summary>
+    private static bool RequiresTranslation(ScheduleMirroringKind mirroringKind, IReadOnlyCollection<string> distinctValues)
     {
         if (mirroringKind is ScheduleMirroringKind.Untranslated)
         {
             return false;
         }
 
-        if (!valuesHarvested)
+        if (mirroringKind is ScheduleMirroringKind.Formula)
         {
             return true;
         }
 
-        return distinctValues.Any(ContainsCyrillic);
-    }
-
-    private static bool ContainsCyrillic(string text)
-    {
-        foreach (var symbol in text)
-        {
-            if (symbol is >= 'Ѐ' and <= 'ӿ')
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return distinctValues.Any(RussianText.ContainsCyrillic);
     }
 
     private void CollectCombinedParameters(ScheduleField field, List<string> names, List<string> literals)
     {
+        foreach (var part in ReadCombinedParameters(field))
+        {
+            var name = ResolveParameterName(part.ParamId);
+            if (name is not null)
+            {
+                names.Add(name);
+            }
+
+            AddLiteral(literals, part.Prefix);
+            AddLiteral(literals, part.Separator);
+            AddLiteral(literals, part.Suffix);
+        }
+    }
+
+    private static IReadOnlyList<TableCellCombinedParameterData> ReadCombinedParameters(ScheduleField field)
+    {
         try
         {
-            foreach (var part in field.GetCombinedParameters())
-            {
-                var name = ResolveParameterName(part.ParamId);
-                if (name is not null)
-                {
-                    names.Add(name);
-                }
-
-                AddLiteral(literals, part.Prefix);
-                AddLiteral(literals, part.Separator);
-                AddLiteral(literals, part.Suffix);
-            }
+            return field.GetCombinedParameters().ToList();
         }
         catch (RevitException)
         {
-            names.Clear();
-            literals.Clear();
+            return [];
         }
     }
 
@@ -404,5 +601,12 @@ public sealed class ScheduleAuditService(Document document)
 #else
         return elementId.IntegerValue;
 #endif
+    }
+
+    private sealed record FieldParameterSource
+    {
+        public required int Position { get; init; }
+        public BuiltInParameter? BuiltInParameter { get; init; }
+        public Definition? Definition { get; init; }
     }
 }
