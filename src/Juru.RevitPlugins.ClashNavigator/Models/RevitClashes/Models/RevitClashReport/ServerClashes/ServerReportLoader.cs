@@ -7,6 +7,7 @@ using Autodesk.Revit.DB;
 
 using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport.ServerClashes.Dto;
+using Juru.RevitPlugins.Core.FileNaming;
 
 namespace Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport.ServerClashes;
 

@@ -2,13 +2,13 @@ using System;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport.ServerClashes;
+namespace Juru.RevitPlugins.Core.FileNaming;
 
 /// <summary>
 /// Компоненты имени файла Revit, разобранные по стандарту наименования организации:
 /// Проект-Название_объекта-Дисциплина(3 символа)-v24(версия ревита).rvt
 /// </summary>
-internal class RevitFileNameInfo {
+public sealed class RevitFileNameInfo {
     // Длину кода проекта не проверяем: кодов ровно в 5 символов стандарт не гарантирует
     // (на сервере есть и "BASH2", и "O&M", и "DEMO"). Существование проекта всё равно
     // проверяется по списку с сервера - см. ServerReportLoader.

@@ -1,9 +1,9 @@
-namespace Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport.ServerClashes;
+namespace Juru.RevitPlugins.Core.FileNaming;
 
 /// <summary>
 /// Код дисциплины, используемый в стандарте наименования файлов организации.
 /// </summary>
-internal enum Discipline {
+public enum Discipline {
     ARC,
     STR,
     WSS,

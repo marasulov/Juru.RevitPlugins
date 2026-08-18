@@ -19,6 +19,7 @@ using Juru.RevitPlugins.ClashNavigator.Models;
 using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport;
 using Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport.ServerClashes;
+using Juru.RevitPlugins.Core.FileNaming;
 using Juru.RevitPlugins.ClashNavigator.Commands;
 using Juru.RevitPlugins.ClashNavigator.Services.ClashStatuses;
 using Juru.RevitPlugins.ClashNavigator.Services.ReportsMerging;
