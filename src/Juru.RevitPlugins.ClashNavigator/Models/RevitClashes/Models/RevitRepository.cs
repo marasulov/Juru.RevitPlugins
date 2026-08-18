@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,6 +16,7 @@ using dosymep.Revit.Geometry;
 using dosymep.SimpleServices;
 
 using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
+using Juru.RevitPlugins.Core.Profiles;
 using Juru.RevitPlugins.ClashNavigator.Models.Extensions;
 using Juru.RevitPlugins.ClashNavigator.Models.FilterableValueProviders;
 using Juru.RevitPlugins.ClashNavigator.Models.GraphicView;
@@ -62,17 +63,9 @@ internal class RevitRepository {
 
     public ParameterFilterProvider ParameterFilterProvider { get; }
 
-    public static string ProfilePath {
-        get {
-            string path = @"W:\Проектный институт\Отд.стандарт.BIM и RD\BIM-Ресурсы\5-Надстройки\Bim4Everyone\A101";
-            if(!Directory.Exists(path)) {
-                path = LocalProfilePath;
-            }
-            return path;
-        }
-    }
+    public static string ProfilePath => ProfilePaths.Shared;
 
-    public static string LocalProfilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "dosymep");
+    public static string LocalProfilePath => ProfilePaths.Local;
 
     public static List<BuiltInParameter> BaseLevelParameters => [
         BuiltInParameter.MULTISTORY_STAIRS_REF_LEVEL,
