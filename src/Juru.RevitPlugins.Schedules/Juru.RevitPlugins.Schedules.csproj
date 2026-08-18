@@ -25,6 +25,11 @@
         <PackageReference Include="Polyfill" Version="10.5.1" PrivateAssets="all" />
     </ItemGroup>
 
+    <ItemGroup Condition="'$(RevitVersion)' &lt; '2025'">
+        <!-- На net48 HttpClient живёт в отдельной сборке платформы. -->
+        <Reference Include="System.Net.Http" />
+    </ItemGroup>
+
     <ItemGroup>
         <!-- Настройки правятся рядом с установленным плагином, без пересборки. -->
         <None Include="Schedules.json" CopyToOutputDirectory="PreserveNewest" />

@@ -24,7 +24,9 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
     /// <param name="existing">
     ///     Уже заполненный глоссарий: сделанные переводы переносятся в новый файл, чтобы не переводить заново.
     /// </param>
-    public GlossaryCollectionResult Collect(string exportDirectory, Glossary existing)
+    public GlossaryCollectionResult Collect(
+        string exportDirectory,
+        IReadOnlyDictionary<string, GlossaryTranslation> existing)
     {
         var originalView = uiDocument.ActiveView;
         var occurrences = new Dictionary<string, int>(StringComparer.CurrentCulture);
@@ -108,17 +110,10 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
     private static IReadOnlyList<GlossaryEntry> BuildEntries(
         Dictionary<string, int> occurrences,
         Dictionary<string, SortedSet<string>> schedules,
-        Glossary existing)
+        IReadOnlyDictionary<string, GlossaryTranslation> existing)
     {
         return occurrences
-            .Select(pair => new GlossaryEntry
-            {
-                Key = pair.Key,
-                Readable = RussianText.Normalize(pair.Key),
-                Suggestion = ResolveSuggestion(pair.Key, existing),
-                Occurrences = pair.Value,
-                Schedules = schedules[pair.Key].ToList()
-            })
+            .Select(pair => CreateEntry(pair.Key, pair.Value, schedules[pair.Key], existing))
             .OrderBy(entry => entry.Readable, StringComparer.CurrentCulture)
             .ToList();
     }
@@ -127,19 +122,44 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
     ///     Заполняет перевод там, где он известен: сделанный ранее перевод, английская половина двуязычной
     ///     строки, обозначение стандарта или марка изделия. Марки и обозначения в переводе остаются собой.
     /// </summary>
-    private static string ResolveSuggestion(string key, Glossary existing)
+    private static GlossaryEntry CreateEntry(
+        string key,
+        int occurrences,
+        IEnumerable<string> scheduleNames,
+        IReadOnlyDictionary<string, GlossaryTranslation> existing)
     {
-        if (existing.TryFind(key, out var translated))
+        var translation = ResolveTranslation(key, existing);
+
+        return new GlossaryEntry
         {
-            return translated;
+            Key = key,
+            Readable = RussianText.Normalize(key),
+            Suggestion = translation.Text,
+            Source = translation.Source,
+            Occurrences = occurrences,
+            Schedules = scheduleNames.ToList()
+        };
+    }
+
+    private static GlossaryTranslation ResolveTranslation(
+        string key,
+        IReadOnlyDictionary<string, GlossaryTranslation> existing)
+    {
+        if (existing.TryGetValue(key, out var carried))
+        {
+            return carried;
         }
 
         if (RussianText.IsStandardDesignation(key) || RussianText.IsProductMark(key))
         {
-            return key;
+            return new GlossaryTranslation(key, TranslationSource.Derived);
         }
 
-        return RussianText.TakeEnglishPart(key);
+        var english = RussianText.TakeEnglishPart(key);
+
+        return english.Length > 0
+            ? new GlossaryTranslation(english, TranslationSource.Derived)
+            : new GlossaryTranslation(string.Empty, TranslationSource.None);
     }
 
     private bool TryActivate(View view)

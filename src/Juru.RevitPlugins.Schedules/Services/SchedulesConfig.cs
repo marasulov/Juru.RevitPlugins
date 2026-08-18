@@ -3,6 +3,8 @@ using System.IO;
 using System.Reflection;
 using System.Text.Json;
 
+using Juru.RevitPlugins.Schedules.Services.Translation;
+
 namespace Juru.RevitPlugins.Schedules.Services;
 
 /// <summary>
@@ -17,6 +19,9 @@ public sealed record SchedulesConfig
     ///     указывают файл на сетевом диске или в репозитории проекта.
     /// </summary>
     public string? GlossaryPath { get; init; }
+
+    /// <summary>Настройки машинного перевода.</summary>
+    public TranslationSettings Translation { get; init; } = new();
 
     public static SchedulesConfig Load()
     {

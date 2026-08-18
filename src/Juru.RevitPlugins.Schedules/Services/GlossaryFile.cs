@@ -14,11 +14,14 @@ public static class GlossaryFile
 {
     public const char Delimiter = ';';
 
-    public const int KeyColumn = 0;
-    public const int ReadableColumn = 1;
-    public const int TranslationColumn = 2;
-
+    private const int KeyColumn = 0;
+    private const int TranslationColumn = 2;
+    private const int SourceColumn = 5;
     private const int MinimumColumnCount = 3;
+
+    private const string MachineMark = "машинный";
+    private const string DerivedMark = "выведен";
+    private const string HumanMark = "вручную";
 
     public static void Write(IReadOnlyList<GlossaryEntry> entries, string path)
     {
@@ -35,7 +38,8 @@ public static class GlossaryFile
             "Читаемый вид",
             "Перевод",
             "Встречается",
-            "Спецификации"));
+            "Спецификации",
+            "Источник"));
 
         foreach (var entry in entries)
         {
@@ -45,7 +49,8 @@ public static class GlossaryFile
                 entry.Readable,
                 entry.Suggestion,
                 entry.Occurrences.ToString(),
-                string.Join(" | ", entry.Schedules)));
+                string.Join(" | ", entry.Schedules),
+                DescribeSource(entry.Source)));
         }
 
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -55,11 +60,33 @@ public static class GlossaryFile
     }
 
     /// <summary>
-    ///     Читает пары «ключ — перевод», пропуская заголовок и строки без перевода.
+    ///     Читает пары «ключ — перевод» для подстановки, пропуская заголовок и строки без перевода.
     /// </summary>
     public static Dictionary<string, string> Read(string path)
     {
         var translations = new Dictionary<string, string>(StringComparer.CurrentCulture);
+
+        foreach (var pair in ReadEntries(path))
+        {
+            translations[pair.Key] = pair.Value.Text;
+        }
+
+        return translations;
+    }
+
+    /// <summary>
+    ///     Читает переводы вместе с происхождением: при пересборке глоссария оно переносится, чтобы
+    ///     исправленное человеком не выглядело машинным.
+    /// </summary>
+    public static Dictionary<string, GlossaryTranslation> ReadEntries(string path)
+    {
+        var entries = new Dictionary<string, GlossaryTranslation>(StringComparer.CurrentCulture);
+
+        if (!File.Exists(path))
+        {
+            return entries;
+        }
+
         var rows = DelimitedText.Parse(File.ReadAllText(path, Encoding.UTF8), Delimiter);
 
         foreach (var row in rows)
@@ -77,9 +104,43 @@ public static class GlossaryFile
                 continue;
             }
 
-            translations[key] = translation;
+            var source = row.Count > SourceColumn ? ParseSource(row[SourceColumn]) : TranslationSource.Human;
+
+            entries[key] = new GlossaryTranslation(translation, source);
         }
 
-        return translations;
+        return entries;
+    }
+
+    private static string DescribeSource(TranslationSource source)
+    {
+        return source switch
+        {
+            TranslationSource.Machine => MachineMark,
+            TranslationSource.Derived => DerivedMark,
+            TranslationSource.Human => HumanMark,
+            _ => string.Empty
+        };
+    }
+
+    /// <summary>
+    ///     Пустой или неизвестный источник считается ручным: так правка, внесённая в файл без пометки,
+    ///     не будет затёрта машинным переводом.
+    /// </summary>
+    private static TranslationSource ParseSource(string mark)
+    {
+        var trimmed = mark.Trim();
+
+        if (string.Equals(trimmed, MachineMark, StringComparison.CurrentCultureIgnoreCase))
+        {
+            return TranslationSource.Machine;
+        }
+
+        if (string.Equals(trimmed, DerivedMark, StringComparison.CurrentCultureIgnoreCase))
+        {
+            return TranslationSource.Derived;
+        }
+
+        return TranslationSource.Human;
     }
 }

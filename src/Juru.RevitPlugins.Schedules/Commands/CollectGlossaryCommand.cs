@@ -1,12 +1,17 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.UI;
 
+using Juru.RevitPlugins.Schedules.Models;
 using Juru.RevitPlugins.Schedules.Services;
+using Juru.RevitPlugins.Schedules.Services.Translation;
 
 using Nice3point.Revit.Toolkit;
 using Nice3point.Revit.Toolkit.External;
@@ -14,8 +19,9 @@ using Nice3point.Revit.Toolkit.External;
 namespace Juru.RevitPlugins.Schedules.Commands;
 
 /// <summary>
-///     Собирает глоссарий по спецификациям, размещённым на листах, и сохраняет его рядом с уже заполненным,
-///     не затирая его. Модель не изменяется.
+///     Собирает глоссарий по спецификациям на листах, переводит пустые строки машинным переводом и вливает
+///     результат в настроенный глоссарий. Уже сделанные переводы сохраняются, строки других моделей из
+///     общего файла не теряются. Модель не изменяется.
 /// </summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
@@ -29,44 +35,116 @@ public sealed class CollectGlossaryCommand : ExternalCommand
         using var dialogSuppression = RevitContext.BeginDialogSuppressionScope(TaskDialogResult.Ok);
 
         var config = SchedulesConfig.Load();
-        var existing = Glossary.Load(config.ResolveGlossaryPath());
+        var glossaryPath = config.ResolveGlossaryPath();
+        var existing = GlossaryFile.ReadEntries(glossaryPath);
 
         var reportDirectory = ReportLocation.Create("Glossary", document.Title, DateTime.Now);
-        var result = new GlossaryCollector(uiDocument).Collect(reportDirectory, existing);
+        var collected = new GlossaryCollector(uiDocument).Collect(reportDirectory, existing);
 
-        if (result.Entries.Count is 0)
+        if (collected.Entries.Count is 0)
         {
-            TaskDialog.Show("Сбор глоссария", $"На листах {result.ScheduleCount} спецификаций, русского текста в них не найдено.");
+            TaskDialog.Show(
+                "Сбор глоссария",
+                $"На листах {collected.ScheduleCount} спецификаций, русского текста в них не найдено.");
+
             return;
         }
 
-        var glossaryPath = Path.Combine(reportDirectory, "glossary.csv");
-        GlossaryFile.Write(result.Entries, glossaryPath);
+        var translated = Translate(config.Translation, collected.Entries, out var translatorNote);
+        var merged = Merge(translated.Entries, existing);
 
-        ShowResult(result, glossaryPath, config.ResolveGlossaryPath());
+        var runPath = Path.Combine(reportDirectory, "glossary.csv");
+        GlossaryFile.Write(merged, runPath);
+        GlossaryFile.Write(merged, glossaryPath);
+
+        ShowResult(collected, translated, merged, translatorNote, glossaryPath, runPath);
+    }
+
+    /// <summary>
+    ///     Переводит строки без перевода. Отсутствие настроенной службы не ошибка: строки просто остаются
+    ///     пустыми и попадают в глоссарий как задача.
+    /// </summary>
+    private static GlossaryTranslationResult Translate(
+        TranslationSettings settings,
+        IReadOnlyList<GlossaryEntry> entries,
+        out string note)
+    {
+        var translator = TranslatorFactory.TryCreate(settings, out var reason);
+
+        if (translator is null)
+        {
+            note = reason ?? "не настроена";
+
+            return new GlossaryTranslationResult
+            {
+                Entries = entries,
+                TranslatedCount = 0,
+                Failures = []
+            };
+        }
+
+        note = translator.Name;
+
+        // Внешний командный интерфейс Revit синхронный, поэтому запросы выполняются на отдельном потоке.
+        return Task.Run(() => new GlossaryTranslator(translator, settings.BatchSize)
+                .TranslateAsync(entries, CancellationToken.None))
+            .GetAwaiter()
+            .GetResult();
+    }
+
+    /// <summary>
+    ///     Добавляет строки, которых нет в текущей модели: общий глоссарий накапливает переводы по всем
+    ///     моделям, и перезапись только собранным потеряла бы остальные.
+    /// </summary>
+    private static IReadOnlyList<GlossaryEntry> Merge(
+        IReadOnlyList<GlossaryEntry> entries,
+        IReadOnlyDictionary<string, GlossaryTranslation> existing)
+    {
+        var collectedKeys = entries.Select(entry => entry.Key).ToHashSet(StringComparer.CurrentCulture);
+
+        var carried = existing
+            .Where(pair => !collectedKeys.Contains(pair.Key))
+            .Select(pair => new GlossaryEntry
+            {
+                Key = pair.Key,
+                Readable = RussianText.Normalize(pair.Key),
+                Suggestion = pair.Value.Text,
+                Source = pair.Value.Source,
+                Occurrences = 0,
+                Schedules = []
+            });
+
+        return entries
+            .Concat(carried)
+            .OrderBy(entry => entry.Readable, StringComparer.CurrentCulture)
+            .ToList();
     }
 
     private static void ShowResult(
-        Models.GlossaryCollectionResult result,
+        GlossaryCollectionResult collected,
+        GlossaryTranslationResult translated,
+        IReadOnlyList<GlossaryEntry> merged,
+        string translatorNote,
         string glossaryPath,
-        string configuredPath)
+        string runPath)
     {
-        var prefilled = result.Entries.Count(entry => entry.Suggestion.Length > 0);
-        var failures = result.Failures.Count is 0
+        var untranslated = merged.Count(entry => entry.Suggestion.Length is 0);
+        var machine = merged.Count(entry => entry.Source is TranslationSource.Machine);
+
+        var failures = translated.Failures.Count is 0
             ? string.Empty
-            : $"\nНе прочитано спецификаций: {result.Failures.Count}. {result.Failures[0]}";
+            : $"\nОшибок перевода: {translated.Failures.Count}. {translated.Failures[0]}";
 
         var dialog = new TaskDialog("Сбор глоссария")
         {
-            MainInstruction = $"Строк на перевод: {result.Entries.Count}",
+            MainInstruction = $"Строк в глоссарии: {merged.Count}, без перевода {untranslated}",
             MainContent = $"""
-                           Спецификаций на листах: {result.ScheduleCount}
-                           Перевод предзаполнен: {prefilled}{failures}
+                           Спецификаций на листах: {collected.ScheduleCount}
+                           Служба перевода: {translatorNote}
+                           Переведено сейчас: {translated.TranslatedCount}, машинных всего: {machine}{failures}
 
-                           {glossaryPath}
-
-                           Заполните колонку «Перевод» и положите файл сюда:
-                           {configuredPath}
+                           Глоссарий: {glossaryPath}
+                           Копия прогона: {runPath}
                            """,
             CommonButtons = TaskDialogCommonButtons.Close
         };

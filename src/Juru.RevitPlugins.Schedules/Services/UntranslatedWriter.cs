@@ -31,6 +31,7 @@ public static class UntranslatedWriter
                 Key = miss.Key,
                 Readable = RussianText.Normalize(miss.Key),
                 Suggestion = string.Empty,
+                Source = TranslationSource.None,
                 Occurrences = miss.Value,
                 Schedules = []
             })

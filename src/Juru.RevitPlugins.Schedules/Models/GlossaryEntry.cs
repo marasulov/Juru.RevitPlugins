@@ -21,6 +21,8 @@ public sealed record GlossaryEntry
     /// </summary>
     public required string Suggestion { get; init; }
 
+    public required TranslationSource Source { get; init; }
+
     public required int Occurrences { get; init; }
     public required IReadOnlyList<string> Schedules { get; init; }
 }

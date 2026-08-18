@@ -1,4 +1,10 @@
 {
-  "//": "Путь к глоссарию. Пусто - файл в документах пользователя. Для общей работы укажите файл на сетевом диске.",
-  "GlossaryPath": ""
+  "GlossaryPath": "",
+  "Translation": {
+    "Provider": "Google",
+    "ApiKeyEnvironmentVariable": "JURU_TRANSLATE_KEY",
+    "SourceLanguage": "ru",
+    "TargetLanguage": "en",
+    "BatchSize": 50
+  }
 }
