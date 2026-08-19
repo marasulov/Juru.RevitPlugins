@@ -177,18 +177,24 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
             : new GlossaryTranslation(string.Empty, TranslationSource.None);
     }
 
+    /// <summary>
+    ///     Открытие вида - способ заставить Revit пересчитать тело спецификации, а не часть работы: его
+    ///     отказ не должен обрывать сбор. Недействительный вид Revit сообщает исключением из слоя
+    ///     взаимодействия, которое не наследуется от управляемых исключений API.
+    /// </summary>
     private bool TryActivate(View view)
     {
+        if (!view.IsValidObject)
+        {
+            return false;
+        }
+
         try
         {
             uiDocument.ActiveView = view;
             return true;
         }
-        catch (RevitException)
-        {
-            return false;
-        }
-        catch (InvalidOperationException)
+        catch (Exception)
         {
             return false;
         }

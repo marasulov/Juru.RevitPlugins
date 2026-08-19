@@ -38,14 +38,18 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
             throw new ArgumentNullException(nameof(glossary));
         }
 
-        var originalView = uiDocument.ActiveView;
+        // Активной может быть копия прошлого прогона: её удаление Revit запретит, а ссылка на неё после
+        // удаления станет недействительной. Поэтому уходим с копии заранее и запоминаем вид по номеру.
+        LeaveCopyView();
+
+        var originalViewId = uiDocument.ActiveView.Id;
 
         var copies = new SheetScheduleFinder(document)
             .Find()
             .Select(entry => Copy(entry.Schedule, entry.Placements, glossary, cellDumpDirectory))
             .ToList();
 
-        TryActivate(originalView);
+        TryActivate(originalViewId);
 
         return copies;
     }
@@ -213,21 +217,64 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
     }
 
     /// <summary>
+    ///     Переводит активный вид с копии прошлого прогона на любой лист: удалить активный вид Revit не даёт.
+    /// </summary>
+    private void LeaveCopyView()
+    {
+        if (uiDocument.ActiveView is not ViewDrafting drafting)
+        {
+            return;
+        }
+
+        if (!drafting.Name.EndsWith(CopySuffix, StringComparison.CurrentCultureIgnoreCase)
+            && !drafting.Name.Contains(CopySuffix + " "))
+        {
+            return;
+        }
+
+        var sheet = new FilteredElementCollector(document)
+            .OfClass(typeof(ViewSheet))
+            .Cast<ViewSheet>()
+            .FirstOrDefault(candidate => !candidate.IsTemplate);
+
+        if (sheet is not null)
+        {
+            TryActivate(sheet.Id);
+        }
+    }
+
+    /// <summary>
     ///     Тело спецификации считается по требованию, и у закрытого вида остаётся устаревшим. Открытие вида
     ///     заставляет Revit его пересчитать. Смена активного вида недопустима внутри транзакции.
     /// </summary>
+    private bool TryActivate(ElementId viewId)
+    {
+        if (document.GetElement(viewId) is not View view || !view.IsValidObject)
+        {
+            return false;
+        }
+
+        return TryActivate(view);
+    }
+
+    /// <summary>
+    ///     Возврат к прежнему виду - удобство, а не часть работы: его отказ не должен обрывать пакетный
+    ///     прогон, а Revit сообщает о недействительном виде исключением из слоя взаимодействия, которое
+    ///     не наследуется от управляемых исключений API.
+    /// </summary>
     private bool TryActivate(View view)
     {
+        if (!view.IsValidObject)
+        {
+            return false;
+        }
+
         try
         {
             uiDocument.ActiveView = view;
             return true;
         }
-        catch (RevitException)
-        {
-            return false;
-        }
-        catch (InvalidOperationException)
+        catch (Exception)
         {
             return false;
         }

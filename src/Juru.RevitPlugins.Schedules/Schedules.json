@@ -2,7 +2,7 @@
   "GlossaryPath": "",
   "BaseGlossaryPath": "",
   "Translation": {
-    "Provider": "Google",
+    "Provider": "DeepL",
     "ApiKeyEnvironmentVariable": "JURU_TRANSLATE_KEY",
     "SourceLanguage": "ru",
     "TargetLanguage": "en",
