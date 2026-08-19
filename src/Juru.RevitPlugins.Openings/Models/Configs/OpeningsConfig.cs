@@ -34,6 +34,11 @@ public class OpeningsConfig : ProjectConfig {
     public List<MepCategorySettings> Categories { get; set; } = GetDefaultCategories();
 
     /// <summary>
+    /// Имена семейств заданий и параметров внутри них.
+    /// </summary>
+    public OpeningFamilyNaming Naming { get; set; } = new OpeningFamilyNaming();
+
+    /// <summary>
     /// Округление габаритов объединённого задания в мм.
     /// </summary>
     public int UnitedTaskSizeRoundingMm { get; set; } = 10;
@@ -104,6 +109,9 @@ public class OpeningsConfig : ProjectConfig {
             // Настройки, сохранённые предыдущей версией плагина, могут не содержать список категорий.
             if(config is not null && (config.Categories is null || config.Categories.Count == 0)) {
                 config.Categories = GetDefaultCategories();
+            }
+            if(config is not null) {
+                config.Naming ??= new OpeningFamilyNaming();
             }
             return config;
         } catch(Exception) {
