@@ -102,8 +102,52 @@ public sealed class GlossaryTranslator(ITextTranslator translator, int batchSize
         return expected.Count == actual.Count && expected.All(actual.Contains);
     }
 
-    private static List<string> ExtractNumbers(string text)
+    /// <summary>
+    ///     Убирает разделитель тысяч: перевод пишет «1,660» там, где в оригинале «1660», и посимвольная
+    ///     сверка сочла бы это потерей числа. Десятичная запятая не трогается — после неё не три цифры.
+    /// </summary>
+    private static string JoinThousands(string text)
     {
+        var joined = new StringBuilder(text.Length);
+
+        for (var index = 0; index < text.Length; index++)
+        {
+            if (IsThousandsSeparator(text, index))
+            {
+                continue;
+            }
+
+            joined.Append(text[index]);
+        }
+
+        return joined.ToString();
+    }
+
+    private static bool IsThousandsSeparator(string text, int index)
+    {
+        if (text[index] is not (',' or ' ' or ' ' or ' '))
+        {
+            return false;
+        }
+
+        if (index is 0 || !char.IsDigit(text[index - 1]))
+        {
+            return false;
+        }
+
+        var digits = 0;
+
+        while (index + 1 + digits < text.Length && char.IsDigit(text[index + 1 + digits]))
+        {
+            digits++;
+        }
+
+        return digits is 3;
+    }
+
+    private static List<string> ExtractNumbers(string source)
+    {
+        var text = JoinThousands(source);
         var numbers = new List<string>();
         var current = new StringBuilder();
 
