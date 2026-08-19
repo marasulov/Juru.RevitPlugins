@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,12 +36,14 @@ public sealed class GlossaryTranslator(ITextTranslator translator, int batchSize
             {
                 Entries = entries,
                 TranslatedCount = 0,
+                RejectedTexts = [],
                 Failures = []
             };
         }
 
         var translations = new Dictionary<string, string>(StringComparer.CurrentCulture);
         var failures = new List<string>();
+        var rejected = new List<string>();
 
         foreach (var batch in Batch(pending, batchSize))
         {
@@ -53,7 +56,16 @@ public sealed class GlossaryTranslator(ITextTranslator translator, int batchSize
 
                 for (var index = 0; index < batch.Count; index++)
                 {
-                    translations[batch[index].Key] = translated[index].Trim();
+                    var source = batch[index].Readable;
+                    var result = translated[index].Trim();
+
+                    if (!PreservesNumbers(source, result))
+                    {
+                        rejected.Add(batch[index].Readable);
+                        continue;
+                    }
+
+                    translations[batch[index].Key] = result;
                 }
             }
             catch (TranslationException exception)
@@ -66,8 +78,56 @@ public sealed class GlossaryTranslator(ITextTranslator translator, int batchSize
         {
             Entries = Apply(entries, translations),
             TranslatedCount = translations.Count,
+            RejectedTexts = rejected,
             Failures = failures
         };
+    }
+
+    /// <summary>
+    ///     Сверяет числа исходной строки и перевода. Размеры и длины вида «Полоса стальная –40х5, L=1660»
+    ///     машинный перевод иногда переставляет или теряет, а в спецификации это ошибка чертежа, поэтому
+    ///     такой перевод не принимается и строка остаётся непереведённой.
+    /// </summary>
+    private static bool PreservesNumbers(string source, string translation)
+    {
+        var expected = ExtractNumbers(source);
+
+        if (expected.Count is 0)
+        {
+            return true;
+        }
+
+        var actual = ExtractNumbers(translation);
+
+        return expected.Count == actual.Count && expected.All(actual.Contains);
+    }
+
+    private static List<string> ExtractNumbers(string text)
+    {
+        var numbers = new List<string>();
+        var current = new StringBuilder();
+
+        foreach (var symbol in text)
+        {
+            if (char.IsDigit(symbol))
+            {
+                current.Append(symbol);
+                continue;
+            }
+
+            if (current.Length > 0)
+            {
+                numbers.Add(current.ToString());
+                current.Clear();
+            }
+        }
+
+        if (current.Length > 0)
+        {
+            numbers.Add(current.ToString());
+        }
+
+        return numbers;
     }
 
     private static IReadOnlyList<GlossaryEntry> Apply(

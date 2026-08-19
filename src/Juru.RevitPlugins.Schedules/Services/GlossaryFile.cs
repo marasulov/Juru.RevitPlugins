@@ -19,6 +19,8 @@ public static class GlossaryFile
     private const int SourceColumn = 5;
     private const int MinimumColumnCount = 3;
 
+    private const string KeyHeader = "Ключ";
+    private const string BaseMark = "базовый";
     private const string MachineMark = "машинный";
     private const string DerivedMark = "выведен";
     private const string HumanMark = "вручную";
@@ -104,6 +106,11 @@ public static class GlossaryFile
                 continue;
             }
 
+            if (string.Equals(key, KeyHeader, StringComparison.CurrentCulture))
+            {
+                continue;
+            }
+
             var source = row.Count > SourceColumn ? ParseSource(row[SourceColumn]) : TranslationSource.Human;
 
             entries[key] = new GlossaryTranslation(translation, source);
@@ -117,6 +124,7 @@ public static class GlossaryFile
         return source switch
         {
             TranslationSource.Machine => MachineMark,
+            TranslationSource.Base => BaseMark,
             TranslationSource.Derived => DerivedMark,
             TranslationSource.Human => HumanMark,
             _ => string.Empty
@@ -139,6 +147,11 @@ public static class GlossaryFile
         if (string.Equals(trimmed, DerivedMark, StringComparison.CurrentCultureIgnoreCase))
         {
             return TranslationSource.Derived;
+        }
+
+        if (string.Equals(trimmed, BaseMark, StringComparison.CurrentCultureIgnoreCase))
+        {
+            return TranslationSource.Base;
         }
 
         return TranslationSource.Human;

@@ -13,12 +13,20 @@ namespace Juru.RevitPlugins.Schedules.Services;
 public sealed record SchedulesConfig
 {
     private const string FileName = "Schedules.json";
+    private const string BaseGlossaryFileName = "BaseGlossary.csv";
 
     /// <summary>
     ///     Путь к глоссарию. Пусто — используется файл в документах пользователя. Для общей работы здесь
     ///     указывают файл на сетевом диске или в репозитории проекта.
     /// </summary>
     public string? GlossaryPath { get; init; }
+
+    /// <summary>
+    ///     Словарь повторяющихся терминов, выверенный один раз на все проекты. Ищется по нормализованному
+    ///     тексту, поэтому переносит термин между моделями с разной ручной расстановкой переносов.
+    ///     Пусто — файл рядом с плагином.
+    /// </summary>
+    public string? BaseGlossaryPath { get; init; }
 
     /// <summary>Настройки машинного перевода.</summary>
     public TranslationSettings Translation { get; init; } = new();
@@ -49,6 +57,18 @@ public sealed record SchedulesConfig
     public string ResolveGlossaryPath()
     {
         return string.IsNullOrWhiteSpace(GlossaryPath) ? Glossary.DefaultPath : GlossaryPath!;
+    }
+
+    public string ResolveBaseGlossaryPath()
+    {
+        if (!string.IsNullOrWhiteSpace(BaseGlossaryPath))
+        {
+            return BaseGlossaryPath!;
+        }
+
+        var directory = Path.GetDirectoryName(ResolveConfigPath() ?? string.Empty);
+
+        return directory is null ? BaseGlossaryFileName : Path.Combine(directory, BaseGlossaryFileName);
     }
 
     private static string? ResolveConfigPath()

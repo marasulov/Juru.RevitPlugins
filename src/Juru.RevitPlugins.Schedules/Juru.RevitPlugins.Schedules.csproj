@@ -33,6 +33,7 @@
     <ItemGroup>
         <!-- Настройки правятся рядом с установленным плагином, без пересборки. -->
         <None Include="Schedules.json" CopyToOutputDirectory="PreserveNewest" />
+        <None Include="BaseGlossary.csv" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>

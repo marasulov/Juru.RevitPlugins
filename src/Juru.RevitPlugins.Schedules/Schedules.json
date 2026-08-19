@@ -1,5 +1,6 @@
 {
   "GlossaryPath": "",
+  "BaseGlossaryPath": "",
   "Translation": {
     "Provider": "Google",
     "ApiKeyEnvironmentVariable": "JURU_TRANSLATE_KEY",

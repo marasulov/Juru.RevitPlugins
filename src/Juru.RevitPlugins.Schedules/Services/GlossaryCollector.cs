@@ -24,9 +24,14 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
     /// <param name="existing">
     ///     Уже заполненный глоссарий: сделанные переводы переносятся в новый файл, чтобы не переводить заново.
     /// </param>
+    /// <param name="baseTerms">
+    ///     Словарь повторяющихся терминов по нормализованному тексту. Проверяется после глоссария проекта,
+    ///     поэтому правка в проекте всегда сильнее общего словаря.
+    /// </param>
     public GlossaryCollectionResult Collect(
         string exportDirectory,
-        IReadOnlyDictionary<string, GlossaryTranslation> existing)
+        IReadOnlyDictionary<string, GlossaryTranslation> existing,
+        IReadOnlyDictionary<string, string> baseTerms)
     {
         var originalView = uiDocument.ActiveView;
         var occurrences = new Dictionary<string, int>(StringComparer.CurrentCulture);
@@ -52,7 +57,7 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
         return new GlossaryCollectionResult
         {
             ScheduleCount = found.Count,
-            Entries = BuildEntries(occurrences, schedules, existing),
+            Entries = BuildEntries(occurrences, schedules, existing, baseTerms),
             Failures = failures
         };
     }
@@ -110,10 +115,11 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
     private static IReadOnlyList<GlossaryEntry> BuildEntries(
         Dictionary<string, int> occurrences,
         Dictionary<string, SortedSet<string>> schedules,
-        IReadOnlyDictionary<string, GlossaryTranslation> existing)
+        IReadOnlyDictionary<string, GlossaryTranslation> existing,
+        IReadOnlyDictionary<string, string> baseTerms)
     {
         return occurrences
-            .Select(pair => CreateEntry(pair.Key, pair.Value, schedules[pair.Key], existing))
+            .Select(pair => CreateEntry(pair.Key, pair.Value, schedules[pair.Key], existing, baseTerms))
             .OrderBy(entry => entry.Readable, StringComparer.CurrentCulture)
             .ToList();
     }
@@ -126,14 +132,16 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
         string key,
         int occurrences,
         IEnumerable<string> scheduleNames,
-        IReadOnlyDictionary<string, GlossaryTranslation> existing)
+        IReadOnlyDictionary<string, GlossaryTranslation> existing,
+        IReadOnlyDictionary<string, string> baseTerms)
     {
-        var translation = ResolveTranslation(key, existing);
+        var readable = RussianText.Normalize(key);
+        var translation = ResolveTranslation(key, readable, existing, baseTerms);
 
         return new GlossaryEntry
         {
             Key = key,
-            Readable = RussianText.Normalize(key),
+            Readable = readable,
             Suggestion = translation.Text,
             Source = translation.Source,
             Occurrences = occurrences,
@@ -143,11 +151,18 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
 
     private static GlossaryTranslation ResolveTranslation(
         string key,
-        IReadOnlyDictionary<string, GlossaryTranslation> existing)
+        string readable,
+        IReadOnlyDictionary<string, GlossaryTranslation> existing,
+        IReadOnlyDictionary<string, string> baseTerms)
     {
         if (existing.TryGetValue(key, out var carried))
         {
             return carried;
+        }
+
+        if (baseTerms.TryGetValue(readable, out var term))
+        {
+            return new GlossaryTranslation(term, TranslationSource.Base);
         }
 
         if (RussianText.IsStandardDesignation(key) || RussianText.IsProductMark(key))

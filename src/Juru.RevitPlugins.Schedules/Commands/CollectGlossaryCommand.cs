@@ -37,9 +37,10 @@ public sealed class CollectGlossaryCommand : ExternalCommand
         var config = SchedulesConfig.Load();
         var glossaryPath = config.ResolveGlossaryPath();
         var existing = GlossaryFile.ReadEntries(glossaryPath);
+        var baseTerms = ReadBaseTerms(config.ResolveBaseGlossaryPath());
 
         var reportDirectory = ReportLocation.Create("Glossary", document.Title, DateTime.Now);
-        var collected = new GlossaryCollector(uiDocument).Collect(reportDirectory, existing);
+        var collected = new GlossaryCollector(uiDocument).Collect(reportDirectory, existing, baseTerms);
 
         if (collected.Entries.Count is 0)
         {
@@ -57,7 +58,23 @@ public sealed class CollectGlossaryCommand : ExternalCommand
         GlossaryFile.Write(merged, runPath);
         GlossaryFile.Write(merged, glossaryPath);
 
-        ShowResult(collected, translated, merged, translatorNote, glossaryPath, runPath);
+        ShowResult(collected, translated, merged, baseTerms.Count, translatorNote, glossaryPath, runPath);
+    }
+
+    /// <summary>
+    ///     Базовый словарь ищется по нормализованному тексту: термин переносится между моделями, даже если
+    ///     переносы в заголовке расставлены по-разному.
+    /// </summary>
+    private static IReadOnlyDictionary<string, string> ReadBaseTerms(string path)
+    {
+        var terms = new Dictionary<string, string>(StringComparer.CurrentCulture);
+
+        foreach (var pair in GlossaryFile.ReadEntries(path))
+        {
+            terms[RussianText.Normalize(pair.Key)] = pair.Value.Text;
+        }
+
+        return terms;
     }
 
     /// <summary>
@@ -79,6 +96,7 @@ public sealed class CollectGlossaryCommand : ExternalCommand
             {
                 Entries = entries,
                 TranslatedCount = 0,
+                RejectedTexts = [],
                 Failures = []
             };
         }
@@ -124,12 +142,18 @@ public sealed class CollectGlossaryCommand : ExternalCommand
         GlossaryCollectionResult collected,
         GlossaryTranslationResult translated,
         IReadOnlyList<GlossaryEntry> merged,
+        int baseTermCount,
         string translatorNote,
         string glossaryPath,
         string runPath)
     {
         var untranslated = merged.Count(entry => entry.Suggestion.Length is 0);
         var machine = merged.Count(entry => entry.Source is TranslationSource.Machine);
+        var fromBase = merged.Count(entry => entry.Source is TranslationSource.Base);
+
+        var rejected = translated.RejectedTexts.Count is 0
+            ? string.Empty
+            : $"\nОтклонено из-за расхождения чисел: {translated.RejectedTexts.Count}. «{translated.RejectedTexts[0]}»";
 
         var failures = translated.Failures.Count is 0
             ? string.Empty
@@ -140,8 +164,9 @@ public sealed class CollectGlossaryCommand : ExternalCommand
             MainInstruction = $"Строк в глоссарии: {merged.Count}, без перевода {untranslated}",
             MainContent = $"""
                            Спецификаций на листах: {collected.ScheduleCount}
+                           Из базового словаря ({baseTermCount} терминов): {fromBase}
                            Служба перевода: {translatorNote}
-                           Переведено сейчас: {translated.TranslatedCount}, машинных всего: {machine}{failures}
+                           Переведено сейчас: {translated.TranslatedCount}, машинных всего: {machine}{rejected}{failures}
 
                            Глоссарий: {glossaryPath}
                            Копия прогона: {runPath}
