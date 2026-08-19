@@ -63,3 +63,12 @@ public sealed record SheetSchedule(ViewSchedule Schedule, IReadOnlyList<SheetPla
 
 /// <summary>Размещение спецификации на листе; точка привязана к левому верхнему углу таблицы.</summary>
 public sealed record SheetPlacement(ElementId SheetId, string SheetNumber, XYZ Point);
+
+/// <summary>
+///     Прочитанная спецификация: снимок таблицы и всё, что уже известно для отчёта. Снимок пуст, если
+///     чтение не удалось.
+/// </summary>
+public sealed record ReadSchedule(
+    SheetSchedule Source,
+    Juru.RevitPlugins.Schedules.Models.ScheduleTableSnapshot? Snapshot,
+    Juru.RevitPlugins.Schedules.Models.SheetScheduleCopy Described);

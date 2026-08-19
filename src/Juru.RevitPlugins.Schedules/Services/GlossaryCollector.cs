@@ -1,95 +1,63 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
-using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
-
 using Juru.RevitPlugins.Schedules.Models;
-
-using RevitException = Autodesk.Revit.Exceptions.ApplicationException;
 
 namespace Juru.RevitPlugins.Schedules.Services;
 
 /// <summary>
-///     Собирает глоссарий по листовым спецификациям тем же путём, которым потом подставляется перевод:
-///     ключи берутся из снимка таблицы, а не из параметров элементов, иначе они не совпадут при подстановке.
-///     Модель не изменяется.
+///     Строит глоссарий по уже прочитанным спецификациям. Ключами становятся те же строки, что уходят в
+///     подстановку при отрисовке, иначе перевод не найдётся.
 /// </summary>
-public sealed class GlossaryCollector(UIDocument uiDocument)
+public static class GlossaryCollector
 {
-    private readonly Document document = uiDocument.Document;
-
     /// <param name="existing">
-    ///     Уже заполненный глоссарий: сделанные переводы переносятся в новый файл, чтобы не переводить заново.
+    ///     Уже заполненный глоссарий: сделанные переводы переносятся, чтобы не переводить заново.
     /// </param>
     /// <param name="baseTerms">
     ///     Словарь повторяющихся терминов по нормализованному тексту. Проверяется после глоссария проекта,
     ///     поэтому правка в проекте всегда сильнее общего словаря.
     /// </param>
-    public GlossaryCollectionResult Collect(
-        string exportDirectory,
+    public static GlossaryCollectionResult Collect(
+        IReadOnlyList<ReadSchedule> schedules,
         IReadOnlyDictionary<string, GlossaryTranslation> existing,
         IReadOnlyDictionary<string, string> baseTerms)
     {
-        var originalView = uiDocument.ActiveView;
+        if (schedules is null)
+        {
+            throw new ArgumentNullException(nameof(schedules));
+        }
+
         var occurrences = new Dictionary<string, int>(StringComparer.CurrentCulture);
-        var schedules = new Dictionary<string, SortedSet<string>>(StringComparer.CurrentCulture);
+        var scheduleNames = new Dictionary<string, SortedSet<string>>(StringComparer.CurrentCulture);
         var failures = new List<string>();
 
-        var found = new SheetScheduleFinder(document).Find();
-
-        foreach (var entry in found)
+        foreach (var read in schedules)
         {
-            try
+            if (read.Snapshot is null)
             {
-                CollectSchedule(entry.Schedule, exportDirectory, occurrences, schedules);
+                failures.Add($"{read.Source.Schedule.Name}: {read.Described.Error}");
+                continue;
             }
-            catch (RevitException exception)
+
+            foreach (var cell in read.Snapshot.Sections.SelectMany(section => section.Cells))
             {
-                failures.Add($"{entry.Schedule.Name}: {exception.Message}");
+                Add(occurrences, scheduleNames, cell.Text, read.Source.Schedule.Name);
             }
         }
 
-        TryActivate(originalView);
-
         return new GlossaryCollectionResult
         {
-            ScheduleCount = found.Count,
-            Entries = BuildEntries(occurrences, schedules, existing, baseTerms),
+            ScheduleCount = schedules.Count,
+            Entries = BuildEntries(occurrences, scheduleNames, existing, baseTerms),
             Failures = failures
         };
     }
 
-    private void CollectSchedule(
-        ViewSchedule schedule,
-        string exportDirectory,
-        Dictionary<string, int> occurrences,
-        Dictionary<string, SortedSet<string>> schedules)
-    {
-        // Экспорт пишет файл на диск, а смена активного вида недопустима внутри транзакции.
-        var exportedText = new ScheduleTextExporter()
-            .TryExport(schedule, Path.Combine(exportDirectory, "export"), out _);
-
-        TryActivate(schedule);
-
-        using var transaction = new Transaction(document, $"Сбор глоссария: {schedule.Name}");
-        transaction.Start();
-
-        var snapshot = new ScheduleTableReader(document).Read(schedule, exportedText);
-
-        transaction.RollBack();
-
-        foreach (var cell in snapshot.Sections.SelectMany(section => section.Cells))
-        {
-            Add(occurrences, schedules, cell.Text, schedule.Name);
-        }
-    }
-
     private static void Add(
         Dictionary<string, int> occurrences,
-        Dictionary<string, SortedSet<string>> schedules,
+        Dictionary<string, SortedSet<string>> scheduleNames,
         string text,
         string scheduleName)
     {
@@ -103,10 +71,10 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
         occurrences.TryGetValue(key, out var count);
         occurrences[key] = count + 1;
 
-        if (!schedules.TryGetValue(key, out var names))
+        if (!scheduleNames.TryGetValue(key, out var names))
         {
             names = new SortedSet<string>(StringComparer.CurrentCulture);
-            schedules[key] = names;
+            scheduleNames[key] = names;
         }
 
         names.Add(scheduleName);
@@ -114,20 +82,16 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
 
     private static IReadOnlyList<GlossaryEntry> BuildEntries(
         Dictionary<string, int> occurrences,
-        Dictionary<string, SortedSet<string>> schedules,
+        Dictionary<string, SortedSet<string>> scheduleNames,
         IReadOnlyDictionary<string, GlossaryTranslation> existing,
         IReadOnlyDictionary<string, string> baseTerms)
     {
         return occurrences
-            .Select(pair => CreateEntry(pair.Key, pair.Value, schedules[pair.Key], existing, baseTerms))
+            .Select(pair => CreateEntry(pair.Key, pair.Value, scheduleNames[pair.Key], existing, baseTerms))
             .OrderBy(entry => entry.Readable, StringComparer.CurrentCulture)
             .ToList();
     }
 
-    /// <summary>
-    ///     Заполняет перевод там, где он известен: сделанный ранее перевод, английская половина двуязычной
-    ///     строки, обозначение стандарта или марка изделия. Марки и обозначения в переводе остаются собой.
-    /// </summary>
     private static GlossaryEntry CreateEntry(
         string key,
         int occurrences,
@@ -149,6 +113,11 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
         };
     }
 
+    /// <summary>
+    ///     Заполняет перевод там, где он известен: сделанный ранее перевод, выверенный термин, обозначение
+    ///     стандарта, марка изделия или английская половина двуязычной строки. Марки и обозначения в
+    ///     переводе остаются собой.
+    /// </summary>
     private static GlossaryTranslation ResolveTranslation(
         string key,
         string readable,
@@ -175,28 +144,5 @@ public sealed class GlossaryCollector(UIDocument uiDocument)
         return english.Length > 0
             ? new GlossaryTranslation(english, TranslationSource.Derived)
             : new GlossaryTranslation(string.Empty, TranslationSource.None);
-    }
-
-    /// <summary>
-    ///     Открытие вида - способ заставить Revit пересчитать тело спецификации, а не часть работы: его
-    ///     отказ не должен обрывать сбор. Недействительный вид Revit сообщает исключением из слоя
-    ///     взаимодействия, которое не наследуется от управляемых исключений API.
-    /// </summary>
-    private bool TryActivate(View view)
-    {
-        if (!view.IsValidObject)
-        {
-            return false;
-        }
-
-        try
-        {
-            uiDocument.ActiveView = view;
-            return true;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
     }
 }

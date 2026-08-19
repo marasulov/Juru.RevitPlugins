@@ -28,39 +28,34 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
 
     private readonly Document document = uiDocument.Document;
 
+    /// <summary>
+    ///     Читает все листовые спецификации: выгрузка текста и снимок таблицы. Ничего не рисует — снимки
+    ///     нужны и глоссарию, и отрисовке, а чтение спецификации дорогое, чтобы делать его дважды.
+    /// </summary>
     /// <param name="cellDumpDirectory">
     ///     Папка, куда складывается прочитанный текст ячеек по каждой спецификации. Пусто — выгрузка не нужна.
     /// </param>
-    public IReadOnlyList<SheetScheduleCopy> CopyAll(Glossary glossary, string? cellDumpDirectory)
+    public IReadOnlyList<ReadSchedule> ReadAll(string? cellDumpDirectory)
     {
-        if (glossary is null)
-        {
-            throw new ArgumentNullException(nameof(glossary));
-        }
-
         // Активной может быть копия прошлого прогона: её удаление Revit запретит, а ссылка на неё после
         // удаления станет недействительной. Поэтому уходим с копии заранее и запоминаем вид по номеру.
         LeaveCopyView();
+        OriginalViewId = uiDocument.ActiveView.Id;
 
-        var originalViewId = uiDocument.ActiveView.Id;
-
-        var copies = new SheetScheduleFinder(document)
+        return new SheetScheduleFinder(document)
             .Find()
-            .Select(entry => Copy(entry.Schedule, entry.Placements, glossary, cellDumpDirectory))
+            .Select(entry => Read(entry, cellDumpDirectory))
             .ToList();
-
-        TryActivate(originalViewId);
-
-        return copies;
     }
 
-    private SheetScheduleCopy Copy(
-        ViewSchedule schedule,
-        IReadOnlyList<SheetPlacement> placements,
-        Glossary glossary,
-        string? cellDumpDirectory)
+    /// <summary>Вид, который был открыт до прогона: к нему возвращаются после отрисовки.</summary>
+    public ElementId? OriginalViewId { get; private set; }
+
+    private ReadSchedule Read(SheetSchedule entry, string? cellDumpDirectory)
     {
+        var schedule = entry.Schedule;
         var definition = schedule.Definition;
+
         var fields = definition.GetFieldOrder()
             .Select(definition.GetField)
             .ToList();
@@ -72,35 +67,87 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
         var described = new SheetScheduleCopy
         {
             ScheduleName = schedule.Name,
-            SheetNumbers = placements.Select(placement => placement.SheetNumber).ToList(),
+            SheetNumbers = entry.Placements.Select(placement => placement.SheetNumber).ToList(),
             VisibleColumnHeadings = fields.Where(field => !field.IsHidden).Select(DescribeColumn).ToList(),
             HiddenFieldNames = fields.Where(field => field.IsHidden).Select(field => field.GetName()).ToList(),
             IsSplit = schedule.IsSplit(),
-            ReplacedCopyCount = DeletePreviousCopies(schedule.Name),
             RowCountBeforeActivation = ReadBodyRowCount(schedule),
             WasActivated = TryActivate(schedule),
             ExportedRowCount = exportedText?.Count ?? 0,
             ExportWarning = exportWarning
         };
 
-        using var transaction = new Transaction(document, $"Копия спецификации: {schedule.Name}");
+        using var transaction = new Transaction(document, $"Чтение спецификации: {schedule.Name}");
         transaction.Start();
 
         try
         {
             var snapshot = new ScheduleTableReader(document).Read(schedule, exportedText);
+
+            transaction.RollBack();
+
+            return new ReadSchedule(entry, snapshot, described);
+        }
+        catch (RevitException exception)
+        {
+            transaction.RollBack();
+
+            return new ReadSchedule(entry, null, described with { Error = exception.Message });
+        }
+    }
+
+    /// <summary>
+    ///     Рисует копии по снимкам и возвращает активный вид на место.
+    /// </summary>
+    public IReadOnlyList<SheetScheduleCopy> DrawAll(
+        IReadOnlyList<ReadSchedule> schedules,
+        Glossary glossary,
+        string? cellDumpDirectory)
+    {
+        if (glossary is null)
+        {
+            throw new ArgumentNullException(nameof(glossary));
+        }
+
+        var copies = schedules
+            .Select(schedule => Draw(schedule, glossary, cellDumpDirectory))
+            .ToList();
+
+        if (OriginalViewId is not null)
+        {
+            TryActivate(OriginalViewId);
+        }
+
+        return copies;
+    }
+
+    private SheetScheduleCopy Draw(ReadSchedule read, Glossary glossary, string? cellDumpDirectory)
+    {
+        if (read.Snapshot is null)
+        {
+            return read.Described;
+        }
+
+        var schedule = read.Source.Schedule;
+        var described = read.Described with { ReplacedCopyCount = DeletePreviousCopies(schedule.Name) };
+
+        using var transaction = new Transaction(document, $"Копия спецификации: {schedule.Name}");
+        transaction.Start();
+
+        try
+        {
             var writer = new DraftingTableWriter(document);
-            var result = writer.Draw(snapshot, glossary);
-            var placement = Place(result, placements);
+            var result = writer.Draw(read.Snapshot, glossary);
+            var placement = Place(result, read.Source.Placements);
 
             if (cellDumpDirectory is not null)
             {
-                ScheduleTableDiagnosticsWriter.WriteTo(snapshot, writer.AppliedViewScale, cellDumpDirectory);
+                ScheduleTableDiagnosticsWriter.WriteTo(read.Snapshot, writer.AppliedViewScale, cellDumpDirectory);
             }
 
             transaction.Commit();
 
-            var body = snapshot.Sections.LastOrDefault();
+            var body = read.Snapshot.Sections.LastOrDefault();
 
             return described with
             {
