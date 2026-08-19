@@ -6,9 +6,10 @@ namespace Juru.RevitPlugins.Openings.Models.Configs;
 /// Имена семейств заданий на отверстия и имена параметров внутри них.
 /// </summary>
 /// <remarks>
-/// Семейства взяты из библиотеки Bim4Everyone, но и имена семейств, и имена параметров у нас свои:
-/// параметры заводятся с префиксом Juru и английскими именами, потому что деления на ВИС в институте
-/// нет. Всё это лежит в настройках, а не в коде: переименование не должно требовать пересборки плагина.
+/// Семейства взяты из библиотеки Bim4Everyone и переименованы под нашу номенклатуру. Габариты остались
+/// на стандартных параметрах ADSK, а те параметры, что несли чужие обозначения - деление на ВИС и
+/// авторство задания, - заведены заново с префиксом Juru. Всё это лежит в настройках, а не в коде:
+/// переименование не должно требовать пересборки плагина.
 /// </remarks>
 public class OpeningFamilyNaming {
     /// <summary>
@@ -34,22 +35,22 @@ public class OpeningFamilyNaming {
     /// <summary>
     /// Диаметр круглого отверстия.
     /// </summary>
-    public string DiameterParam { get; set; } = "Juru_Opening_Diameter";
+    public string DiameterParam { get; set; } = "ADSK_Размер_Диаметр";
 
     /// <summary>
     /// Ширина прямоугольного отверстия.
     /// </summary>
-    public string WidthParam { get; set; } = "Juru_Opening_Width";
+    public string WidthParam { get; set; } = "ADSK_Размер_Ширина";
 
     /// <summary>
     /// Высота прямоугольного отверстия.
     /// </summary>
-    public string HeightParam { get; set; } = "Juru_Opening_Height";
+    public string HeightParam { get; set; } = "ADSK_Размер_Высота";
 
     /// <summary>
     /// Глубина отверстия - толщина конструкции в месте прохода.
     /// </summary>
-    public string ThicknessParam { get; set; } = "Juru_Opening_Depth";
+    public string ThicknessParam { get; set; } = "ADSK_Размер_Глубина";
 
     /// <summary>
     /// Отметка оси отверстия от нуля здания.
