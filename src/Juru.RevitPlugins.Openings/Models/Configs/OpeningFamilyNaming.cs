@@ -6,9 +6,9 @@ namespace Juru.RevitPlugins.Openings.Models.Configs;
 /// Имена семейств заданий на отверстия и имена параметров внутри них.
 /// </summary>
 /// <remarks>
-/// Семейства взяты из библиотеки Bim4Everyone и переименованы под нашу номенклатуру, поэтому имена
-/// семейств наши, а имена параметров - их. Всё это лежит в настройках, а не в коде: переименование
-/// семейства или параметра не должно требовать пересборки плагина.
+/// Семейства взяты из библиотеки Bim4Everyone, но и имена семейств, и имена параметров у нас свои:
+/// параметры заводятся с префиксом Juru и английскими именами, потому что деления на ВИС в институте
+/// нет. Всё это лежит в настройках, а не в коде: переименование не должно требовать пересборки плагина.
 /// </remarks>
 public class OpeningFamilyNaming {
     /// <summary>
@@ -34,57 +34,57 @@ public class OpeningFamilyNaming {
     /// <summary>
     /// Диаметр круглого отверстия.
     /// </summary>
-    public string DiameterParam { get; set; } = "ADSK_Размер_Диаметр";
+    public string DiameterParam { get; set; } = "Juru_Opening_Diameter";
 
     /// <summary>
     /// Ширина прямоугольного отверстия.
     /// </summary>
-    public string WidthParam { get; set; } = "ADSK_Размер_Ширина";
+    public string WidthParam { get; set; } = "Juru_Opening_Width";
 
     /// <summary>
     /// Высота прямоугольного отверстия.
     /// </summary>
-    public string HeightParam { get; set; } = "ADSK_Размер_Высота";
+    public string HeightParam { get; set; } = "Juru_Opening_Height";
 
     /// <summary>
     /// Глубина отверстия - толщина конструкции в месте прохода.
     /// </summary>
-    public string ThicknessParam { get; set; } = "ADSK_Размер_Глубина";
+    public string ThicknessParam { get; set; } = "Juru_Opening_Depth";
 
     /// <summary>
     /// Отметка оси отверстия от нуля здания.
     /// </summary>
-    public string CenterOffsetParam { get; set; } = "ФОП_ВИС_Отметка оси от нуля";
+    public string CenterOffsetParam { get; set; } = "Juru_Opening_CenterElevation";
 
     /// <summary>
     /// Отметка низа отверстия от нуля здания.
     /// </summary>
-    public string BottomOffsetParam { get; set; } = "ФОП_ВИС_Отметка низа от нуля";
+    public string BottomOffsetParam { get; set; } = "Juru_Opening_BottomElevation";
 
     /// <summary>
     /// Имя инженерной системы элемента, для которого выдано задание.
     /// </summary>
-    public string MepSystemParam { get; set; } = "ФОП_ВИС_Имя системы";
+    public string MepSystemParam { get; set; } = "Juru_Opening_System";
 
     /// <summary>
     /// Описание задания: файлы, имена и id элементов, из пересечения которых оно возникло.
     /// </summary>
-    public string DescriptionParam { get; set; } = "ФОП_Описание";
+    public string DescriptionParam { get; set; } = "Juru_Opening_Description";
 
     /// <summary>
     /// Дата выдачи задания.
     /// </summary>
-    public string DateParam { get; set; } = "ФОП_Дата";
+    public string DateParam { get; set; } = "Juru_Opening_IssueDate";
 
     /// <summary>
     /// Автор задания.
     /// </summary>
-    public string AuthorParam { get; set; } = "ФОП_Автор задания";
+    public string AuthorParam { get; set; } = "Juru_Opening_Author";
 
     /// <summary>
     /// Признак того, что задание размещено вручную и не должно перезаписываться авторасстановкой.
     /// </summary>
-    public string ManuallyPlacedParam { get; set; } = "ФОП_Размещено вручную";
+    public string ManuallyPlacedParam { get; set; } = "Juru_Opening_ManuallyPlaced";
 
     /// <summary>
     /// Возвращает имя семейства для типа отверстия.
