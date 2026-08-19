@@ -53,14 +53,24 @@ public class OpeningFamilyNaming {
     public string ThicknessParam { get; set; } = "ADSK_Размер_Глубина";
 
     /// <summary>
-    /// Отметка оси отверстия от нуля здания.
+    /// Отметка оси отверстия от нуля здания. Параметр необязательный: если его в семействе нет,
+    /// плагин молча его пропустит.
     /// </summary>
     public string CenterOffsetParam { get; set; } = "Juru_Opening_CenterElevation";
 
     /// <summary>
     /// Отметка низа отверстия от нуля здания.
     /// </summary>
-    public string BottomOffsetParam { get; set; } = "Juru_Opening_BottomElevation";
+    /// <remarks>
+    /// Стандартный параметр ADSK: он уже есть и в семействах, и в файле общих параметров института,
+    /// поэтому своего заводить не нужно.
+    /// </remarks>
+    public string BottomOffsetParam { get; set; } = "ADSK_Отверстие_Отметка от нуля";
+
+    /// <summary>
+    /// Отметка низа отверстия от уровня, на котором оно размещено.
+    /// </summary>
+    public string LevelOffsetParam { get; set; } = "ADSK_Отверстие_Отметка от этажа";
 
     /// <summary>
     /// Имя инженерной системы элемента, для которого выдано задание.

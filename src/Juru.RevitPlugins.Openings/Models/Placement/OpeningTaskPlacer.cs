@@ -79,7 +79,7 @@ public class OpeningTaskPlacer {
         // Параметры назначаются после Regenerate: до него значения, назначенные только что созданному
         // экземпляру, могут не примениться.
         _doc.Regenerate();
-        SetParameters(instance, intersection, size);
+        SetParameters(instance, intersection, size, level);
 
         double angle = OpeningAngle.Get(intersection);
         if(Math.Abs(angle) > 1e-9) {
@@ -108,7 +108,8 @@ public class OpeningTaskPlacer {
     private void SetParameters(
         FamilyInstance instance,
         MepStructureIntersection intersection,
-        OpeningSize size) {
+        OpeningSize size,
+        Level level) {
 
         var naming = _config.Naming;
         if(size.IsRound) {
@@ -120,8 +121,12 @@ public class OpeningTaskPlacer {
         ParameterWriter.SetLength(instance, naming.ThicknessParam, size.Thickness);
 
         double halfHeight = size.IsRound ? size.Diameter / 2 : size.Height / 2;
+        double bottomElevation = size.Center.Z - halfHeight;
         ParameterWriter.SetLength(instance, naming.CenterOffsetParam, size.Center.Z);
-        ParameterWriter.SetLength(instance, naming.BottomOffsetParam, size.Center.Z - halfHeight);
+        ParameterWriter.SetLength(instance, naming.BottomOffsetParam, bottomElevation);
+        if(level is not null) {
+            ParameterWriter.SetLength(instance, naming.LevelOffsetParam, bottomElevation - level.ProjectElevation);
+        }
 
         ParameterWriter.SetText(instance, naming.MepSystemParam, GetMepSystemName(intersection.Mep.Element));
         ParameterWriter.SetText(instance, naming.DescriptionParam, GetDescription(intersection));
