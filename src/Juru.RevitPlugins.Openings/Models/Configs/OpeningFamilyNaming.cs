@@ -33,6 +33,15 @@ public class OpeningFamilyNaming {
     public string FloorRoundFamily { get; set; } = "opening_slab_circ";
 
     /// <summary>
+    /// Семейство отверстия в перекрытии, размещаемого вручную для нестандартных случаев.
+    /// </summary>
+    /// <remarks>
+    /// Плагин такие отверстия не рассчитывает и не изменяет - только показывает наравне с остальными,
+    /// чтобы шахты и нетиповые проёмы были видны в общем списке.
+    /// </remarks>
+    public string SlabUniqueFamily { get; set; } = "opening_slab_unique";
+
+    /// <summary>
     /// Диаметр круглого отверстия.
     /// </summary>
     public string DiameterParam { get; set; } = "ADSK_Размер_Диаметр";
