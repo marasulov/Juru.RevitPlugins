@@ -56,9 +56,13 @@ public class SolidIntersectionFinder {
                 cancellationToken.ThrowIfCancellationRequested();
                 progress?.Report(++processed);
 
+                // Одно пересечение на пару "элемент ВИС + конструкция": слои составной конструкции
+                // дают несколько солидов, но проход через них один.
+                Dictionary<ElementId, MepStructureIntersection> byMepElement = [];
                 foreach(var structureSolid in GetTransformedSolids(structureElement, transitionMatrix)) {
-                    intersections.AddRange(FindForSolid(candidates, mepIds, structureProvider, structureElement, structureSolid));
+                    CollectForSolid(candidates, mepIds, structureProvider, structureElement, structureSolid, byMepElement);
                 }
+                intersections.AddRange(byMepElement.Values);
             }
         }
 
@@ -77,19 +81,20 @@ public class SolidIntersectionFinder {
         }
     }
 
-    private IEnumerable<MepStructureIntersection> FindForSolid(
+    private void CollectForSolid(
         IReadOnlyDictionary<ElementId, MepElementCandidate> candidates,
         IList<ElementId> mepIds,
         StructureElementsProvider structureProvider,
         Element structureElement,
-        Solid structureSolid) {
+        Solid structureSolid,
+        Dictionary<ElementId, MepStructureIntersection> byMepElement) {
 
         var nearby = new FilteredElementCollector(_mepProvider.Doc, mepIds)
             .WherePasses(new BoundingBoxIntersectsFilter(GeometryUtils.GetOutline(structureSolid)))
             .ToElementIds()
             .ToList();
         if(nearby.Count == 0) {
-            yield break;
+            return;
         }
 
         // Пересекается ли элемент с конструкцией, решает Revit: его фильтр справляется с геометрией,
@@ -103,10 +108,14 @@ public class SolidIntersectionFinder {
                 continue;
             }
 
+            if(!byMepElement.TryGetValue(mepId, out var intersection)) {
+                intersection = new MepStructureIntersection(candidate, structureProvider, structureElement);
+                byMepElement[mepId] = intersection;
+            }
+
             // Габариты берём из булева пересечения, но его неудача пересечение не отменяет:
             // такое попадёт в отчёт как невычислимая геометрия, а не потеряется.
-            var intersection = GetIntersection(candidate.Element, structureSolid);
-            yield return new MepStructureIntersection(candidate, structureProvider, structureElement, intersection);
+            intersection.AddSolid(GetIntersection(candidate.Element, structureSolid));
         }
     }
 

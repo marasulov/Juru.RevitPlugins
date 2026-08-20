@@ -34,14 +34,18 @@ public class OpeningTaskPlacer {
         if(intersections is null) { throw new ArgumentNullException(nameof(intersections)); }
 
         var result = new PlacementResult();
+        var placedTasks = new PlacedTasksIndex(_doc, _config);
         using var transaction = new Transaction(_doc, "Расстановка заданий на отверстия");
         transaction.Start();
 
         foreach(var intersection in intersections) {
             try {
-                var instance = PlaceOne(intersection, result, out string failure);
+                var instance = PlaceOne(intersection, result, placedTasks, out string failure);
                 if(instance is null) {
-                    result.Failed.Add(new IntersectionRejection(intersection, failure));
+                    // Пропуск дубля - не отказ: причины у него нет, он ожидаемый.
+                    if(failure is not null) {
+                        result.Failed.Add(new IntersectionRejection(intersection, failure));
+                    }
                 } else {
                     result.Placed.Add(instance);
                 }
@@ -57,6 +61,7 @@ public class OpeningTaskPlacer {
     private FamilyInstance PlaceOne(
         MepStructureIntersection intersection,
         PlacementResult result,
+        PlacedTasksIndex placedTasks,
         out string failure) {
         failure = null;
         var size = _sizeCalculator.Calculate(intersection);
@@ -73,6 +78,12 @@ public class OpeningTaskPlacer {
 
         var level = GetLevel(intersection.Mep.Element, size.Center);
         var point = InsertionPoint.Get(size, intersection);
+
+        if(placedTasks.AlreadyPlaced(point, size.BoxVolume)) {
+            result.SkippedAsDuplicate++;
+            return null;
+        }
+
         var instance = CreateInstance(symbol, point, level);
         if(instance is null) {
             failure = "Revit не создал экземпляр семейства задания.";
@@ -90,6 +101,9 @@ public class OpeningTaskPlacer {
             ElementTransformUtils.RotateElement(_doc, instance.Id, axis, angle);
         }
 
+        // Задание учитывается сразу: иначе два пересечения в одном месте внутри одного прогона
+        // дали бы два задания.
+        placedTasks.Add(point, size.BoxVolume);
         return instance;
     }
 

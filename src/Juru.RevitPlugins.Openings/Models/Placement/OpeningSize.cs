@@ -58,4 +58,12 @@ public class OpeningSize {
     /// Круглое ли отверстие.
     /// </summary>
     public bool IsRound => OpeningType is OpeningType.WallRound or OpeningType.FloorRound;
+
+    /// <summary>
+    /// Объём отверстия в единицах Revit - по габаритному боксу, а не по форме:
+    /// он нужен только для сравнения заданий между собой.
+    /// </summary>
+    public double BoxVolume => IsRound
+        ? Diameter * Diameter * Thickness
+        : Width * Height * Thickness;
 }

@@ -27,7 +27,7 @@ public class OpeningSizeCalculator {
         }
 
         var frame = StructureFrame.Create(intersection);
-        var box = GetBoxInFrame(intersection.Intersection, frame);
+        var box = GetUnionBoxInFrame(intersection, frame);
         if(box is null) {
             return null;
         }
@@ -80,6 +80,33 @@ public class OpeningSizeCalculator {
             diameter,
             thickness,
             center);
+    }
+
+    /// <summary>
+    /// Возвращает общий габаритный бокс всех солидов пересечения в системе координат конструкции:
+    /// слои составной конструкции складываются в одно отверстие на всю её толщину.
+    /// </summary>
+    private BoundingBoxXYZ GetUnionBoxInFrame(MepStructureIntersection intersection, StructureFrame frame) {
+        BoundingBoxXYZ union = null;
+        foreach(var solid in intersection.Solids) {
+            var box = GetBoxInFrame(solid, frame);
+            if(box is null) {
+                continue;
+            }
+            if(union is null) {
+                union = box;
+                continue;
+            }
+            union.Min = new XYZ(
+                Math.Min(union.Min.X, box.Min.X),
+                Math.Min(union.Min.Y, box.Min.Y),
+                Math.Min(union.Min.Z, box.Min.Z));
+            union.Max = new XYZ(
+                Math.Max(union.Max.X, box.Max.X),
+                Math.Max(union.Max.Y, box.Max.Y),
+                Math.Max(union.Max.Z, box.Max.Z));
+        }
+        return union;
     }
 
     /// <summary>

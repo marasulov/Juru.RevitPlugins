@@ -113,6 +113,9 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
         report.AppendLine($"Инженерных элементов проверено: {mepProvider.GetCandidates().Count}");
         report.AppendLine($"Пересечений найдено: {intersections.Count}");
         report.AppendLine($"Заданий размещено: {placement.Placed.Count}");
+        if(placement.SkippedAsDuplicate > 0) {
+            report.AppendLine($"Пропущено, задание уже стоит: {placement.SkippedAsDuplicate}");
+        }
 
         if(validation.Rejected.Count > 0) {
             report.AppendLine();

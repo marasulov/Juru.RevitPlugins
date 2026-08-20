@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+
 using Autodesk.Revit.DB;
 
 using Juru.RevitPlugins.Openings.Models.Configs;
@@ -8,17 +11,28 @@ namespace Juru.RevitPlugins.Openings.Models.Intersections;
 /// Пересечение инженерного элемента активного файла с конструкцией из связи.
 /// </summary>
 public class MepStructureIntersection {
+    private readonly List<Solid> _solids = [];
+
     public MepStructureIntersection(
         MepElementCandidate mep,
         StructureElementsProvider structureProvider,
-        Element structureElement,
-        Solid intersection) {
+        Element structureElement) {
 
         Mep = mep;
         StructureProvider = structureProvider;
         StructureElement = structureElement;
-        Intersection = intersection;
         StructureKind = StructureElementsProvider.GetKind(structureElement);
+    }
+
+    /// <summary>
+    /// Добавляет солид пересечения. Составная конструкция отдаёт солид на слой, и труба, прошедшая
+    /// сквозь штукатурку, кладку и штукатурку, даёт три солида на один и тот же проход - это одно
+    /// отверстие, а не три.
+    /// </summary>
+    public void AddSolid(Solid solid) {
+        if(solid is not null) {
+            _solids.Add(solid);
+        }
     }
 
     /// <summary>
@@ -42,20 +56,19 @@ public class MepStructureIntersection {
     public StructureKind StructureKind { get; }
 
     /// <summary>
-    /// Солид пересечения в координатах активного файла,
-    /// либо <c>null</c>, если геометрию пересечения вычислить не удалось.
+    /// Солиды пересечения в координатах активного файла - по одному на слой конструкции.
     /// </summary>
-    public Solid Intersection { get; }
+    public IReadOnlyCollection<Solid> Solids => _solids;
 
     /// <summary>
     /// Пересечение найдено, но его геометрия не вычислена: габариты отверстия по нему не построить.
     /// </summary>
-    public bool GeometryIsInvalid => Intersection is null;
+    public bool GeometryIsInvalid => _solids.Count == 0;
 
     /// <summary>
-    /// Объём пересечения в единицах Revit, либо 0, если геометрия не вычислена.
+    /// Суммарный объём пересечения в единицах Revit, либо 0, если геометрия не вычислена.
     /// </summary>
-    public double Volume => Intersection?.Volume ?? 0;
+    public double Volume => _solids.Sum(solid => solid.Volume);
 
     /// <summary>
     /// Настройки вида инженерного элемента.
