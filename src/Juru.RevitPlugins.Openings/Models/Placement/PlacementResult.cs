@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 using Autodesk.Revit.DB;
 
@@ -24,4 +25,20 @@ public class PlacementResult {
     /// Сколько заданий пропущено, потому что такое же уже стоит в модели.
     /// </summary>
     public int SkippedAsDuplicate { get; set; }
+
+    /// <summary>
+    /// Параметры, которых не оказалось в семействах: значения для них посчитаны, но записать некуда.
+    /// </summary>
+    public SortedSet<string> MissingParameters { get; } = [];
+
+    /// <summary>
+    /// Причины отказов с количеством пересечений по каждой.
+    /// </summary>
+    public IReadOnlyCollection<KeyValuePair<string, int>> GetFailureSummary() {
+        return Failed
+            .GroupBy(failure => failure.Reason)
+            .Select(group => new KeyValuePair<string, int>(group.Key, group.Count()))
+            .OrderByDescending(pair => pair.Value)
+            .ToArray();
+    }
 }

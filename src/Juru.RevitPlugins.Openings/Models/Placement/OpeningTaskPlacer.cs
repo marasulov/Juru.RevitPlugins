@@ -39,7 +39,7 @@ public class OpeningTaskPlacer {
 
         foreach(var intersection in intersections) {
             try {
-                var instance = PlaceOne(intersection, out string failure);
+                var instance = PlaceOne(intersection, result, out string failure);
                 if(instance is null) {
                     result.Failed.Add(new IntersectionRejection(intersection, failure));
                 } else {
@@ -54,7 +54,10 @@ public class OpeningTaskPlacer {
         return result;
     }
 
-    private FamilyInstance PlaceOne(MepStructureIntersection intersection, out string failure) {
+    private FamilyInstance PlaceOne(
+        MepStructureIntersection intersection,
+        PlacementResult result,
+        out string failure) {
         failure = null;
         var size = _sizeCalculator.Calculate(intersection);
         if(size is null) {
@@ -79,7 +82,7 @@ public class OpeningTaskPlacer {
         // Параметры назначаются после Regenerate: до него значения, назначенные только что созданному
         // экземпляру, могут не примениться.
         _doc.Regenerate();
-        SetParameters(instance, intersection, size, level);
+        SetParameters(instance, intersection, size, level, result);
 
         double angle = OpeningAngle.Get(intersection);
         if(Math.Abs(angle) > 1e-9) {
@@ -109,32 +112,54 @@ public class OpeningTaskPlacer {
         FamilyInstance instance,
         MepStructureIntersection intersection,
         OpeningSize size,
-        Level level) {
+        Level level,
+        PlacementResult result) {
 
         var naming = _config.Naming;
-        if(size.IsRound) {
-            ParameterWriter.SetLength(instance, naming.DiameterParam, size.Diameter);
-        } else {
-            ParameterWriter.SetLength(instance, naming.WidthParam, size.Width);
-            ParameterWriter.SetLength(instance, naming.HeightParam, size.Height);
+
+        // Отсутствие параметра в семействе не срывает расстановку, но должно попасть в отчёт:
+        // иначе задание встанет без данных, и узнается это только на чертеже.
+        void Length(string paramName, double value) {
+            if(!ParameterWriter.SetLength(instance, paramName, value)) {
+                result.MissingParameters.Add(paramName);
+            }
         }
-        ParameterWriter.SetLength(instance, naming.ThicknessParam, size.Thickness);
+
+        void Text(string paramName, string value) {
+            if(!ParameterWriter.SetText(instance, paramName, value)) {
+                result.MissingParameters.Add(paramName);
+            }
+        }
+
+        void Flag(string paramName, int value) {
+            if(!ParameterWriter.SetInteger(instance, paramName, value)) {
+                result.MissingParameters.Add(paramName);
+            }
+        }
+
+        if(size.IsRound) {
+            Length(naming.DiameterParam, size.Diameter);
+        } else {
+            Length(naming.WidthParam, size.Width);
+            Length(naming.HeightParam, size.Height);
+        }
+        Length(naming.ThicknessParam, size.Thickness);
 
         double halfHeight = size.IsRound ? size.Diameter / 2 : size.Height / 2;
         double bottomElevation = size.Center.Z - halfHeight;
+        // Отметка оси необязательна: если её в семействе нет, в отчёт это не пишем.
         ParameterWriter.SetLength(instance, naming.CenterOffsetParam, size.Center.Z);
-        ParameterWriter.SetLength(instance, naming.BottomOffsetParam, bottomElevation);
+        Length(naming.BottomOffsetParam, bottomElevation);
         if(level is not null) {
-            ParameterWriter.SetLength(instance, naming.LevelOffsetParam, bottomElevation - level.ProjectElevation);
+            Length(naming.LevelOffsetParam, bottomElevation - level.ProjectElevation);
         }
 
-        ParameterWriter.SetText(instance, naming.MepSystemParam, GetMepSystemName(intersection.Mep.Element));
-        ParameterWriter.SetText(instance, naming.DescriptionParam, GetDescription(intersection));
-        ParameterWriter.SetText(instance, naming.DateParam,
-            DateTime.Now.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture));
-        ParameterWriter.SetText(instance, naming.AuthorParam, GetAuthor());
-        ParameterWriter.SetInteger(instance, naming.ManuallyPlacedParam, 0);
-        ParameterWriter.SetInteger(instance, naming.UnitedParam, 0);
+        Text(naming.MepSystemParam, GetMepSystemName(intersection.Mep.Element));
+        Text(naming.DescriptionParam, GetDescription(intersection));
+        Text(naming.DateParam, DateTime.Now.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture));
+        Text(naming.AuthorParam, GetAuthor());
+        Flag(naming.ManuallyPlacedParam, 0);
+        Flag(naming.UnitedParam, 0);
     }
 
     /// <summary>
