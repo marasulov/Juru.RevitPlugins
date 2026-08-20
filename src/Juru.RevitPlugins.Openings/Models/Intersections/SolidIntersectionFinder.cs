@@ -11,9 +11,12 @@ namespace Juru.RevitPlugins.Openings.Models.Intersections;
 /// Ищет пересечения инженерных элементов с конструкциями из связей по геометрии солидов.
 /// </summary>
 /// <remarks>
-/// Алгоритм повторяет проверку на коллизии из ClashNavigator: замкнутость солида определяется
-/// до трансформации, потому что у трансформированного солида появляются лишние грани и рёбра;
-/// сначала отсекаем по габаритному боксу, и только затем считаем булево пересечение.
+/// Порядок такой: отсечь по габаритному боксу, подтвердить пересечение штатным
+/// <see cref="ElementIntersectsSolidFilter"/> и только затем считать булево пересечение — оно нужно
+/// для габаритов отверстия, а не для ответа на вопрос, есть ли пересечение вообще. Замер на живой
+/// модели: фильтр Revit нашёл 8 пар, булева операция — 4 из них, остальные она возвращала с нулевым
+/// объёмом без исключения. Если считать пересечением только удавшееся булево, половина проходов
+/// исчезает молча.
 /// В отличие от луча, это находит проходы соединительной арматуры и наклонные проходы,
 /// а объём пересечения позволяет отличить настоящий проход от касания углом.
 /// </remarks>
@@ -83,31 +86,35 @@ public class SolidIntersectionFinder {
 
         var nearby = new FilteredElementCollector(_mepProvider.Doc, mepIds)
             .WherePasses(new BoundingBoxIntersectsFilter(GeometryUtils.GetOutline(structureSolid)))
+            .ToElementIds()
+            .ToList();
+        if(nearby.Count == 0) {
+            yield break;
+        }
+
+        // Пересекается ли элемент с конструкцией, решает Revit: его фильтр справляется с геометрией,
+        // на которой булева операция возвращает пустой результат.
+        var intersecting = new FilteredElementCollector(_mepProvider.Doc, nearby)
+            .WherePasses(new ElementIntersectsSolidFilter(structureSolid))
             .ToElementIds();
 
-        foreach(var mepId in nearby) {
+        foreach(var mepId in intersecting) {
             if(!candidates.TryGetValue(mepId, out var candidate)) {
                 continue;
             }
 
-            var intersection = GetIntersection(candidate.Element, structureSolid, out bool geometryFailed);
-            if(intersection is null && !geometryFailed) {
-                continue;
-            }
-
+            // Габариты берём из булева пересечения, но его неудача пересечение не отменяет:
+            // такое попадёт в отчёт как невычислимая геометрия, а не потеряется.
+            var intersection = GetIntersection(candidate.Element, structureSolid);
             yield return new MepStructureIntersection(candidate, structureProvider, structureElement, intersection);
         }
     }
 
     /// <summary>
-    /// Возвращает наибольший солид пересечения элемента с конструкцией,
-    /// либо <c>null</c>, если пересечения нет или его геометрию вычислить не удалось.
+    /// Возвращает наибольший солид пересечения элемента с конструкцией, либо <c>null</c>,
+    /// если булева операция ничего не дала: сам факт пересечения к этому моменту уже подтверждён.
     /// </summary>
-    /// <param name="geometryFailed">
-    /// True, если пересечение есть, но булева операция над геометрией не удалась.
-    /// </param>
-    private Solid GetIntersection(Element mepElement, Solid structureSolid, out bool geometryFailed) {
-        geometryFailed = false;
+    private Solid GetIntersection(Element mepElement, Solid structureSolid) {
         Solid biggest = null;
 
         foreach(var mepSolid in GeometryUtils.GetSolids(mepElement)) {
@@ -120,18 +127,10 @@ public class SolidIntersectionFinder {
                     biggest = intersection;
                 }
             } catch(Autodesk.Revit.Exceptions.InvalidOperationException) {
-                // Булева операция не всегда справляется с геометрией элемента. Пересечение при этом
-                // может существовать - проверяем его фильтром, и отдаём наверх без габаритов,
-                // чтобы такое пересечение попало в отчёт, а не потерялось молча.
-                if(new ElementIntersectsSolidFilter(structureSolid).PassesFilter(mepElement)) {
-                    geometryFailed = true;
-                }
+                // Геометрия элемента не поддалась булевой операции: габариты по ней не построить.
             }
         }
 
-        if(biggest is not null) {
-            geometryFailed = false;
-        }
         return biggest;
     }
 }
