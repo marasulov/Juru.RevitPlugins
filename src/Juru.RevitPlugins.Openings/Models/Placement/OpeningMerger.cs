@@ -23,6 +23,7 @@ public class OpeningMerger {
     private readonly double _touchTolerance;
     private readonly double _acrossTolerance;
     private readonly double _sameSizeTolerance;
+    private readonly double _unitedRounding;
 
     public OpeningMerger(OpeningsConfig config) {
         if(config is null) { throw new ArgumentNullException(nameof(config)); }
@@ -32,6 +33,8 @@ public class OpeningMerger {
         _acrossTolerance = UnitUtils.ConvertToInternalUnits(
             config.UnitedTaskMaxGapMm, UnitTypeId.Millimeters);
         _sameSizeTolerance = UnitUtils.ConvertToInternalUnits(
+            config.UnitedTaskSizeRoundingMm, UnitTypeId.Millimeters);
+        _unitedRounding = UnitUtils.ConvertToInternalUnits(
             config.UnitedTaskSizeRoundingMm, UnitTypeId.Millimeters);
     }
 
@@ -47,7 +50,7 @@ public class OpeningMerger {
         // и разные точки вставки.
         foreach(var byKind in openings.GroupBy(opening => opening.StructureKind)) {
             foreach(var group in BuildGroups(byKind.ToList())) {
-                result.Add(PlannedOpening.Unite(group, _sameSizeTolerance));
+                result.Add(PlannedOpening.Unite(group, _sameSizeTolerance, _unitedRounding));
             }
         }
 

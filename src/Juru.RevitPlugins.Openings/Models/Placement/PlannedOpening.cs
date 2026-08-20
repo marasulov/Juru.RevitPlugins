@@ -82,7 +82,10 @@ public class PlannedOpening {
     /// Склеивает группу отверстий в одно: габариты объединяются в системе координат самого крупного,
     /// а форма остаётся круглой только если круглые все и их габариты совпадают в плане реза.
     /// </summary>
-    public static PlannedOpening Unite(IReadOnlyCollection<PlannedOpening> group, double sameSizeTolerance) {
+    public static PlannedOpening Unite(
+        IReadOnlyCollection<PlannedOpening> group,
+        double sameSizeTolerance,
+        double roundingStep) {
         if(group is null || group.Count == 0) {
             throw new ArgumentException("Склеивать нечего.", nameof(group));
         }
@@ -107,9 +110,31 @@ public class PlannedOpening {
 
         return new PlannedOpening(
             group.SelectMany(item => item.Sources),
-            box,
+            RoundUp(box, roundingStep),
             round ? OpeningShape.Round : OpeningShape.Rectangle,
             primary.StructureKind);
+    }
+
+    /// <summary>
+    /// Округляет габариты объединённого отверстия вверх до заданного шага.
+    /// </summary>
+    /// <remarks>
+    /// Зазор заново не добавляется - он уже заложен в каждом члене группы. Bim4Everyone поступает так же:
+    /// у объединённых заданий свой шаг округления, обычно мельче основного, иначе объединение слоёв
+    /// давало бы некруглые габариты вида 793 мм.
+    /// </remarks>
+    private static OpeningBox RoundUp(OpeningBox box, double step) {
+        if(step <= 0) {
+            return box;
+        }
+
+        double along = Math.Ceiling(Math.Round(box.Along / step, 5)) * step;
+        double vertical = Math.Ceiling(Math.Round(box.Vertical / step, 5)) * step;
+        var center = (box.Min + box.Max) / 2;
+        return new OpeningBox(
+            box.Frame,
+            new XYZ(center.X - along / 2, box.Min.Y, center.Z - vertical / 2),
+            new XYZ(center.X + along / 2, box.Max.Y, center.Z + vertical / 2));
     }
 
     /// <summary>
