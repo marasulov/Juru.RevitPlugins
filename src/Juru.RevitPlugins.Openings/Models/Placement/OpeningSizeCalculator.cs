@@ -63,8 +63,8 @@ public class OpeningSizeCalculator {
         int roundingMm,
         StructureKind kind) {
 
-        double along = Round(box.Along + offset * 2, roundingMm);
-        double vertical = Round(box.Vertical + offset * 2, roundingMm);
+        double along = Round(box.Along + offset * 2, roundingMm, box.Along);
+        double vertical = Round(box.Vertical + offset * 2, roundingMm, box.Vertical);
 
         // Габариты растут симметрично от центра, толщина остаётся как есть.
         var center = (box.Min + box.Max) / 2;
@@ -243,15 +243,22 @@ public class OpeningSizeCalculator {
     }
 
     /// <summary>
-    /// Округляет размер вверх до заданного числа миллиметров: отверстие не должно оказаться
-    /// меньше того, что через него проходит.
+    /// Округляет размер до ближайшего кратного заданному числу миллиметров, но не ниже сечения
+    /// прохода.
     /// </summary>
-    private double Round(double value, int roundingMm) {
+    /// <remarks>
+    /// До ближайшего, а не вверх - так делает Bim4Everyone, и от этого зависит совпадение габаритов:
+    /// труба Ø19 с зазором 50 с каждой стороны даёт 119 мм, что при шаге 50 округляется до 100.
+    /// Оговорка про сечение нужна для чужих настроек: при зазоре меньше половины шага округление
+    /// вниз могло бы сделать отверстие уже того, что через него проходит.
+    /// </remarks>
+    private double Round(double value, int roundingMm, double sectionSize) {
         if(roundingMm <= 0) {
             return value;
         }
 
         double step = UnitUtils.ConvertToInternalUnits(roundingMm, UnitTypeId.Millimeters);
-        return Math.Ceiling(Math.Round(value / step, 5, MidpointRounding.AwayFromZero)) * step;
+        double rounded = Math.Round(value / step, MidpointRounding.AwayFromZero) * step;
+        return rounded < sectionSize ? rounded + step : rounded;
     }
 }
