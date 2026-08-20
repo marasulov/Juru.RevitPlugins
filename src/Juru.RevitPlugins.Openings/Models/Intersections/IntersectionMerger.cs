@@ -76,23 +76,46 @@ public class IntersectionMerger {
     }
 
     /// <summary>
-    /// Проверяет, что два прохода одного элемента идут вплотную: расстояние вдоль оси в пределах
-    /// зазора склейки, а поперёк оси - в пределах допуска.
+    /// Проверяет, что два прохода одного элемента идут вплотную: зазор между их габаритами вдоль оси
+    /// не больше порога склейки, а поперёк оси они смещены не больше допуска.
     /// </summary>
+    /// <remarks>
+    /// Сравниваются промежутки, занятые проходами вдоль оси, а не расстояние между их центрами:
+    /// у толстой стены центр прохода уходит далеко от границы, и склейка по центрам пропускала
+    /// пары, между которыми на самом деле нет зазора.
+    /// </remarks>
     private bool Adjacent(MepStructureIntersection first, MepStructureIntersection second, XYZ axis) {
+        if(axis is null) {
+            return WithinGap(first, second, XYZ.BasisX)
+                && WithinGap(first, second, XYZ.BasisY)
+                && WithinGap(first, second, XYZ.BasisZ);
+        }
+
+        if(!WithinGap(first, second, axis)) {
+            return false;
+        }
+
         var firstCenter = first.GetCenter();
         var secondCenter = second.GetCenter();
         if(firstCenter is null || secondCenter is null) {
             return false;
         }
 
-        var between = secondCenter - firstCenter;
-        if(axis is null) {
-            return between.GetLength() <= _maxGap;
+        double lateral = (secondCenter - firstCenter).CrossProduct(axis).GetLength();
+        return lateral <= _lateralTolerance;
+    }
+
+    /// <summary>
+    /// Проверяет, что промежутки двух проходов вдоль направления перекрываются
+    /// либо расходятся не больше чем на порог склейки.
+    /// </summary>
+    private bool WithinGap(MepStructureIntersection first, MepStructureIntersection second, XYZ direction) {
+        if(!first.TryGetInterval(direction, out double firstMin, out double firstMax)
+            || !second.TryGetInterval(direction, out double secondMin, out double secondMax)) {
+            return false;
         }
 
-        double along = Math.Abs(between.DotProduct(axis));
-        double lateral = between.CrossProduct(axis).GetLength();
-        return along <= _maxGap && lateral <= _lateralTolerance;
+        double gap = Math.Max(firstMin, secondMin) - Math.Min(firstMax, secondMax);
+        return gap <= _maxGap;
     }
 }

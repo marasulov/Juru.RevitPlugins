@@ -106,6 +106,46 @@ public class MepStructureIntersection {
     }
 
     /// <summary>
+    /// Возвращает промежуток, который пересечение занимает вдоль заданного направления:
+    /// наименьшую и наибольшую проекцию его габаритов на это направление.
+    /// </summary>
+    /// <remarks>
+    /// Именно промежутки, а не центры, отвечают на вопрос, идут ли два прохода вплотную:
+    /// у стены толщиной 500 мм центры соседних проходов разнесены на четверть метра,
+    /// хотя зазора между ними нет вовсе.
+    /// </remarks>
+    public bool TryGetInterval(XYZ direction, out double min, out double max) {
+        min = double.MaxValue;
+        max = double.MinValue;
+        if(_solids.Count == 0) {
+            return false;
+        }
+
+        foreach(var solid in _solids) {
+            var box = solid.GetBoundingBox();
+            foreach(var corner in GetCorners(box)) {
+                double projection = box.Transform.OfPoint(corner).DotProduct(direction);
+                if(projection < min) { min = projection; }
+                if(projection > max) { max = projection; }
+            }
+        }
+        return true;
+    }
+
+    private static IEnumerable<XYZ> GetCorners(BoundingBoxXYZ box) {
+        double[] xs = [box.Min.X, box.Max.X];
+        double[] ys = [box.Min.Y, box.Max.Y];
+        double[] zs = [box.Min.Z, box.Max.Z];
+        foreach(double x in xs) {
+            foreach(double y in ys) {
+                foreach(double z in zs) {
+                    yield return new XYZ(x, y, z);
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Склеивает несколько пересечений одного элемента в одно. Основной конструкцией становится та,
     /// по которой пересечение крупнее: от неё берутся нормаль и система координат для габаритов.
     /// </summary>
