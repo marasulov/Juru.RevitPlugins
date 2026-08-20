@@ -24,12 +24,12 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
         var uiDocument = commandData.Application.ActiveUIDocument;
         var doc = uiDocument.Document;
 
-        if(!TryGetMepDiscipline(doc, out var discipline, out string namingError)) {
+        var config = OpeningsConfig.GetOpeningsConfig();
+        if(!TryGetMepDiscipline(doc, config, out var discipline, out bool byStandard, out string namingError)) {
             TaskDialog.Show("Задания на отверстия", namingError);
             return Result.Cancelled;
         }
 
-        var config = OpeningsConfig.GetOpeningsConfig();
         if(config.GetSelectedCategories().Count == 0) {
             TaskDialog.Show("Задания на отверстия",
                 "В настройках не выбран ни один вид инженерных элементов.");
@@ -60,7 +60,8 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
         var placement = new OpeningTaskPlacer(doc, config).Place(merged);
 
         TaskDialog.Show("Задания на отверстия",
-            BuildReport(discipline, structureProviders, linksProvider, mepProvider, intersections, validation, merged, placement));
+            BuildReport(discipline, byStandard, structureProviders, linksProvider,
+                mepProvider, intersections, validation, merged, placement));
 
         if(placement.Placed.Count > 0) {
             uiDocument.Selection.SetElementIds(placement.Placed.Select(item => item.Id).ToList());
@@ -71,28 +72,32 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
     /// <summary>
     /// Проверяет, что команда запущена в файле инженерных систем: задания выдаёт только он.
     /// </summary>
-    private bool TryGetMepDiscipline(Document doc, out Discipline discipline, out string error) {
-        discipline = default;
+    private bool TryGetMepDiscipline(
+        Document doc,
+        OpeningsConfig config,
+        out Discipline discipline,
+        out bool byStandard,
+        out string error) {
+
         error = null;
-
-        if(!RevitFileNameInfo.TryParse(doc.PathName, out var fileInfo)) {
-            error = "Имя файла не соответствует стандарту наименования "
-                + "(Проект-Объект-Дисциплина-vNN), поэтому дисциплину определить нельзя.";
+        if(!new DisciplineResolver(config).TryResolve(doc.PathName, out discipline, out byStandard)) {
+            error = "Дисциплину файла определить не удалось: имя не соответствует стандарту "
+                + "(Проект-Объект-Дисциплина-vNN) и не подходит ни под одно правило из настроек.";
             return false;
         }
 
-        if(!fileInfo.Discipline.IssuesOpeningTasks()) {
-            error = $"Дисциплина файла - {fileInfo.Discipline}. "
-                + "Задания на отверстия выдаются из файлов WSS, ELE и HVC.";
+        if(!discipline.IssuesOpeningTasks()) {
+            error = "Дисциплина файла - " + discipline
+                + ". Задания на отверстия выдаются из файлов WSS, ELE и HVC.";
             return false;
         }
 
-        discipline = fileInfo.Discipline;
         return true;
     }
 
     private string BuildReport(
         Discipline discipline,
+        bool byStandard,
         IReadOnlyCollection<StructureElementsProvider> structureProviders,
         StructureLinksProvider linksProvider,
         MepElementsProvider mepProvider,
@@ -102,7 +107,8 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
         PlacementResult placement) {
 
         var report = new StringBuilder();
-        report.AppendLine($"Дисциплина файла: {discipline}");
+        report.AppendLine("Дисциплина файла: " + discipline
+            + (byStandard ? string.Empty : " (по правилу из настроек, имя не по стандарту)"));
         report.AppendLine("Связи с конструкциями: "
             + string.Join(", ", structureProviders.Select(item => $"{item.LinkName} ({item.Discipline})")));
 

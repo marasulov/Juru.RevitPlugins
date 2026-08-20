@@ -19,10 +19,12 @@ namespace Juru.RevitPlugins.Openings.Models.Intersections;
 public class StructureLinksProvider {
     private readonly Document _doc;
     private readonly OpeningsConfig _config;
+    private readonly DisciplineResolver _disciplineResolver;
 
     public StructureLinksProvider(Document doc, OpeningsConfig config) {
         _doc = doc ?? throw new ArgumentNullException(nameof(doc));
         _config = config ?? throw new ArgumentNullException(nameof(config));
+        _disciplineResolver = new DisciplineResolver(config);
     }
 
     /// <summary>
@@ -52,7 +54,7 @@ public class StructureLinksProvider {
     /// </summary>
     public IReadOnlyCollection<string> GetUnrecognizedLinkNames() {
         return GetLinkInstances()
-            .Where(link => !RevitFileNameInfo.TryParse(GetLinkFileName(link), out _))
+            .Where(link => !_disciplineResolver.TryResolve(GetLinkFileName(link), out _, out _))
             .Select(link => link.Name)
             .ToArray();
     }
@@ -76,17 +78,11 @@ public class StructureLinksProvider {
     }
 
     private bool TryGetStructureDiscipline(RevitLinkInstance linkInstance, out Discipline discipline) {
-        discipline = default;
-        if(!RevitFileNameInfo.TryParse(GetLinkFileName(linkInstance), out var fileInfo)) {
+        if(!_disciplineResolver.TryResolve(GetLinkFileName(linkInstance), out discipline, out _)) {
             return false;
         }
 
-        if(!fileInfo.Discipline.ReceivesOpeningTasks()) {
-            return false;
-        }
-
-        discipline = fileInfo.Discipline;
-        return true;
+        return discipline.ReceivesOpeningTasks();
     }
 
     private static string GetLinkFileName(RevitLinkInstance linkInstance) {

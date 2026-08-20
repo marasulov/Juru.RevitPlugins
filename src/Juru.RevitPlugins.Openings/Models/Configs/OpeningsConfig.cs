@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 
 using Juru.RevitPlugins.Core;
+using Juru.RevitPlugins.Core.FileNaming;
 using Juru.RevitPlugins.Core.Profiles;
 using Juru.RevitPlugins.Core.ProjectConfigs;
 
@@ -37,6 +38,12 @@ public class OpeningsConfig : ProjectConfig {
     /// Имена семейств заданий и параметров внутри них.
     /// </summary>
     public OpeningFamilyNaming Naming { get; set; } = new OpeningFamilyNaming();
+
+    /// <summary>
+    /// Соответствия фрагмента имени файла и дисциплины - для файлов не по стандарту наименования.
+    /// Применяются, только если имя не разобралось по стандарту.
+    /// </summary>
+    public List<DisciplineNameRule> DisciplineNameRules { get; set; } = GetDefaultDisciplineRules();
 
     /// <summary>
     /// Округление габаритов объединённого задания в мм.
@@ -124,6 +131,9 @@ public class OpeningsConfig : ProjectConfig {
             }
             if(config is not null) {
                 config.Naming ??= new OpeningFamilyNaming();
+                if(config.DisciplineNameRules is null || config.DisciplineNameRules.Count == 0) {
+                    config.DisciplineNameRules = GetDefaultDisciplineRules();
+                }
             }
             return config;
         } catch(Exception) {
@@ -134,6 +144,22 @@ public class OpeningsConfig : ProjectConfig {
 
     private static string GetConfigPath(string profilePath) {
         return Path.Combine(profilePath, RevitVersionInfo.Version, _pluginFolderName, _configFileName);
+    }
+
+    private static List<DisciplineNameRule> GetDefaultDisciplineRules() {
+        return [
+            new DisciplineNameRule { Fragment = "_OV", Discipline = Discipline.HVC },
+            new DisciplineNameRule { Fragment = "_ОВ", Discipline = Discipline.HVC },
+            new DisciplineNameRule { Fragment = "_HVAC", Discipline = Discipline.HVC },
+            new DisciplineNameRule { Fragment = "_VK", Discipline = Discipline.WSS },
+            new DisciplineNameRule { Fragment = "_ВК", Discipline = Discipline.WSS },
+            new DisciplineNameRule { Fragment = "_EL", Discipline = Discipline.ELE },
+            new DisciplineNameRule { Fragment = "_ЭОМ", Discipline = Discipline.ELE },
+            new DisciplineNameRule { Fragment = "_AR", Discipline = Discipline.ARC },
+            new DisciplineNameRule { Fragment = "_АР", Discipline = Discipline.ARC },
+            new DisciplineNameRule { Fragment = "_KR", Discipline = Discipline.STR },
+            new DisciplineNameRule { Fragment = "_КР", Discipline = Discipline.STR }
+        ];
     }
 
     private static List<MepCategorySettings> GetDefaultCategories() {
