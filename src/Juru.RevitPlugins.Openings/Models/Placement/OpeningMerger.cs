@@ -28,7 +28,7 @@ public class OpeningMerger {
         if(config is null) { throw new ArgumentNullException(nameof(config)); }
 
         _touchTolerance = UnitUtils.ConvertToInternalUnits(
-            config.UnitedTaskLateralToleranceMm, UnitTypeId.Millimeters);
+            config.UnitedTaskTouchToleranceMm, UnitTypeId.Millimeters);
         _acrossTolerance = UnitUtils.ConvertToInternalUnits(
             config.UnitedTaskMaxGapMm, UnitTypeId.Millimeters);
         _sameSizeTolerance = UnitUtils.ConvertToInternalUnits(
