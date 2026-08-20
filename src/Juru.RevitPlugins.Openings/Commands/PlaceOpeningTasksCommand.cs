@@ -56,10 +56,11 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
 
         var intersections = new SolidIntersectionFinder(mepProvider).Find(structureProviders);
         var validation = new IntersectionValidator().Validate(intersections);
-        var placement = new OpeningTaskPlacer(doc, config).Place(validation.Accepted);
+        var merged = new IntersectionMerger(config).Merge(validation.Accepted);
+        var placement = new OpeningTaskPlacer(doc, config).Place(merged);
 
         TaskDialog.Show("Задания на отверстия",
-            BuildReport(discipline, structureProviders, linksProvider, mepProvider, intersections, validation, placement));
+            BuildReport(discipline, structureProviders, linksProvider, mepProvider, intersections, validation, merged, placement));
 
         if(placement.Placed.Count > 0) {
             uiDocument.Selection.SetElementIds(placement.Placed.Select(item => item.Id).ToList());
@@ -97,6 +98,7 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
         MepElementsProvider mepProvider,
         IReadOnlyCollection<MepStructureIntersection> intersections,
         IntersectionValidator.ValidationResult validation,
+        IReadOnlyCollection<MepStructureIntersection> merged,
         PlacementResult placement) {
 
         var report = new StringBuilder();
@@ -112,6 +114,10 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
         report.AppendLine();
         report.AppendLine($"Инженерных элементов проверено: {mepProvider.GetCandidates().Count}");
         report.AppendLine($"Пересечений найдено: {intersections.Count}");
+        int unitedCount = merged.Count(item => item.IsUnited);
+        if(unitedCount > 0) {
+            report.AppendLine($"Склеено проходов в объединённые задания: {unitedCount}");
+        }
         report.AppendLine($"Заданий размещено: {placement.Placed.Count}");
         if(placement.SkippedAsDuplicate > 0) {
             report.AppendLine($"Пропущено, задание уже стоит: {placement.SkippedAsDuplicate}");

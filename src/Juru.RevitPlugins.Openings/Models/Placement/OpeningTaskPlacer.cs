@@ -173,7 +173,7 @@ public class OpeningTaskPlacer {
         Text(naming.DateParam, DateTime.Now.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture));
         Text(naming.AuthorParam, GetAuthor());
         Flag(naming.ManuallyPlacedParam, 0);
-        Flag(naming.UnitedParam, 0);
+        Flag(naming.UnitedParam, intersection.IsUnited ? 1 : 0);
     }
 
     /// <summary>

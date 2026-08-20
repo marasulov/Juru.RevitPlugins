@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -74,4 +75,55 @@ public class MepStructureIntersection {
     /// Настройки вида инженерного элемента.
     /// </summary>
     public MepCategorySettings Settings => Mep.Settings;
+
+    /// <summary>
+    /// Сколько проходов склеено в это пересечение. Единица означает обычное пересечение.
+    /// </summary>
+    public int MergedCount { get; private set; } = 1;
+
+    /// <summary>
+    /// Задание получено склейкой нескольких проходов вплотную идущих конструкций.
+    /// </summary>
+    public bool IsUnited => MergedCount > 1;
+
+    /// <summary>
+    /// Возвращает центр габаритов пересечения в координатах активного файла,
+    /// либо <c>null</c>, если геометрии нет.
+    /// </summary>
+    public XYZ GetCenter() {
+        if(_solids.Count == 0) {
+            return null;
+        }
+
+        double weight = 0;
+        var sum = XYZ.Zero;
+        foreach(var solid in _solids) {
+            var centroid = solid.ComputeCentroid();
+            sum += centroid * solid.Volume;
+            weight += solid.Volume;
+        }
+        return weight > 0 ? sum / weight : null;
+    }
+
+    /// <summary>
+    /// Склеивает несколько пересечений одного элемента в одно. Основной конструкцией становится та,
+    /// по которой пересечение крупнее: от неё берутся нормаль и система координат для габаритов.
+    /// </summary>
+    public static MepStructureIntersection Unite(IReadOnlyCollection<MepStructureIntersection> group) {
+        if(group is null || group.Count == 0) {
+            throw new ArgumentException("Склеивать нечего.", nameof(group));
+        }
+
+        var primary = group.OrderByDescending(item => item.Volume).First();
+        var united = new MepStructureIntersection(
+            primary.Mep,
+            primary.StructureProvider,
+            primary.StructureElement);
+
+        foreach(var solid in group.SelectMany(item => item.Solids)) {
+            united.AddSolid(solid);
+        }
+        united.MergedCount = group.Count;
+        return united;
+    }
 }

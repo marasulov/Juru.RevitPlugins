@@ -44,6 +44,18 @@ public class OpeningsConfig : ProjectConfig {
     public int UnitedTaskSizeRoundingMm { get; set; } = 10;
 
     /// <summary>
+    /// Наибольший зазор между проходами вдоль элемента, при котором они склеиваются в одно задание, мм.
+    /// Слои конструкции, начерченные отдельными стенами, идут вплотную либо с воздушной прослойкой.
+    /// </summary>
+    public int UnitedTaskMaxGapMm { get; set; } = 150;
+
+    /// <summary>
+    /// Допустимое смещение проходов поперёк оси элемента при склейке, мм.
+    /// Больше этого - это уже разные трассы, а не слои одной конструкции.
+    /// </summary>
+    public int UnitedTaskLateralToleranceMm { get; set; } = 50;
+
+    /// <summary>
     /// Показывать ли отчёт о пересечениях, для которых задание разместить не удалось.
     /// </summary>
     public bool ShowPlacingErrors { get; set; } = true;
