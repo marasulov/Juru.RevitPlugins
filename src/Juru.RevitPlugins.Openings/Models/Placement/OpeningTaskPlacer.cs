@@ -69,7 +69,7 @@ public class OpeningTaskPlacer {
         }
 
         var level = GetLevel(intersection.Mep.Element, size.Center);
-        var point = InsertionPoint.Get(size);
+        var point = InsertionPoint.Get(size, intersection);
         var instance = CreateInstance(symbol, point, level);
         if(instance is null) {
             failure = "Revit не создал экземпляр семейства задания.";
