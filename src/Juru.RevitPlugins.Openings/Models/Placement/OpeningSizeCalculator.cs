@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using Autodesk.Revit.DB;
 
@@ -27,7 +28,7 @@ public class OpeningSizeCalculator {
         }
 
         var frame = StructureFrame.Create(intersection);
-        var box = GetUnionBoxInFrame(intersection, frame);
+        var box = GetSectionBox(intersection, frame) ?? GetUnionBoxInFrame(intersection, frame);
         if(box is null) {
             return null;
         }
@@ -70,6 +71,137 @@ public class OpeningSizeCalculator {
         var min = new XYZ(center.X - along / 2, box.Min.Y, center.Z - vertical / 2);
         var max = new XYZ(center.X + along / 2, box.Max.Y, center.Z + vertical / 2);
         return new OpeningBox(box.Frame, min, max);
+    }
+
+    /// <summary>
+    /// Возвращает габариты прохода, измеренные по пересечению элемента с плитой в плоскости
+    /// конструкции: границы конструкции сечение не обрезают.
+    /// </summary>
+    /// <remarks>
+    /// Габариты самого пересечения для этого не годятся. Воздуховод, идущий у верха стены, пересекает
+    /// её лишь частью сечения, и отверстие по такому пересечению вышло бы ниже воздуховода - в него
+    /// не пролез бы тот, для кого его делают. Замер на модели: там, где Bim4Everyone ставил 750x500,
+    /// по пересечению получалось 700x200.
+    /// Плита продолжает конструкцию в её плоскости и оставляет исходной только толщину, поэтому
+    /// наклонный проход по-прежнему даёт вытянутое сечение, как и должен.
+    /// </remarks>
+    private OpeningBox GetSectionBox(MepStructureIntersection intersection, StructureFrame frame) {
+        var structureBox = GetStructureBoxInFrame(intersection, frame);
+        if(structureBox is null) {
+            return null;
+        }
+
+        var slab = CreateSlab(structureBox);
+        if(slab is null) {
+            return null;
+        }
+
+        OpeningBox union = null;
+        var toFrame = frame.Transform.Inverse;
+        foreach(var mepSolid in GeometryUtils.GetSolids(intersection.Mep.Element)) {
+            Solid section;
+            try {
+                section = BooleanOperationsUtils.ExecuteBooleanOperation(
+                    mepSolid, slab, BooleanOperationsType.Intersect);
+            } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+                continue;
+            }
+            if(section is null || section.Volume <= 0) {
+                continue;
+            }
+
+            var box = ToBoxInFrame(section, toFrame, frame);
+            if(box is null) {
+                continue;
+            }
+            union = union is null ? box : union.Union(box);
+        }
+
+        if(union is null) {
+            return null;
+        }
+
+        // Толщину задаёт конструкция, а не элемент: за её пределами резать нечего.
+        return new OpeningBox(
+            frame.Transform,
+            new XYZ(union.Min.X, structureBox.Min.Y, union.Min.Z),
+            new XYZ(union.Max.X, structureBox.Max.Y, union.Max.Z));
+    }
+
+    /// <summary>
+    /// Строит плиту, продолжающую конструкцию в её плоскости: толщина конструкции, а в плоскости
+    /// заведомо больше любого инженерного элемента.
+    /// </summary>
+    private Solid CreateSlab(OpeningBox structureBox) {
+        double margin = UnitUtils.ConvertToInternalUnits(20000, UnitTypeId.Millimeters);
+        double thickness = structureBox.Across;
+        if(thickness <= 0) {
+            return null;
+        }
+
+        var frame = structureBox.Frame;
+        var corners = new List<XYZ> {
+            frame.OfPoint(new XYZ(structureBox.Min.X - margin, structureBox.Min.Y, structureBox.Min.Z - margin)),
+            frame.OfPoint(new XYZ(structureBox.Max.X + margin, structureBox.Min.Y, structureBox.Min.Z - margin)),
+            frame.OfPoint(new XYZ(structureBox.Max.X + margin, structureBox.Min.Y, structureBox.Max.Z + margin)),
+            frame.OfPoint(new XYZ(structureBox.Min.X - margin, structureBox.Min.Y, structureBox.Max.Z + margin))
+        };
+
+        try {
+            var lines = new List<Curve>();
+            for(int i = 0; i < corners.Count; i++) {
+                lines.Add(Line.CreateBound(corners[i], corners[(i + 1) % corners.Count]));
+            }
+            var loop = CurveLoop.Create(lines);
+            return GeometryCreationUtilities.CreateExtrusionGeometry(
+                [loop], frame.OfVector(XYZ.BasisY), thickness);
+        } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Возвращает габариты конструкции в её системе координат.
+    /// </summary>
+    private OpeningBox GetStructureBoxInFrame(MepStructureIntersection intersection, StructureFrame frame) {
+        var toFrame = frame.Transform.Inverse;
+        var transform = intersection.StructureProvider.MainTransform;
+        OpeningBox union = null;
+
+        foreach(var raw in GeometryUtils.GetSolids(intersection.StructureElement)) {
+            Solid inProject;
+            try {
+                inProject = SolidUtils.CreateTransformed(raw, transform);
+            } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+                continue;
+            }
+            var box = ToBoxInFrame(inProject, toFrame, frame);
+            if(box is null) {
+                continue;
+            }
+            union = union is null ? box : union.Union(box);
+        }
+        return union;
+    }
+
+    /// <summary>
+    /// Возвращает габариты солида в системе координат конструкции.
+    /// </summary>
+    private OpeningBox ToBoxInFrame(Solid solid, Transform toFrame, StructureFrame frame) {
+        Solid transformed;
+        try {
+            transformed = SolidUtils.CreateTransformed(solid, toFrame);
+        } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+            return null;
+        }
+
+        var box = transformed.GetBoundingBox();
+        var first = box.Transform.OfPoint(box.Min);
+        var second = box.Transform.OfPoint(box.Max);
+        return new OpeningBox(
+            frame.Transform,
+            new XYZ(Math.Min(first.X, second.X), Math.Min(first.Y, second.Y), Math.Min(first.Z, second.Z)),
+            new XYZ(Math.Max(first.X, second.X), Math.Max(first.Y, second.Y), Math.Max(first.Z, second.Z)));
     }
 
     /// <summary>
