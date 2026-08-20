@@ -107,6 +107,15 @@ public class OpeningFamilyNaming {
     public string ManuallyPlacedParam { get; set; } = "Juru_Opening_ManuallyPlaced";
 
     /// <summary>
+    /// Признак того, что задание получено объединением нескольких отверстий.
+    /// </summary>
+    /// <remarks>
+    /// Труба через штукатурку, кладку и штукатурку даёт три отверстия вместо одного, и они склеиваются
+    /// в одно задание. Без этого признака следующий прогон обновил бы его до габарита одного слоя.
+    /// </remarks>
+    public string UnitedParam { get; set; } = "Juru_Opening_United";
+
+    /// <summary>
     /// Возвращает имя семейства для типа отверстия.
     /// </summary>
     public string GetFamilyName(OpeningType openingType) {

@@ -134,6 +134,7 @@ public class OpeningTaskPlacer {
             DateTime.Now.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture));
         ParameterWriter.SetText(instance, naming.AuthorParam, GetAuthor());
         ParameterWriter.SetInteger(instance, naming.ManuallyPlacedParam, 0);
+        ParameterWriter.SetInteger(instance, naming.UnitedParam, 0);
     }
 
     /// <summary>
