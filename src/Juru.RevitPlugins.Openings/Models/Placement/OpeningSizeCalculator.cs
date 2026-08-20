@@ -8,7 +8,7 @@ using Juru.RevitPlugins.Openings.Models.Intersections;
 namespace Juru.RevitPlugins.Openings.Models.Placement;
 
 /// <summary>
-/// Считает габариты задания на отверстие по солиду пересечения.
+/// Считает габариты отверстия по солидам пересечения.
 /// </summary>
 public class OpeningSizeCalculator {
     /// <summary>
@@ -17,10 +17,10 @@ public class OpeningSizeCalculator {
     private const double _minSizeMm = 5;
 
     /// <summary>
-    /// Возвращает габариты задания, либо <c>null</c>, если габарит оказался недопустимо мал
+    /// Возвращает планируемое отверстие, либо <c>null</c>, если габарит оказался недопустимо мал
     /// либо геометрию пересечения вычислить не удалось.
     /// </summary>
-    public OpeningSize Calculate(MepStructureIntersection intersection) {
+    public PlannedOpening Calculate(MepStructureIntersection intersection) {
         if(intersection is null) { throw new ArgumentNullException(nameof(intersection)); }
         if(intersection.GeometryIsInvalid) {
             return null;
@@ -39,102 +39,71 @@ public class OpeningSizeCalculator {
         double offset = offsetRange is null
             ? 0
             : UnitUtils.ConvertToInternalUnits(offsetRange.OffsetMm, UnitTypeId.Millimeters);
-
-        // Зазор добавляется с двух сторон габарита.
-        double alongStructure = box.Max.X - box.Min.X + offset * 2;
-        double across = box.Max.Y - box.Min.Y;
-        double vertical = box.Max.Z - box.Min.Z;
-
-        double width;
-        double height;
-        double thickness;
-        if(frame.Kind == StructureKind.Wall) {
-            width = Round(alongStructure, settings.SizeRoundingMm);
-            height = Round(vertical + offset * 2, settings.SizeRoundingMm);
-            // Толщину не округляем: округлённая глубина не прорежет конструкцию насквозь.
-            thickness = across;
-        } else {
-            width = Round(alongStructure, settings.SizeRoundingMm);
-            height = Round(across + offset * 2, settings.SizeRoundingMm);
-            thickness = vertical;
-        }
-
         var shape = offsetRange?.Shape ?? OpeningShape.Rectangle;
-        double diameter = 0;
-        if(shape == OpeningShape.Round) {
-            // Круглое отверстие должно накрыть оба габарита пересечения.
-            diameter = Math.Max(width, height);
-            width = 0;
-            height = 0;
-        }
 
-        if(!SizeIsAllowed(shape == OpeningShape.Round ? diameter : Math.Min(width, height))) {
+        var sized = ApplyOffsetAndRounding(box, offset, settings.SizeRoundingMm, frame.Kind);
+        double smallest = frame.Kind == StructureKind.Wall
+            ? Math.Min(sized.Along, sized.Vertical)
+            : Math.Min(sized.Along, sized.Vertical);
+        if(!SizeIsAllowed(smallest)) {
             return null;
         }
 
-        var center = frame.Transform.OfPoint((box.Min + box.Max) / 2);
-        return new OpeningSize(
-            GetOpeningType(frame.Kind, shape),
-            width,
-            height,
-            diameter,
-            thickness,
-            center);
+        return new PlannedOpening(intersection, sized, shape, frame.Kind);
+    }
+
+    /// <summary>
+    /// Расширяет габариты на зазор в плоскости реза и округляет их вверх.
+    /// По толщине конструкции габарит не меняется: округлённая глубина не прорежет её насквозь.
+    /// </summary>
+    private OpeningBox ApplyOffsetAndRounding(
+        OpeningBox box,
+        double offset,
+        int roundingMm,
+        StructureKind kind) {
+
+        double along = Round(box.Along + offset * 2, roundingMm);
+        double vertical = Round(box.Vertical + offset * 2, roundingMm);
+
+        // Габариты растут симметрично от центра, толщина остаётся как есть.
+        var center = (box.Min + box.Max) / 2;
+        var min = new XYZ(center.X - along / 2, box.Min.Y, center.Z - vertical / 2);
+        var max = new XYZ(center.X + along / 2, box.Max.Y, center.Z + vertical / 2);
+        return new OpeningBox(box.Frame, min, max);
     }
 
     /// <summary>
     /// Возвращает общий габаритный бокс всех солидов пересечения в системе координат конструкции:
     /// слои составной конструкции складываются в одно отверстие на всю её толщину.
     /// </summary>
-    private BoundingBoxXYZ GetUnionBoxInFrame(MepStructureIntersection intersection, StructureFrame frame) {
-        BoundingBoxXYZ union = null;
+    private OpeningBox GetUnionBoxInFrame(MepStructureIntersection intersection, StructureFrame frame) {
+        OpeningBox union = null;
+        var toFrame = frame.Transform.Inverse;
+
         foreach(var solid in intersection.Solids) {
-            var box = GetBoxInFrame(solid, frame);
+            Solid transformed;
+            try {
+                transformed = SolidUtils.CreateTransformed(solid, toFrame);
+            } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+                continue;
+            }
+
+            var box = transformed.GetBoundingBox();
             if(box is null) {
                 continue;
             }
-            if(union is null) {
-                union = box;
-                continue;
-            }
-            union.Min = new XYZ(
-                Math.Min(union.Min.X, box.Min.X),
-                Math.Min(union.Min.Y, box.Min.Y),
-                Math.Min(union.Min.Z, box.Min.Z));
-            union.Max = new XYZ(
-                Math.Max(union.Max.X, box.Max.X),
-                Math.Max(union.Max.Y, box.Max.Y),
-                Math.Max(union.Max.Z, box.Max.Z));
+
+            var first = box.Transform.OfPoint(box.Min);
+            var second = box.Transform.OfPoint(box.Max);
+            var current = new OpeningBox(
+                frame.Transform,
+                new XYZ(Math.Min(first.X, second.X), Math.Min(first.Y, second.Y), Math.Min(first.Z, second.Z)),
+                new XYZ(Math.Max(first.X, second.X), Math.Max(first.Y, second.Y), Math.Max(first.Z, second.Z)));
+
+            union = union is null ? current : union.Union(current);
         }
+
         return union;
-    }
-
-    /// <summary>
-    /// Возвращает габаритный бокс солида в системе координат конструкции.
-    /// </summary>
-    private BoundingBoxXYZ GetBoxInFrame(Solid solid, StructureFrame frame) {
-        try {
-            var toFrame = frame.Transform.Inverse;
-            var transformed = SolidUtils.CreateTransformed(solid, toFrame);
-            return transformed.GetBoundingBox() is { } box ? ToWorldAlignedBox(box) : null;
-        } catch(Autodesk.Revit.Exceptions.ApplicationException) {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Приводит бокс солида к системе, в которой он был построен: <see cref="Solid.GetBoundingBox"/>
-    /// возвращает бокс в собственных координатах солида вместе с их преобразованием.
-    /// </summary>
-    private BoundingBoxXYZ ToWorldAlignedBox(BoundingBoxXYZ box) {
-        var transform = box.Transform;
-        var first = transform.OfPoint(box.Min);
-        var second = transform.OfPoint(box.Max);
-        var result = new BoundingBoxXYZ {
-            Min = new XYZ(Math.Min(first.X, second.X), Math.Min(first.Y, second.Y), Math.Min(first.Z, second.Z)),
-            Max = new XYZ(Math.Max(first.X, second.X), Math.Max(first.Y, second.Y), Math.Max(first.Z, second.Z))
-        };
-        return result;
     }
 
     private bool SizeIsAllowed(double size) {
@@ -152,12 +121,5 @@ public class OpeningSizeCalculator {
 
         double step = UnitUtils.ConvertToInternalUnits(roundingMm, UnitTypeId.Millimeters);
         return Math.Ceiling(Math.Round(value / step, 5, MidpointRounding.AwayFromZero)) * step;
-    }
-
-    private OpeningType GetOpeningType(StructureKind kind, OpeningShape shape) {
-        if(kind == StructureKind.Wall) {
-            return shape == OpeningShape.Round ? OpeningType.WallRound : OpeningType.WallRectangle;
-        }
-        return shape == OpeningShape.Round ? OpeningType.FloorRound : OpeningType.FloorRectangle;
     }
 }

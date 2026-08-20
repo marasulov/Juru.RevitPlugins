@@ -56,7 +56,13 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
 
         var intersections = new SolidIntersectionFinder(mepProvider).Find(structureProviders);
         var validation = new IntersectionValidator().Validate(intersections);
-        var merged = new IntersectionMerger(config).Merge(validation.Accepted);
+
+        var calculator = new OpeningSizeCalculator();
+        var planned = validation.Accepted
+            .Select(calculator.Calculate)
+            .Where(opening => opening is not null)
+            .ToArray();
+        var merged = new OpeningMerger(config).Merge(planned);
         var placement = new OpeningTaskPlacer(doc, config).Place(merged);
 
         TaskDialog.Show("Задания на отверстия",
@@ -103,7 +109,7 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
         MepElementsProvider mepProvider,
         IReadOnlyCollection<MepStructureIntersection> intersections,
         IntersectionValidator.ValidationResult validation,
-        IReadOnlyCollection<MepStructureIntersection> merged,
+        IReadOnlyCollection<PlannedOpening> merged,
         PlacementResult placement) {
 
         var report = new StringBuilder();
@@ -122,7 +128,8 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
         report.AppendLine($"Пересечений найдено: {intersections.Count}");
         int unitedCount = merged.Count(item => item.IsUnited);
         if(unitedCount > 0) {
-            report.AppendLine($"Склеено проходов в объединённые задания: {unitedCount}");
+            int mergedSources = merged.Where(item => item.IsUnited).Sum(item => item.Sources.Count);
+            report.AppendLine($"Объединённых заданий: {unitedCount} (склеено проходов: {mergedSources})");
         }
         report.AppendLine($"Заданий размещено: {placement.Placed.Count}");
         if(placement.SkippedAsDuplicate > 0) {

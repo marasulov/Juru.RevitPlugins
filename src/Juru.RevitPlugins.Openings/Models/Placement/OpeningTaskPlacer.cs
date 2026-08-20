@@ -13,12 +13,11 @@ using Juru.RevitPlugins.Openings.Models.Intersections;
 namespace Juru.RevitPlugins.Openings.Models.Placement;
 
 /// <summary>
-/// Размещает задания на отверстия по найденным пересечениям.
+/// Размещает задания на отверстия по рассчитанным отверстиям.
 /// </summary>
 public class OpeningTaskPlacer {
     private readonly Document _doc;
     private readonly OpeningsConfig _config;
-    private readonly OpeningSizeCalculator _sizeCalculator = new OpeningSizeCalculator();
     private readonly Dictionary<OpeningType, FamilySymbol> _symbols = [];
 
     public OpeningTaskPlacer(Document doc, OpeningsConfig config) {
@@ -27,30 +26,31 @@ public class OpeningTaskPlacer {
     }
 
     /// <summary>
-    /// Размещает задания в одной транзакции. Пересечение, для которого разместить задание не удалось,
+    /// Размещает задания в одной транзакции. Отверстие, которое разместить не удалось,
     /// не прерывает расстановку, а попадает в отчёт.
     /// </summary>
-    public PlacementResult Place(IReadOnlyCollection<MepStructureIntersection> intersections) {
-        if(intersections is null) { throw new ArgumentNullException(nameof(intersections)); }
+    public PlacementResult Place(IReadOnlyCollection<PlannedOpening> openings) {
+        if(openings is null) { throw new ArgumentNullException(nameof(openings)); }
 
         var result = new PlacementResult();
         var placedTasks = new PlacedTasksIndex(_doc, _config);
+
         using var transaction = new Transaction(_doc, "Расстановка заданий на отверстия");
         transaction.Start();
 
-        foreach(var intersection in intersections) {
+        foreach(var opening in openings) {
             try {
-                var instance = PlaceOne(intersection, result, placedTasks, out string failure);
+                var instance = PlaceOne(opening, result, placedTasks, out string failure);
                 if(instance is null) {
                     // Пропуск дубля - не отказ: причины у него нет, он ожидаемый.
                     if(failure is not null) {
-                        result.Failed.Add(new IntersectionRejection(intersection, failure));
+                        result.Failed.Add(new IntersectionRejection(opening.Primary, failure));
                     }
                 } else {
                     result.Placed.Add(instance);
                 }
             } catch(Autodesk.Revit.Exceptions.ApplicationException exception) {
-                result.Failed.Add(new IntersectionRejection(intersection, exception.Message));
+                result.Failed.Add(new IntersectionRejection(opening.Primary, exception.Message));
             }
         }
 
@@ -59,25 +59,21 @@ public class OpeningTaskPlacer {
     }
 
     private FamilyInstance PlaceOne(
-        MepStructureIntersection intersection,
+        PlannedOpening opening,
         PlacementResult result,
         PlacedTasksIndex placedTasks,
         out string failure) {
-        failure = null;
-        var size = _sizeCalculator.Calculate(intersection);
-        if(size is null) {
-            failure = "Габариты отверстия по геометрии пересечения не определены либо недопустимо малы.";
-            return null;
-        }
 
+        failure = null;
+        var size = opening.GetSize();
         var symbol = GetSymbol(size.OpeningType);
         if(symbol is null) {
             failure = $"Семейство {_config.Naming.GetFamilyName(size.OpeningType)} не загружено в проект.";
             return null;
         }
 
-        var level = GetLevel(intersection.Mep.Element, size.Center);
-        var point = InsertionPoint.Get(size, intersection);
+        var level = GetLevel(opening.Primary.Mep.Element, size.Center);
+        var point = InsertionPoint.Get(size, opening.Primary);
 
         if(placedTasks.AlreadyPlaced(point, size.BoxVolume)) {
             result.SkippedAsDuplicate++;
@@ -93,15 +89,15 @@ public class OpeningTaskPlacer {
         // Параметры назначаются после Regenerate: до него значения, назначенные только что созданному
         // экземпляру, могут не примениться.
         _doc.Regenerate();
-        SetParameters(instance, intersection, size, level, result);
+        SetParameters(instance, opening, size, level, result);
 
-        double angle = OpeningAngle.Get(intersection);
+        double angle = OpeningAngle.Get(opening.Primary);
         if(Math.Abs(angle) > 1e-9) {
             var axis = Line.CreateBound(point, point + XYZ.BasisZ);
             ElementTransformUtils.RotateElement(_doc, instance.Id, axis, angle);
         }
 
-        // Задание учитывается сразу: иначе два пересечения в одном месте внутри одного прогона
+        // Задание учитывается сразу: иначе два отверстия в одном месте внутри одного прогона
         // дали бы два задания.
         placedTasks.Add(point, size.BoxVolume);
         return instance;
@@ -124,7 +120,7 @@ public class OpeningTaskPlacer {
 
     private void SetParameters(
         FamilyInstance instance,
-        MepStructureIntersection intersection,
+        PlannedOpening opening,
         OpeningSize size,
         Level level,
         PlacementResult result) {
@@ -168,24 +164,36 @@ public class OpeningTaskPlacer {
             Length(naming.LevelOffsetParam, bottomElevation - level.ProjectElevation);
         }
 
-        Text(naming.MepSystemParam, GetMepSystemName(intersection.Mep.Element));
-        Text(naming.DescriptionParam, GetDescription(intersection));
+        Text(naming.MepSystemParam, GetMepSystems(opening));
+        Text(naming.DescriptionParam, GetDescription(opening));
         Text(naming.DateParam, DateTime.Now.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture));
         Text(naming.AuthorParam, GetAuthor());
         Flag(naming.ManuallyPlacedParam, 0);
-        Flag(naming.UnitedParam, intersection.IsUnited ? 1 : 0);
+        Flag(naming.UnitedParam, opening.IsUnited ? 1 : 0);
     }
 
     /// <summary>
     /// Возвращает описание задания: файлы, имена и id элементов, из пересечения которых оно возникло.
-    /// Этого достаточно, чтобы найти источник задания без отдельного идентификатора.
+    /// У объединённого задания перечисляются все, иначе после склейки не найти, откуда оно взялось.
     /// </summary>
-    private string GetDescription(MepStructureIntersection intersection) {
-        var mep = intersection.Mep.Element;
-        var structure = intersection.StructureElement;
-        return string.Join("; ",
-            $"{mep.Document.Title}: {mep.Name}: {mep.Id}",
-            $"{structure.Document.Title}: {structure.Name}: {structure.Id}");
+    private string GetDescription(PlannedOpening opening) {
+        return string.Join("; ", opening.Sources.Select(source => {
+            var mep = source.Mep.Element;
+            var structure = source.StructureElement;
+            return $"{mep.Document.Title}: {mep.Name}: {mep.Id}"
+                + $"; {structure.Document.Title}: {structure.Name}: {structure.Id}";
+        }));
+    }
+
+    /// <summary>
+    /// Возвращает имена инженерных систем всех проходов задания без повторов.
+    /// </summary>
+    private string GetMepSystems(PlannedOpening opening) {
+        var systems = opening.Sources
+            .Select(source => GetMepSystemName(source.Mep.Element))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct();
+        return string.Join("; ", systems);
     }
 
     private string GetMepSystemName(Element element) {
