@@ -142,10 +142,10 @@ public class OpeningTask {
     }
 
     /// <summary>
-    /// Отметка низа задания в единицах Revit.
+    /// Отметка задания в единицах Revit - та, что записана в семейство: отметка его точки вставки.
     /// </summary>
-    public double GetBottomElevation() {
-        return GetLength(_naming.BottomOffsetParam);
+    public double GetElevation() {
+        return GetLength(_naming.ElevationParam);
     }
 
     /// <summary>

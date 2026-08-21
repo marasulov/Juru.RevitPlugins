@@ -27,7 +27,7 @@ public class OpeningTaskViewModel {
         Description = task.Description;
         Author = task.Author;
         Size = GetSizeText(task);
-        BottomElevation = ToMillimeters(task.GetBottomElevation());
+        Elevation = ToMillimeters(task.GetElevation());
         CenterElevation = ToMillimeters(task.GetCenterElevation());
         Host = GetHostText(task.Host);
     }
@@ -72,9 +72,9 @@ public class OpeningTaskViewModel {
     public string Size { get; }
 
     /// <summary>
-    /// Отметка низа задания в мм.
+    /// Отметка задания в мм, как она записана в семейство.
     /// </summary>
-    public string BottomElevation { get; }
+    public string Elevation { get; }
 
     /// <summary>
     /// Отметка оси задания в мм.

@@ -171,12 +171,12 @@ public class OpeningTaskPlacer {
 
         // Отметки считаются от точки вставки, а не от расчётного центра: точка вставки округлена,
         // и отметка в параметре должна совпадать с тем, где отверстие действительно стоит.
-        var (bottomElevation, centerElevation) = GetElevations(size, point);
+        var (_, centerElevation) = GetElevations(size, point);
         // Отметка оси необязательна: если её в семействе нет, в отчёт это не пишем.
         ParameterWriter.SetLength(instance, naming.CenterOffsetParam, centerElevation);
-        Length(naming.BottomOffsetParam, bottomElevation);
+        Length(naming.ElevationParam, point.Z);
         if(level is not null) {
-            Length(naming.LevelOffsetParam, bottomElevation - level.ProjectElevation);
+            Length(naming.LevelOffsetParam, point.Z - level.ProjectElevation);
         }
 
         Text(naming.MepSystemParam, GetMepSystems(opening));
