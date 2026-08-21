@@ -1,6 +1,8 @@
-using Color = System.Windows.Media.Color;
+using Autodesk.Revit.UI;
 
 using Wpf.Ui.Appearance;
+
+using Color = System.Windows.Media.Color;
 
 namespace Juru.RevitPlugins.Core.Theming;
 
@@ -18,10 +20,30 @@ public static class JuruTheme {
     public static Color AccentColor { get; } = Color.FromRgb(0xD3, 0x1B, 0x1E);
 
     /// <summary>
-    /// Применяет фирменный акцент к окнам WPF-UI.
+    /// Применяет фирменное оформление, подхватывая светлую или тёмную тему из настроек Revit.
     /// </summary>
-    /// <param name="theme">Светлая или тёмная тема окон.</param>
-    public static void Apply(ApplicationTheme theme = ApplicationTheme.Light) {
+    public static void Apply() {
+        Apply(GetRevitTheme());
+    }
+
+    /// <summary>
+    /// Применяет фирменное оформление с заданной темой.
+    /// </summary>
+    public static void Apply(ApplicationTheme theme) {
+        ApplicationThemeManager.Apply(theme);
         ApplicationAccentColorManager.Apply(AccentColor, theme);
+    }
+
+    /// <summary>
+    /// Возвращает тему, выбранную в настройках интерфейса Revit.
+    /// </summary>
+    /// <remarks>
+    /// Берём тему интерфейса, а не тему области рисования: окна плагина стоят рядом с панелями
+    /// Revit, а не с моделью, и должны совпадать с ними.
+    /// </remarks>
+    private static ApplicationTheme GetRevitTheme() {
+        return UIThemeManager.CurrentTheme == UITheme.Dark
+            ? ApplicationTheme.Dark
+            : ApplicationTheme.Light;
     }
 }

@@ -21,9 +21,9 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <!-- Без словарей WPF-UI флажки и поля рисуются без стилей: окно наследует Window,
-                     а не FluentWindow, и тему за него никто не применяет. -->
-                <ui:ThemesDictionary
-                    Theme="Light" />
+                     а не FluentWindow. Тему здесь задавать нечего - её ставит JuruTheme по настройке
+                     интерфейса Revit, светлую или тёмную. -->
+                <ui:ThemesDictionary />
                 <ui:ControlsDictionary />
                 <ResourceDictionary
                     Source="pack://application:,,,/Juru.RevitPlugins.Core;component/Resources/CustomStyles.xaml" />
