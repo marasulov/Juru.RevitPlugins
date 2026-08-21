@@ -73,7 +73,7 @@ public class OpeningTaskPlacer {
         }
 
         var level = GetLevel(opening.Primary.Mep.Element, size.Center);
-        var point = InsertionPoint.Get(size, opening.Primary);
+        var point = InsertionPoint.Get(size, opening.Primary, GetElevationRounding(opening));
 
         if(placedTasks.AlreadyPlaced(point, size.BoxVolume)) {
             result.SkippedAsDuplicate++;
@@ -89,7 +89,7 @@ public class OpeningTaskPlacer {
         // Параметры назначаются после Regenerate: до него значения, назначенные только что созданному
         // экземпляру, могут не примениться.
         _doc.Regenerate();
-        SetParameters(instance, opening, size, level, result);
+        SetParameters(instance, opening, size, point, level, result);
 
         double angle = OpeningAngle.Get(opening.Primary);
         if(Math.Abs(angle) > 1e-9) {
@@ -118,10 +118,24 @@ public class OpeningTaskPlacer {
         return _doc.Create.NewFamilyInstance(pointOnLevel, symbol, level, StructuralType.NonStructural);
     }
 
+    /// <summary>
+    /// Возвращает округление отметки для отверстия в мм.
+    /// </summary>
+    /// <remarks>
+    /// У объединённого отверстия шаг свой: его габариты уже сложены из нескольких проходов и
+    /// переокруглены мельче, и отметка должна лечь на тот же шаг, что и они.
+    /// </remarks>
+    private int GetElevationRounding(PlannedOpening opening) {
+        return opening.IsUnited
+            ? _config.UnitedTaskSizeRoundingMm
+            : opening.Primary.Settings.ElevationRoundingMm;
+    }
+
     private void SetParameters(
         FamilyInstance instance,
         PlannedOpening opening,
         OpeningSize size,
+        XYZ point,
         Level level,
         PlacementResult result) {
 
@@ -155,10 +169,11 @@ public class OpeningTaskPlacer {
         }
         Length(naming.ThicknessParam, size.Thickness);
 
-        double halfHeight = size.IsRound ? size.Diameter / 2 : size.Height / 2;
-        double bottomElevation = size.Center.Z - halfHeight;
+        // Отметки считаются от точки вставки, а не от расчётного центра: точка вставки округлена,
+        // и отметка в параметре должна совпадать с тем, где отверстие действительно стоит.
+        var (bottomElevation, centerElevation) = GetElevations(size, point);
         // Отметка оси необязательна: если её в семействе нет, в отчёт это не пишем.
-        ParameterWriter.SetLength(instance, naming.CenterOffsetParam, size.Center.Z);
+        ParameterWriter.SetLength(instance, naming.CenterOffsetParam, centerElevation);
         Length(naming.BottomOffsetParam, bottomElevation);
         if(level is not null) {
             Length(naming.LevelOffsetParam, bottomElevation - level.ProjectElevation);
@@ -170,6 +185,26 @@ public class OpeningTaskPlacer {
         Text(naming.AuthorParam, GetAuthor());
         Flag(naming.ManuallyPlacedParam, 0);
         Flag(naming.UnitedParam, opening.IsUnited ? 1 : 0);
+    }
+
+    /// <summary>
+    /// Возвращает отметки низа и оси отверстия по его точке вставки.
+    /// </summary>
+    /// <remarks>
+    /// Начало координат у семейств разное, поэтому и отметки выводятся из точки по-разному:
+    /// у прямоугольного отверстия в стене точка лежит на низу, у круглого - на оси,
+    /// у отверстия в перекрытии - на верхней грани плиты. Расхождение здесь означает отметку
+    /// в спецификации, не совпадающую с моделью.
+    /// </remarks>
+    private (double Bottom, double Center) GetElevations(OpeningSize size, XYZ point) {
+        switch(size.OpeningType) {
+            case OpeningType.WallRectangle:
+                return (point.Z, point.Z + size.Height / 2);
+            case OpeningType.WallRound:
+                return (point.Z - size.Diameter / 2, point.Z);
+            default:
+                return (point.Z - size.Thickness, point.Z - size.Thickness / 2);
+        }
     }
 
     /// <summary>
