@@ -13,7 +13,8 @@ namespace Juru.RevitPlugins.Openings.Commands;
 /// <summary>
 /// Открывает настройки выдачи заданий на отверстия.
 /// </summary>
-[Transaction(TransactionMode.ReadOnly)]
+// Manual, а не ReadOnly: AddinManager требует одинаковый режим у всех команд сборки.
+[Transaction(TransactionMode.Manual)]
 public class SetOpeningsSettingsCommand : IExternalCommand {
     public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements) {
         var config = OpeningsConfig.GetOpeningsConfig();
