@@ -6,7 +6,8 @@ using Autodesk.Revit.DB;
 namespace Juru.RevitPlugins.Openings.Models.Placement;
 
 /// <summary>
-/// Габариты отверстия в системе координат конструкции: X вдоль конструкции, Y по её толщине, Z вверх.
+/// Габариты отверстия в системе координат конструкции: X вдоль конструкции, Y сквозь её толщину,
+/// Z - третья ось (у стены это вертикаль, у перекрытия - вторая ось плана).
 /// </summary>
 public class OpeningBox {
     public OpeningBox(Transform frame, XYZ min, XYZ max) {
@@ -41,7 +42,7 @@ public class OpeningBox {
     public double Across => Max.Y - Min.Y;
 
     /// <summary>
-    /// Размер по вертикали.
+    /// Размер по третьей оси: у стены это высота, у перекрытия - второй размер в плане.
     /// </summary>
     public double Vertical => Max.Z - Min.Z;
 
