@@ -10,10 +10,10 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     mc:Ignorable="d"
     Title="Настройки выдачи заданий"
-    Width="1000"
-    Height="660"
-    MinWidth="900"
-    MinHeight="600"
+    Width="880"
+    Height="700"
+    MinWidth="820"
+    MinHeight="620"
     WindowStartupLocation="CenterOwner"
     d:DataContext="{d:DesignInstance vms:OpeningsSettingsViewModel, IsDesignTimeCreatable=False}">
 
@@ -43,39 +43,61 @@
             </ObjectDataProvider>
 
             <Style
-                x:Key="FieldLabel"
+                x:Key="SectionTitle"
                 TargetType="TextBlock">
+                <Setter
+                    Property="FontWeight"
+                    Value="SemiBold" />
+                <Setter
+                    Property="Margin"
+                    Value="0 0 0 2" />
+            </Style>
+
+            <Style
+                x:Key="Hint"
+                TargetType="TextBlock">
+                <Setter
+                    Property="Opacity"
+                    Value="0.6" />
+                <Setter
+                    Property="TextWrapping"
+                    Value="Wrap" />
+                <Setter
+                    Property="Margin"
+                    Value="0 0 0 8" />
+            </Style>
+
+            <Style
+                x:Key="FieldRow"
+                TargetType="DockPanel">
+                <Setter
+                    Property="Margin"
+                    Value="0 3" />
+            </Style>
+
+            <Style
+                x:Key="FieldName"
+                TargetType="TextBlock">
+                <Setter
+                    Property="Width"
+                    Value="250" />
                 <Setter
                     Property="VerticalAlignment"
                     Value="Center" />
                 <Setter
                     Property="TextWrapping"
                     Value="Wrap" />
-                <Setter
-                    Property="Margin"
-                    Value="0 0 12 0" />
             </Style>
 
             <Style
-                x:Key="FieldBox"
+                x:Key="FieldValue"
                 TargetType="ui:TextBox">
                 <Setter
                     Property="Width"
-                    Value="120" />
+                    Value="110" />
                 <Setter
                     Property="HorizontalAlignment"
-                    Value="Right" />
-            </Style>
-
-            <Style
-                x:Key="SectionHeader"
-                TargetType="TextBlock">
-                <Setter
-                    Property="Margin"
-                    Value="4 0 0 6" />
-                <Setter
-                    Property="Opacity"
-                    Value="0.75" />
+                    Value="Left" />
             </Style>
         </ResourceDictionary>
     </Window.Resources>
@@ -96,216 +118,156 @@
 
         <Grid
             Grid.Row="1"
-            Margin="12">
+            Margin="14 6 14 0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition
-                    Width="300" />
+                    Width="250" />
                 <ColumnDefinition
                     Width="*" />
             </Grid.ColumnDefinitions>
 
-            <Grid
+            <!-- Слева только выбор вида: что с ним делать, решается справа. -->
+            <Border
                 Grid.Column="0"
-                Margin="0 0 12 0">
-                <Grid.RowDefinitions>
-                    <RowDefinition
-                        Height="*" />
-                    <RowDefinition
-                        Height="Auto" />
-                </Grid.RowDefinitions>
+                Margin="0 0 14 0"
+                Style="{StaticResource CustomBorder}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition
+                            Height="Auto" />
+                        <RowDefinition
+                            Height="*" />
+                    </Grid.RowDefinitions>
 
-                <Border
-                    Grid.Row="0"
-                    Style="{StaticResource CustomBorder}">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition
-                                Height="Auto" />
-                            <RowDefinition
-                                Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <TextBlock
-                            Grid.Row="0"
-                            Margin="10 8 10 4"
-                            Style="{StaticResource SectionHeader}"
-                            Text="Виды элементов" />
-
-                        <ListBox
-                            Grid.Row="1"
-                            Margin="4"
-                            BorderThickness="0"
-                            Background="Transparent"
-                            HorizontalContentAlignment="Stretch"
-                            ItemsSource="{Binding Categories}"
-                            SelectedItem="{Binding SelectedCategory}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox
-                                        Margin="4 6"
-                                        IsChecked="{Binding IsSelected}">
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            Text="{Binding Name}"
-                                            TextWrapping="Wrap" />
-                                    </CheckBox>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </Grid>
-                </Border>
-
-                <Border
-                    Grid.Row="1"
-                    Margin="0 12 0 0"
-                    Style="{StaticResource CustomBorder}">
                     <StackPanel
-                        Margin="10 8">
+                        Grid.Row="0"
+                        Margin="12 10 12 4">
                         <TextBlock
-                            Style="{StaticResource SectionHeader}"
-                            Text="Объединение заданий" />
-                        <DockPanel
-                            Margin="4 4">
-                            <TextBlock
-                                Style="{StaticResource FieldLabel}"
-                                Text="Округление, мм" />
-                            <ui:TextBox
-                                Style="{StaticResource FieldBox}"
-                                Text="{Binding UnitedTaskSizeRoundingMm, UpdateSourceTrigger=PropertyChanged}" />
-                        </DockPanel>
-                        <DockPanel
-                            Margin="4 4">
-                            <TextBlock
-                                Style="{StaticResource FieldLabel}"
-                                Text="Зазор по толщине, мм" />
-                            <ui:TextBox
-                                Style="{StaticResource FieldBox}"
-                                Text="{Binding UnitedTaskMaxGapMm, UpdateSourceTrigger=PropertyChanged}" />
-                        </DockPanel>
-                        <DockPanel
-                            Margin="4 4">
-                            <TextBlock
-                                Style="{StaticResource FieldLabel}"
-                                Text="Допуск касания, мм" />
-                            <ui:TextBox
-                                Style="{StaticResource FieldBox}"
-                                Text="{Binding UnitedTaskTouchToleranceMm, UpdateSourceTrigger=PropertyChanged}" />
-                        </DockPanel>
-
+                            Style="{StaticResource SectionTitle}"
+                            Text="Виды элементов" />
                         <TextBlock
-                            Margin="4 12 0 6"
-                            Style="{StaticResource SectionHeader}"
-                            Text="Отбор пересечений" />
-                        <DockPanel
-                            Margin="4 4"
-                            ToolTip="Проходы мельче этого значения считаются касанием. Ноль - выдавать задания и на касаниях.">
-                            <TextBlock
-                                Style="{StaticResource FieldLabel}"
-                                Text="Глубина прохода, мм" />
-                            <ui:TextBox
-                                Style="{StaticResource FieldBox}"
-                                Text="{Binding MinPassDepthMm, UpdateSourceTrigger=PropertyChanged}" />
-                        </DockPanel>
+                            Style="{StaticResource Hint}"
+                            Text="Настройки задаются для каждого вида отдельно. Серым показаны те, для которых задания не выдаются." />
                     </StackPanel>
-                </Border>
-            </Grid>
+
+                    <ListBox
+                        Grid.Row="1"
+                        Margin="6 0 6 6"
+                        BorderThickness="0"
+                        Background="Transparent"
+                        HorizontalContentAlignment="Stretch"
+                        ItemsSource="{Binding Categories}"
+                        SelectedItem="{Binding SelectedCategory}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock
+                                    Margin="6 7"
+                                    Text="{Binding Name}"
+                                    TextWrapping="Wrap">
+                                    <TextBlock.Style>
+                                        <Style
+                                            TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger
+                                                    Binding="{Binding IsSelected}"
+                                                    Value="False">
+                                                    <Setter
+                                                        Property="Opacity"
+                                                        Value="0.45" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
 
             <ScrollViewer
                 Grid.Column="1"
-                VerticalScrollBarVisibility="Auto"
-                DataContext="{Binding SelectedCategory}">
+                VerticalScrollBarVisibility="Auto">
                 <StackPanel>
                     <Border
                         Margin="0 0 0 12"
+                        DataContext="{Binding SelectedCategory}"
                         Style="{StaticResource CustomBorder}">
                         <StackPanel
-                            Margin="10 8">
+                            Margin="12 10">
                             <TextBlock
-                                Style="{StaticResource SectionHeader}"
-                                Text="Наименьшие габариты элемента, мм" />
+                                Style="{StaticResource SectionTitle}"
+                                Text="{Binding Name}" />
+                            <TextBlock
+                                Style="{StaticResource Hint}"
+                                Text="Выключите, если для этого вида задания на отверстия не нужны: такие элементы не проверяются вовсе." />
+                            <CheckBox
+                                Content="Выдавать задания для этого вида"
+                                IsChecked="{Binding IsSelected}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Margin="0 0 0 12"
+                        DataContext="{Binding SelectedCategory}"
+                        Style="{StaticResource CustomBorder}">
+                        <StackPanel
+                            Margin="12 10"
+                            IsEnabled="{Binding IsSelected}">
+                            <TextBlock
+                                Style="{StaticResource SectionTitle}"
+                                Text="Какие элементы проверять" />
+                            <TextBlock
+                                Style="{StaticResource Hint}"
+                                Text="Элементы мельче наименьшего габарита не проверяются: для них отверстия не выдают. Крупнее наибольшего - пропускаются как ошибка черчения." />
+
                             <DockPanel
-                                Margin="4 6"
+                                Style="{StaticResource FieldRow}"
                                 Visibility="{Binding IsRound, Converter={StaticResource BoolToVisibility}}">
                                 <TextBlock
-                                    Style="{StaticResource FieldLabel}"
-                                    Text="Диаметр" />
+                                    Style="{StaticResource FieldName}"
+                                    Text="Наименьший диаметр, мм" />
                                 <ui:TextBox
-                                    Style="{StaticResource FieldBox}"
+                                    Style="{StaticResource FieldValue}"
                                     Text="{Binding MinDiameterMm, UpdateSourceTrigger=PropertyChanged}" />
                             </DockPanel>
                             <StackPanel
                                 Visibility="{Binding IsRectangular, Converter={StaticResource BoolToVisibility}}">
                                 <DockPanel
-                                    Margin="4 6">
+                                    Style="{StaticResource FieldRow}">
                                     <TextBlock
-                                        Style="{StaticResource FieldLabel}"
-                                        Text="Ширина" />
+                                        Style="{StaticResource FieldName}"
+                                        Text="Наименьшая ширина, мм" />
                                     <ui:TextBox
-                                        Style="{StaticResource FieldBox}"
+                                        Style="{StaticResource FieldValue}"
                                         Text="{Binding MinWidthMm, UpdateSourceTrigger=PropertyChanged}" />
                                 </DockPanel>
                                 <DockPanel
-                                    Margin="4 6">
+                                    Style="{StaticResource FieldRow}">
                                     <TextBlock
-                                        Style="{StaticResource FieldLabel}"
-                                        Text="Высота" />
+                                        Style="{StaticResource FieldName}"
+                                        Text="Наименьшая высота, мм" />
                                     <ui:TextBox
-                                        Style="{StaticResource FieldBox}"
+                                        Style="{StaticResource FieldValue}"
                                         Text="{Binding MinHeightMm, UpdateSourceTrigger=PropertyChanged}" />
                                 </DockPanel>
                             </StackPanel>
                             <DockPanel
-                                Margin="4 6"
-                                ToolTip="Элементы крупнее этого габарита пропускаются: обычно это ошибка черчения.">
+                                Style="{StaticResource FieldRow}">
                                 <TextBlock
-                                    Style="{StaticResource FieldLabel}"
-                                    Text="Наибольший габарит" />
+                                    Style="{StaticResource FieldName}"
+                                    Text="Наибольший габарит, мм" />
                                 <ui:TextBox
-                                    Style="{StaticResource FieldBox}"
+                                    Style="{StaticResource FieldValue}"
                                     Text="{Binding MaxSizeMm, UpdateSourceTrigger=PropertyChanged}" />
                             </DockPanel>
-                        </StackPanel>
-                    </Border>
 
-                    <Border
-                        Margin="0 0 0 12"
-                        Style="{StaticResource CustomBorder}">
-                        <StackPanel
-                            Margin="10 8">
                             <TextBlock
-                                Style="{StaticResource SectionHeader}"
-                                Text="Округление, мм" />
-                            <DockPanel
-                                Margin="4 6">
-                                <TextBlock
-                                    Style="{StaticResource FieldLabel}"
-                                    Text="Габариты" />
-                                <ui:TextBox
-                                    Style="{StaticResource FieldBox}"
-                                    Text="{Binding SizeRoundingMm, UpdateSourceTrigger=PropertyChanged}" />
-                            </DockPanel>
-                            <DockPanel
-                                Margin="4 6">
-                                <TextBlock
-                                    Style="{StaticResource FieldLabel}"
-                                    Text="Отметки" />
-                                <ui:TextBox
-                                    Style="{StaticResource FieldBox}"
-                                    Text="{Binding ElevationRoundingMm, UpdateSourceTrigger=PropertyChanged}" />
-                            </DockPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <Border
-                        Margin="0 0 0 12"
-                        Style="{StaticResource CustomBorder}">
-                        <StackPanel
-                            Margin="10 8">
-                            <TextBlock
-                                Style="{StaticResource SectionHeader}"
-                                Text="Конструкции для проверки" />
+                                Margin="0 10 0 2"
+                                Style="{StaticResource SectionTitle}"
+                                Text="В каких конструкциях" />
                             <StackPanel
-                                Margin="4 6"
+                                Margin="0 4"
                                 Orientation="Horizontal">
                                 <CheckBox
                                     Margin="0 0 24 0"
@@ -319,99 +281,193 @@
                     </Border>
 
                     <Border
+                        Margin="0 0 0 12"
+                        DataContext="{Binding SelectedCategory}"
                         Style="{StaticResource CustomBorder}">
                         <StackPanel
-                            Margin="10 8">
-                            <DockPanel>
+                            Margin="12 10"
+                            IsEnabled="{Binding IsSelected}">
+                            <TextBlock
+                                Style="{StaticResource SectionTitle}"
+                                Text="Размер отверстия" />
+                            <TextBlock
+                                Style="{StaticResource Hint}"
+                                Text="Зазор - насколько отверстие шире элемента с каждой стороны. Для каждого диапазона габаритов свой зазор и своя форма отверстия: мелкие трассы обычно круглые, крупные прямоугольные." />
+
+                            <DockPanel
+                                Style="{StaticResource FieldRow}">
                                 <TextBlock
-                                    Style="{StaticResource SectionHeader}"
-                                    Text="Зазоры по диапазонам габаритов, мм" />
+                                    Style="{StaticResource FieldName}"
+                                    Text="Округление габаритов, мм" />
+                                <ui:TextBox
+                                    Style="{StaticResource FieldValue}"
+                                    Text="{Binding SizeRoundingMm, UpdateSourceTrigger=PropertyChanged}" />
+                            </DockPanel>
+                            <DockPanel
+                                Style="{StaticResource FieldRow}">
+                                <TextBlock
+                                    Style="{StaticResource FieldName}"
+                                    Text="Округление отметок, мм" />
+                                <ui:TextBox
+                                    Style="{StaticResource FieldValue}"
+                                    Text="{Binding ElevationRoundingMm, UpdateSourceTrigger=PropertyChanged}" />
+                            </DockPanel>
+
+                            <DockPanel
+                                Margin="0 10 0 4">
+                                <TextBlock
+                                    Style="{StaticResource SectionTitle}"
+                                    Text="Зазоры по диапазонам габаритов" />
                                 <StackPanel
                                     HorizontalAlignment="Right"
                                     Orientation="Horizontal">
                                     <ui:Button
-                                        Width="34"
+                                        Width="110"
                                         Margin="4 0"
-                                        Content="+"
-                                        ToolTip="Добавить диапазон"
+                                        Content="Добавить"
                                         Command="{Binding AddOffsetCommand}" />
                                     <ui:Button
-                                        Width="34"
+                                        Width="110"
                                         Margin="4 0"
-                                        Content="—"
-                                        ToolTip="Удалить выбранный диапазон"
+                                        Content="Удалить"
                                         Command="{Binding RemoveOffsetCommand}" />
                                 </StackPanel>
                             </DockPanel>
 
                             <DataGrid
-                                Margin="4 8"
-                                MinHeight="160"
+                                MinHeight="150"
                                 AutoGenerateColumns="False"
                                 CanUserAddRows="False"
-                                GridLinesVisibility="Horizontal"
+                                GridLinesVisibility="All"
                                 HeadersVisibility="Column"
                                 ItemsSource="{Binding Offsets}"
                                 SelectedItem="{Binding SelectedOffset}"
                                 VirtualizingPanel.VirtualizationMode="Standard">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn
-                                        Header="От"
-                                        Width="100"
+                                        Header="Габарит от, мм"
+                                        Width="120"
                                         Binding="{Binding FromMm, UpdateSourceTrigger=PropertyChanged}" />
                                     <DataGridTextColumn
-                                        Header="До"
-                                        Width="100"
+                                        Header="до, мм"
+                                        Width="120"
                                         Binding="{Binding ToMm, UpdateSourceTrigger=PropertyChanged}" />
                                     <DataGridTextColumn
-                                        Header="Зазор"
-                                        Width="100"
+                                        Header="Зазор, мм"
+                                        Width="120"
                                         Binding="{Binding OffsetMm, UpdateSourceTrigger=PropertyChanged}" />
-                                    <DataGridComboBoxColumn
+                                    <!-- Шаблон, а не DataGridComboBoxColumn: та показывает значение
+                                         только в режиме правки, и колонка выглядит пустой. -->
+                                    <DataGridTemplateColumn
                                         Header="Форма отверстия"
-                                        Width="*"
-                                        ItemsSource="{Binding Source={StaticResource Shapes}}"
-                                        SelectedItemBinding="{Binding Shape, UpdateSourceTrigger=PropertyChanged}" />
+                                        Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox
+                                                    Margin="2"
+                                                    BorderThickness="0"
+                                                    Background="Transparent"
+                                                    ItemsSource="{Binding Source={StaticResource Shapes}}"
+                                                    SelectedItem="{Binding Shape, UpdateSourceTrigger=PropertyChanged}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Style="{StaticResource CustomBorder}">
+                        <StackPanel
+                            Margin="12 10">
+                            <TextBlock
+                                Style="{StaticResource SectionTitle}"
+                                Text="Общее для всех видов" />
+                            <TextBlock
+                                Style="{StaticResource Hint}"
+                                Text="Соприкасающиеся отверстия плагин заменяет одним: труба сквозь штукатурку, кладку и штукатурку - это одно отверстие, а не три." />
+
+                            <DockPanel
+                                Style="{StaticResource FieldRow}"
+                                ToolTip="Габариты объединённого отверстия округляются до этого шага.">
+                                <TextBlock
+                                    Style="{StaticResource FieldName}"
+                                    Text="Округление объединённых, мм" />
+                                <ui:TextBox
+                                    Style="{StaticResource FieldValue}"
+                                    Text="{Binding UnitedTaskSizeRoundingMm, UpdateSourceTrigger=PropertyChanged}" />
+                            </DockPanel>
+                            <DockPanel
+                                Style="{StaticResource FieldRow}"
+                                ToolTip="Слои конструкции могут идти с воздушной прослойкой. Если она не больше этого значения, отверстия объединяются.">
+                                <TextBlock
+                                    Style="{StaticResource FieldName}"
+                                    Text="Наибольший зазор между слоями, мм" />
+                                <ui:TextBox
+                                    Style="{StaticResource FieldValue}"
+                                    Text="{Binding UnitedTaskMaxGapMm, UpdateSourceTrigger=PropertyChanged}" />
+                            </DockPanel>
+                            <DockPanel
+                                Style="{StaticResource FieldRow}"
+                                ToolTip="Насколько отверстия могут не доходить друг до друга вдоль конструкции, чтобы всё же считаться соприкасающимися. Большое значение склеит соседние отверстия в одно огромное.">
+                                <TextBlock
+                                    Style="{StaticResource FieldName}"
+                                    Text="Допуск соприкосновения, мм" />
+                                <ui:TextBox
+                                    Style="{StaticResource FieldValue}"
+                                    Text="{Binding UnitedTaskTouchToleranceMm, UpdateSourceTrigger=PropertyChanged}" />
+                            </DockPanel>
+                            <DockPanel
+                                Style="{StaticResource FieldRow}"
+                                ToolTip="Элемент, задевший конструкцию углом, отверстия не требует. Ноль - выдавать задания и на касаниях.">
+                                <TextBlock
+                                    Style="{StaticResource FieldName}"
+                                    Text="Наименьшая глубина прохода, мм" />
+                                <ui:TextBox
+                                    Style="{StaticResource FieldValue}"
+                                    Text="{Binding MinPassDepthMm, UpdateSourceTrigger=PropertyChanged}" />
+                            </DockPanel>
+
+                            <CheckBox
+                                Margin="0 8 0 0"
+                                Content="Показывать отчёт об ошибках расстановки"
+                                IsChecked="{Binding ShowPlacingErrors}" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
             </ScrollViewer>
         </Grid>
 
-        <DockPanel
+        <Border
             Grid.Row="2"
-            Margin="12 0 12 12">
-            <CheckBox
-                VerticalAlignment="Center"
-                Content="Показывать ошибки расстановки"
-                IsChecked="{Binding ShowPlacingErrors}" />
-
-            <StackPanel
-                HorizontalAlignment="Right"
-                Orientation="Horizontal">
+            Margin="14 12 14 14">
+            <DockPanel>
                 <ui:TextBlock
-                    MaxWidth="420"
-                    Margin="10"
+                    MaxWidth="520"
                     VerticalAlignment="Center"
                     TextWrapping="Wrap"
                     Foreground="Orange"
                     Text="{Binding ErrorText}" />
-                <ui:Button
-                    Width="90"
-                    Margin="6"
-                    Appearance="Info"
-                    Content="ОК"
-                    Click="ButtonOk_Click"
-                    Command="{Binding AcceptViewCommand}" />
-                <ui:Button
-                    Width="90"
-                    Margin="6"
-                    Content="Отмена"
-                    IsCancel="True"
-                    Click="ButtonCancel_Click" />
-            </StackPanel>
-        </DockPanel>
+
+                <StackPanel
+                    HorizontalAlignment="Right"
+                    Orientation="Horizontal">
+                    <ui:Button
+                        Width="120"
+                        Margin="6 0"
+                        Appearance="Info"
+                        Content="Сохранить"
+                        Click="ButtonOk_Click"
+                        Command="{Binding AcceptViewCommand}" />
+                    <ui:Button
+                        Width="120"
+                        Margin="6 0"
+                        Content="Отмена"
+                        IsCancel="True"
+                        Click="ButtonCancel_Click" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
     </Grid>
 </Window>
