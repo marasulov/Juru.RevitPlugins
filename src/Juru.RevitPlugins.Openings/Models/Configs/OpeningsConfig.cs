@@ -16,12 +16,19 @@ namespace Juru.RevitPlugins.Openings.Models.Configs;
 /// </summary>
 public class OpeningsConfig : ProjectConfig {
     private const string _configFileName = nameof(OpeningsConfig) + ".json";
+
+    /// <summary>
+    /// Наименьший габарит элемента по умолчанию в мм: мельче отверстия не выдают.
+    /// </summary>
+    private const double _defaultMinSizeMm = 50;
     private const string _pluginFolderName = "Openings";
 
-    [JsonIgnore]
+    // Атрибут System.Text.Json: у базового класса стоит атрибут Newtonsoft, который этот
+    // сериализатор не видит, и служебные поля попадали в файл настроек.
+    [System.Text.Json.Serialization.JsonIgnore]
     public override string ProjectConfigPath { get; set; }
 
-    [JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore]
     public override IConfigSerializer Serializer { get; set; }
 
     /// <summary>
@@ -177,47 +184,26 @@ public class OpeningsConfig : ProjectConfig {
     }
 
     private static List<MepCategorySettings> GetDefaultCategories() {
-        return [
-            new MepCategorySettings {
-                Kind = MepKind.Pipe,
-                MinDiameterMm = 50,
+        // Значения по умолчанию повторяют настройки Bim4Everyone, на которых мы сверяли расстановку:
+        // зазор 50 мм с каждой стороны, округление габаритов 50 мм и отметок 10 мм, форма
+        // прямоугольная во всех диапазонах. Отличие одно: наименьший габарит 50 мм, а не ноль -
+        // отверстия под трассы мельче не выдают, и гонять их через поиск незачем.
+        return Enum.GetValues(typeof(MepKind))
+            .Cast<MepKind>()
+            .Select(kind => new MepCategorySettings {
+                Kind = kind,
+                MinDiameterMm = kind.IsRound() ? _defaultMinSizeMm : 0,
+                MinWidthMm = kind.IsRound() ? 0 : _defaultMinSizeMm,
+                MinHeightMm = kind.IsRound() ? 0 : _defaultMinSizeMm,
                 Offsets = [
-                    new OffsetRange { FromMm = 0, ToMm = 300, OffsetMm = 50, Shape = OpeningShape.Round },
-                    new OffsetRange { FromMm = 300, ToMm = 10000, OffsetMm = 50, Shape = OpeningShape.Rectangle }
+                    new OffsetRange {
+                        FromMm = 0,
+                        ToMm = 10000,
+                        OffsetMm = 50,
+                        Shape = OpeningShape.Rectangle
+                    }
                 ]
-            },
-            new MepCategorySettings {
-                Kind = MepKind.RoundDuct,
-                MinDiameterMm = 100,
-                Offsets = [
-                    new OffsetRange { FromMm = 0, ToMm = 300, OffsetMm = 50, Shape = OpeningShape.Round },
-                    new OffsetRange { FromMm = 300, ToMm = 10000, OffsetMm = 50, Shape = OpeningShape.Rectangle }
-                ]
-            },
-            new MepCategorySettings {
-                Kind = MepKind.RectangleDuct,
-                MinWidthMm = 100,
-                MinHeightMm = 100,
-                Offsets = [
-                    new OffsetRange { FromMm = 0, ToMm = 10000, OffsetMm = 50, Shape = OpeningShape.Rectangle }
-                ]
-            },
-            new MepCategorySettings {
-                Kind = MepKind.CableTray,
-                MinWidthMm = 100,
-                MinHeightMm = 100,
-                Offsets = [
-                    new OffsetRange { FromMm = 0, ToMm = 10000, OffsetMm = 50, Shape = OpeningShape.Rectangle }
-                ]
-            },
-            new MepCategorySettings {
-                Kind = MepKind.Conduit,
-                IsSelected = false,
-                MinDiameterMm = 50,
-                Offsets = [
-                    new OffsetRange { FromMm = 0, ToMm = 10000, OffsetMm = 50, Shape = OpeningShape.Round }
-                ]
-            }
-        ];
+            })
+            .ToList();
     }
 }

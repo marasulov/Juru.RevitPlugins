@@ -23,6 +23,11 @@ public class JsonConfigSerializer : IConfigSerializer {
     }
 
     public string Serialize<T>(T @object) {
-        return JsonSerializer.Serialize(@object, _options);
+        // По реальному типу, а не по объявленному: SaveProjectConfig вызывает Serialize(this),
+        // где this объявлен базовым ProjectConfig, и System.Text.Json записал бы только его
+        // свойства - файл настроек оставался бы с двумя служебными полями.
+        return @object is null
+            ? JsonSerializer.Serialize(@object, _options)
+            : JsonSerializer.Serialize(@object, @object.GetType(), _options);
     }
 }
