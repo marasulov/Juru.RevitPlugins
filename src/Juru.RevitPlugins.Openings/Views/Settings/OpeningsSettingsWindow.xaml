@@ -1,0 +1,329 @@
+﻿<Window
+    x:Class="Juru.RevitPlugins.Openings.Views.Settings.OpeningsSettingsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:configs="clr-namespace:Juru.RevitPlugins.Openings.Models.Configs"
+    xmlns:vms="clr-namespace:Juru.RevitPlugins.Openings.ViewModels.Settings"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    mc:Ignorable="d"
+    Title="Настройки выдачи заданий"
+    Width="900"
+    Height="620"
+    MinWidth="820"
+    MinHeight="560"
+    WindowStartupLocation="CenterOwner"
+    d:DataContext="{d:DesignInstance vms:OpeningsSettingsViewModel, IsDesignTimeCreatable=False}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/Juru.RevitPlugins.Core;component/Resources/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter
+                x:Key="BoolToVisibility" />
+
+            <ObjectDataProvider
+                x:Key="Shapes"
+                MethodName="GetValues"
+                ObjectType="{x:Type sys:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type
+                        TypeName="configs:OpeningShape" />
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition
+                Height="Auto" />
+            <RowDefinition
+                Height="*" />
+            <RowDefinition
+                Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar
+            Grid.Row="0"
+            Title="Настройки выдачи заданий" />
+
+        <Grid
+            Grid.Row="1"
+            Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition
+                    Width="240" />
+                <ColumnDefinition
+                    Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border
+                Grid.Column="0"
+                Margin="0 0 10 0"
+                Style="{StaticResource CustomBorder}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition
+                            Height="Auto" />
+                        <RowDefinition
+                            Height="*" />
+                        <RowDefinition
+                            Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Label
+                        Grid.Row="0"
+                        Content="Виды элементов" />
+
+                    <ListBox
+                        Grid.Row="1"
+                        Margin="8 4"
+                        BorderThickness="0"
+                        Background="Transparent"
+                        ItemsSource="{Binding Categories}"
+                        SelectedItem="{Binding SelectedCategory}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox
+                                    Margin="2"
+                                    Content="{Binding Name}"
+                                    IsChecked="{Binding IsSelected}" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel
+                        Grid.Row="2"
+                        Margin="8 8">
+                        <Label
+                            Content="Объединение заданий" />
+                        <DockPanel
+                            Margin="6 4">
+                            <Label
+                                Width="130"
+                                Style="{StaticResource CustomLabel}"
+                                Content="Округление, мм" />
+                            <ui:TextBox
+                                Text="{Binding UnitedTaskSizeRoundingMm, UpdateSourceTrigger=PropertyChanged}" />
+                        </DockPanel>
+                        <DockPanel
+                            Margin="6 4">
+                            <Label
+                                Width="130"
+                                Style="{StaticResource CustomLabel}"
+                                Content="Зазор по толщине, мм" />
+                            <ui:TextBox
+                                Text="{Binding UnitedTaskMaxGapMm, UpdateSourceTrigger=PropertyChanged}" />
+                        </DockPanel>
+                        <DockPanel
+                            Margin="6 4">
+                            <Label
+                                Width="130"
+                                Style="{StaticResource CustomLabel}"
+                                Content="Допуск касания, мм" />
+                            <ui:TextBox
+                                Text="{Binding UnitedTaskTouchToleranceMm, UpdateSourceTrigger=PropertyChanged}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <ScrollViewer
+                Grid.Column="1"
+                VerticalScrollBarVisibility="Auto"
+                DataContext="{Binding SelectedCategory}">
+                <StackPanel>
+                    <Border
+                        Margin="0 0 0 10"
+                        Style="{StaticResource CustomBorder}">
+                        <StackPanel>
+                            <Label
+                                Content="Наименьшие габариты элемента, мм" />
+                            <DockPanel
+                                Margin="14 8"
+                                Visibility="{Binding IsRound, Converter={StaticResource BoolToVisibility}}">
+                                <Label
+                                    Width="200"
+                                    Style="{StaticResource CustomLabel}"
+                                    Content="Диаметр" />
+                                <ui:TextBox
+                                    Text="{Binding MinDiameterMm, UpdateSourceTrigger=PropertyChanged}" />
+                            </DockPanel>
+                            <StackPanel
+                                Visibility="{Binding IsRectangular, Converter={StaticResource BoolToVisibility}}">
+                                <DockPanel
+                                    Margin="14 8">
+                                    <Label
+                                        Width="200"
+                                        Style="{StaticResource CustomLabel}"
+                                        Content="Ширина" />
+                                    <ui:TextBox
+                                        Text="{Binding MinWidthMm, UpdateSourceTrigger=PropertyChanged}" />
+                                </DockPanel>
+                                <DockPanel
+                                    Margin="14 8">
+                                    <Label
+                                        Width="200"
+                                        Style="{StaticResource CustomLabel}"
+                                        Content="Высота" />
+                                    <ui:TextBox
+                                        Text="{Binding MinHeightMm, UpdateSourceTrigger=PropertyChanged}" />
+                                </DockPanel>
+                            </StackPanel>
+                            <DockPanel
+                                Margin="14 8">
+                                <Label
+                                    Width="200"
+                                    Style="{StaticResource CustomLabel}"
+                                    Content="Наибольший габарит" />
+                                <ui:TextBox
+                                    Text="{Binding MaxSizeMm, UpdateSourceTrigger=PropertyChanged}" />
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Margin="0 0 0 10"
+                        Style="{StaticResource CustomBorder}">
+                        <StackPanel>
+                            <Label
+                                Content="Округление, мм" />
+                            <DockPanel
+                                Margin="14 8">
+                                <Label
+                                    Width="200"
+                                    Style="{StaticResource CustomLabel}"
+                                    Content="Габариты" />
+                                <ui:TextBox
+                                    Text="{Binding SizeRoundingMm, UpdateSourceTrigger=PropertyChanged}" />
+                            </DockPanel>
+                            <DockPanel
+                                Margin="14 8">
+                                <Label
+                                    Width="200"
+                                    Style="{StaticResource CustomLabel}"
+                                    Content="Отметки" />
+                                <ui:TextBox
+                                    Text="{Binding ElevationRoundingMm, UpdateSourceTrigger=PropertyChanged}" />
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Margin="0 0 0 10"
+                        Style="{StaticResource CustomBorder}">
+                        <StackPanel>
+                            <Label
+                                Content="Конструкции для проверки" />
+                            <StackPanel
+                                Margin="14 8"
+                                Orientation="Horizontal">
+                                <CheckBox
+                                    Margin="0 0 20 0"
+                                    Content="Стены"
+                                    IsChecked="{Binding CheckWalls}" />
+                                <CheckBox
+                                    Content="Перекрытия"
+                                    IsChecked="{Binding CheckFloors}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Style="{StaticResource CustomBorder}">
+                        <StackPanel>
+                            <DockPanel>
+                                <Label
+                                    Content="Зазоры по диапазонам габаритов, мм" />
+                                <StackPanel
+                                    HorizontalAlignment="Right"
+                                    Orientation="Horizontal">
+                                    <ui:Button
+                                        Margin="4"
+                                        Width="36"
+                                        Content="+"
+                                        ToolTip="Добавить диапазон"
+                                        Command="{Binding AddOffsetCommand}" />
+                                    <ui:Button
+                                        Margin="4"
+                                        Width="36"
+                                        Content="-"
+                                        ToolTip="Удалить выбранный диапазон"
+                                        Command="{Binding RemoveOffsetCommand}" />
+                                </StackPanel>
+                            </DockPanel>
+
+                            <DataGrid
+                                Margin="8"
+                                MinHeight="140"
+                                AutoGenerateColumns="False"
+                                CanUserAddRows="False"
+                                HeadersVisibility="Column"
+                                ItemsSource="{Binding Offsets}"
+                                SelectedItem="{Binding SelectedOffset}"
+                                VirtualizingPanel.VirtualizationMode="Standard">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn
+                                        Header="От"
+                                        Width="90"
+                                        Binding="{Binding FromMm, UpdateSourceTrigger=PropertyChanged}" />
+                                    <DataGridTextColumn
+                                        Header="До"
+                                        Width="90"
+                                        Binding="{Binding ToMm, UpdateSourceTrigger=PropertyChanged}" />
+                                    <DataGridTextColumn
+                                        Header="Зазор"
+                                        Width="90"
+                                        Binding="{Binding OffsetMm, UpdateSourceTrigger=PropertyChanged}" />
+                                    <DataGridComboBoxColumn
+                                        Header="Форма отверстия"
+                                        Width="*"
+                                        ItemsSource="{Binding Source={StaticResource Shapes}}"
+                                        SelectedItemBinding="{Binding Shape, UpdateSourceTrigger=PropertyChanged}" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <DockPanel
+            Grid.Row="2"
+            Margin="10 0 10 10">
+            <CheckBox
+                VerticalAlignment="Center"
+                Content="Показывать ошибки расстановки"
+                IsChecked="{Binding ShowPlacingErrors}" />
+
+            <StackPanel
+                HorizontalAlignment="Right"
+                Orientation="Horizontal">
+                <ui:TextBlock
+                    Margin="10"
+                    VerticalAlignment="Center"
+                    Foreground="Orange"
+                    Text="{Binding ErrorText}" />
+                <ui:Button
+                    Margin="10"
+                    Width="80"
+                    Appearance="Info"
+                    Content="ОК"
+                    Click="ButtonOk_Click"
+                    Command="{Binding AcceptViewCommand}" />
+                <ui:Button
+                    Margin="10"
+                    Width="80"
+                    Content="Отмена"
+                    IsCancel="True"
+                    Click="ButtonCancel_Click" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

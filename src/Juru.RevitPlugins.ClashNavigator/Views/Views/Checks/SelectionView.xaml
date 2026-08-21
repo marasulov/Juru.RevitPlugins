@@ -16,7 +16,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="../../../Resources/CustomStyles.xaml" />
+                    Source="pack://application:,,,/Juru.RevitPlugins.Core;component/Resources/CustomStyles.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/Wpf.Ui;component/Controls/TextBlock/TextBlock.xaml" />
             </ResourceDictionary.MergedDictionaries>

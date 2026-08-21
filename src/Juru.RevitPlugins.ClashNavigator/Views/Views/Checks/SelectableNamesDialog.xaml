@@ -27,7 +27,7 @@
                 <ResourceDictionary
                     Source="pack://application:,,,/Wpf.Ui;component/Controls/ListView/ListView.xaml" />
                 <ResourceDictionary
-                    Source="../../../Resources/CustomStyles.xaml" />
+                    Source="pack://application:,,,/Juru.RevitPlugins.Core;component/Resources/CustomStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <ui:TextBlock
                 x:Key="NameHeader"
