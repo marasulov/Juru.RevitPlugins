@@ -38,8 +38,14 @@ public partial class OpeningsSettingsViewModel : ObservableObject {
     public OpeningsSettingsViewModel(OpeningsConfig config) {
         _config = config;
 
+        // Порядок как в окне Bim4Everyone: трубы, воздуховоды, лотки, короба.
+        var order = new[] {
+            MepKind.Pipe, MepKind.RectangleDuct, MepKind.RoundDuct, MepKind.CableTray, MepKind.Conduit
+        };
         Categories = new ObservableCollection<MepCategoryViewModel>(
-            config.Categories.Select(category => new MepCategoryViewModel(category)));
+            config.Categories
+                .OrderBy(category => System.Array.IndexOf(order, category.Kind))
+                .Select(category => new MepCategoryViewModel(category)));
         _selectedCategory = Categories.FirstOrDefault();
 
         _unitedTaskSizeRoundingMm = config.UnitedTaskSizeRoundingMm.ToString();

@@ -186,13 +186,13 @@ public partial class MepCategoryViewModel : ObservableObject {
             case MepKind.Pipe:
                 return "Трубы";
             case MepKind.RoundDuct:
-                return "Воздуховоды круглые";
+                return "Воздуховоды (круглое сечение)";
             case MepKind.RectangleDuct:
-                return "Воздуховоды прямоугольные";
+                return "Воздуховоды (прямоугольное сечение)";
             case MepKind.CableTray:
                 return "Лотки";
             case MepKind.Conduit:
-                return "Кабелепроводы";
+                return "Короба";
             default:
                 return kind.ToString();
         }
