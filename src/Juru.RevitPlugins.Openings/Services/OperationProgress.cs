@@ -3,6 +3,7 @@ using System.Threading;
 using System.Windows.Interop;
 using System.Windows.Threading;
 
+using Juru.RevitPlugins.Core.Theming;
 using Juru.RevitPlugins.Openings.Views;
 
 namespace Juru.RevitPlugins.Openings.Services;
@@ -26,6 +27,7 @@ public sealed class OperationProgress : IProgress<int>, IDisposable {
 
     /// <param name="ownerHandle">Дескриптор главного окна Revit, чтобы окно не уходило за него.</param>
     public OperationProgress(IntPtr ownerHandle) {
+        JuruTheme.Apply();
         _window = new ProgressWindow();
         new WindowInteropHelper(_window) { Owner = ownerHandle };
         _window.Show();

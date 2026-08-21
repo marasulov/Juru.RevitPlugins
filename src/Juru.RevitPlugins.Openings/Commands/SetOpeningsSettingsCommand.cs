@@ -4,6 +4,7 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 
+using Juru.RevitPlugins.Core.Theming;
 using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.ViewModels.Settings;
 using Juru.RevitPlugins.Openings.Views.Settings;
@@ -17,6 +18,8 @@ namespace Juru.RevitPlugins.Openings.Commands;
 [Transaction(TransactionMode.Manual)]
 public class SetOpeningsSettingsCommand : IExternalCommand {
     public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements) {
+        JuruTheme.Apply();
+
         var config = OpeningsConfig.GetOpeningsConfig();
         var window = new OpeningsSettingsWindow {
             DataContext = new OpeningsSettingsViewModel(config)
