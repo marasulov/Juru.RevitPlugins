@@ -25,6 +25,35 @@ public static class GeometryUtils {
     }
 
     /// <summary>
+    /// Объединяет солиды в один, либо возвращает <c>null</c>, если объединять нечего.
+    /// </summary>
+    /// <remarks>
+    /// Солид, который не поддался объединению, пропускается: потерять один из нескольких солидов
+    /// элемента лучше, чем потерять элемент целиком.
+    /// </remarks>
+    public static Solid Unite(IEnumerable<Solid> solids) {
+        Solid united = null;
+        foreach(var solid in solids) {
+            if(solid is null || solid.Volume <= _minSolidVolume) {
+                continue;
+            }
+
+            if(united is null) {
+                united = solid;
+                continue;
+            }
+
+            try {
+                united = BooleanOperationsUtils.ExecuteBooleanOperation(united, solid, BooleanOperationsType.Union);
+            } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+                // Объединение не удалось: продолжаем с тем, что уже собрано.
+            }
+        }
+
+        return united;
+    }
+
+    /// <summary>
     /// Возвращает габаритный бокс солида в виде <see cref="Outline"/> для фильтра по габаритам.
     /// </summary>
     public static Outline GetOutline(Solid solid) {
