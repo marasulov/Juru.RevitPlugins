@@ -27,6 +27,9 @@ public partial class OpeningsSettingsViewModel : ObservableObject {
     private string _unitedTaskTouchToleranceMm;
 
     [ObservableProperty]
+    private string _minPassDepthMm;
+
+    [ObservableProperty]
     private bool _showPlacingErrors;
 
     [ObservableProperty]
@@ -42,6 +45,7 @@ public partial class OpeningsSettingsViewModel : ObservableObject {
         _unitedTaskSizeRoundingMm = config.UnitedTaskSizeRoundingMm.ToString();
         _unitedTaskMaxGapMm = config.UnitedTaskMaxGapMm.ToString();
         _unitedTaskTouchToleranceMm = config.UnitedTaskTouchToleranceMm.ToString();
+        _minPassDepthMm = config.MinPassDepthMm.ToString("0.##");
         _showPlacingErrors = config.ShowPlacingErrors;
 
         AcceptViewCommand = new ToolkitCommand(Accept, CanAccept);
@@ -63,6 +67,7 @@ public partial class OpeningsSettingsViewModel : ObservableObject {
         _config.UnitedTaskSizeRoundingMm = int.Parse(UnitedTaskSizeRoundingMm);
         _config.UnitedTaskMaxGapMm = int.Parse(UnitedTaskMaxGapMm);
         _config.UnitedTaskTouchToleranceMm = int.Parse(UnitedTaskTouchToleranceMm);
+        _config.MinPassDepthMm = double.Parse(MinPassDepthMm);
         _config.ShowPlacingErrors = ShowPlacingErrors;
         _config.SaveProjectConfig();
     }
@@ -93,6 +98,9 @@ public partial class OpeningsSettingsViewModel : ObservableObject {
         if(!int.TryParse(UnitedTaskTouchToleranceMm, out int touch) || touch < 0) {
             return "Допуск касания должен быть неотрицательным числом.";
         }
+        if(!double.TryParse(MinPassDepthMm, out double depth) || depth < 0) {
+            return "Наименьшая глубина прохода должна быть неотрицательным числом.";
+        }
 
         return Categories.Select(category => category.GetError()).FirstOrDefault(error => error is not null);
     }
@@ -102,4 +110,6 @@ public partial class OpeningsSettingsViewModel : ObservableObject {
     partial void OnUnitedTaskMaxGapMmChanged(string value) => Revalidate();
 
     partial void OnUnitedTaskTouchToleranceMmChanged(string value) => Revalidate();
+
+    partial void OnMinPassDepthMmChanged(string value) => Revalidate();
 }

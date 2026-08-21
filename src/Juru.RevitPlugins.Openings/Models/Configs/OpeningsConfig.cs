@@ -46,6 +46,16 @@ public class OpeningsConfig : ProjectConfig {
     public List<DisciplineNameRule> DisciplineNameRules { get; set; } = GetDefaultDisciplineRules();
 
     /// <summary>
+    /// Наименьшая глубина прохода в мм, при которой выдаётся задание. Ноль - выдавать и на касаниях.
+    /// </summary>
+    /// <remarks>
+    /// Отсекает элементы, задевшие конструкцию углом. Bim4Everyone использует порог, равный
+    /// примерно 15 мм, и на проходах через тонкие перегородки это даёт расхождение: задание там,
+    /// где у нас отказ.
+    /// </remarks>
+    public double MinPassDepthMm { get; set; } = 15;
+
+    /// <summary>
     /// Округление габаритов объединённого задания в мм.
     /// </summary>
     public int UnitedTaskSizeRoundingMm { get; set; } = 10;

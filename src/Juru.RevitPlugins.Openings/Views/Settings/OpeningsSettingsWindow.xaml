@@ -130,6 +130,20 @@
                             <ui:TextBox
                                 Text="{Binding UnitedTaskTouchToleranceMm, UpdateSourceTrigger=PropertyChanged}" />
                         </DockPanel>
+
+                        <Label
+                            Margin="0 8 0 0"
+                            Content="Отбор пересечений" />
+                        <DockPanel
+                            Margin="6 4"
+                            ToolTip="Проходы мельче этого значения считаются касанием. Ноль - выдавать задания и на касаниях.">
+                            <Label
+                                Width="130"
+                                Style="{StaticResource CustomLabel}"
+                                Content="Глубина прохода, мм" />
+                            <ui:TextBox
+                                Text="{Binding MinPassDepthMm, UpdateSourceTrigger=PropertyChanged}" />
+                        </DockPanel>
                     </StackPanel>
                 </Grid>
             </Border>

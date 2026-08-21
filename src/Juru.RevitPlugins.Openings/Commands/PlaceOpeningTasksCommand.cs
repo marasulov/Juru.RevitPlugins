@@ -68,7 +68,7 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
                     .Find(structureProviders, progress, progress.Token);
 
                 progress.StartStage("Расчёт габаритов", intersections.Count);
-                validation = new IntersectionValidator().Validate(intersections);
+                validation = new IntersectionValidator(config).Validate(intersections);
 
                 var calculator = new OpeningSizeCalculator();
                 var planned = new List<PlannedOpening>();

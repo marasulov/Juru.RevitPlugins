@@ -16,10 +16,16 @@ namespace Juru.RevitPlugins.Openings.Models.Intersections;
 /// почему в этом месте задания нет, иначе отсутствие отверстия выглядит как ошибка плагина.
 /// </remarks>
 public class IntersectionValidator {
-    /// <summary>
-    /// Наименьшая доля объёма сечения, ниже которой пересечение считается касанием, а не проходом.
-    /// </summary>
-    private const double _minVolumeRatio = 0.05;
+    private readonly double _minPassDepth;
+
+    /// <param name="config">
+    /// Настройки: из них берётся наименьшая глубина, при которой пересечение считается проходом.
+    /// </param>
+    public IntersectionValidator(OpeningsConfig config) {
+        if(config is null) { throw new ArgumentNullException(nameof(config)); }
+
+        _minPassDepth = UnitUtils.ConvertToInternalUnits(config.MinPassDepthMm, UnitTypeId.Millimeters);
+    }
 
     /// <summary>
     /// Делит пересечения на те, для которых нужно выдать задание, и отклонённые с причинами.
@@ -97,13 +103,23 @@ public class IntersectionValidator {
     }
 
     /// <summary>
-    /// Отклоняет пересечение, объём которого слишком мал по сравнению с сечением элемента:
-    /// элемент задел конструкцию, но не проходит через неё.
+    /// Отклоняет пересечение, слишком мелкое, чтобы считаться проходом: элемент задел конструкцию,
+    /// но сквозь неё не идёт.
     /// </summary>
+    /// <remarks>
+    /// Объём пересечения делится на площадь сечения элемента, и получается средняя глубина прохода.
+    /// Так порог задаётся в миллиметрах, а не долей объёма: инженеру понятно, что значит
+    /// "проход глубиной меньше 15 мм", и непонятно, что значит "меньше 5% сечения".
+    /// Ноль в настройках отключает проверку - тогда задания появятся и на касаниях.
+    /// </remarks>
     private string GetVolumeRejectionReason(MepStructureIntersection intersection) {
+        if(_minPassDepth <= 0) {
+            return null;
+        }
+
         double sectionArea = MepGeometry.GetSectionArea(intersection.Mep.Size);
-        return sectionArea > 0 && intersection.Volume <= sectionArea * _minVolumeRatio
-            ? "Объём пересечения слишком мал: элемент задевает конструкцию, но не проходит сквозь неё."
+        return sectionArea > 0 && intersection.Volume / sectionArea <= _minPassDepth
+            ? "Проход слишком мелкий: элемент задевает конструкцию, но не проходит сквозь неё."
             : null;
     }
 
