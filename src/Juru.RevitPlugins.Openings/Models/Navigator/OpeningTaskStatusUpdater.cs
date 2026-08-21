@@ -38,6 +38,9 @@ public class OpeningTaskStatusUpdater {
     /// <summary>Кандидаты в хосты и связь, из которой они взяты, для обрабатываемого задания.</summary>
     private (IReadOnlyCollection<ElementId> Candidates, StructureElementsProvider? Link) _hosts;
 
+    /// <summary>Трассы, проходящие через обрабатываемое задание.</summary>
+    private IReadOnlyCollection<IReadOnlyCollection<Element>>? _passes;
+
     /// <param name="doc">Активный документ инженерных систем.</param>
     /// <param name="mepElements">Инженерные элементы активного файла.</param>
     /// <param name="structureProviders">Связи с конструкциями.</param>
@@ -65,6 +68,7 @@ public class OpeningTaskStatusUpdater {
         if(task is null) { throw new ArgumentNullException(nameof(task)); }
 
         _hosts = ([], null);
+        _passes = null;
 
         // Нестандартное отверстие плагин не считает: у него нет ни расчётных габаритов, ни зазоров.
         if(task.Status == OpeningTaskStatus.Unique) {
@@ -121,10 +125,23 @@ public class OpeningTaskStatusUpdater {
 
     /// <summary>
     /// Задание объединённое: либо так записано при расстановке, либо через него проходит
-    /// больше одного инженерного элемента.
+    /// больше одной трассы.
     /// </summary>
+    /// <remarks>
+    /// Считать по числу элементов нельзя: воздуховод со своим отводом - это два элемента и один
+    /// проход. Замер на 62 заданиях реальной модели: по элементам объединённых выходило 26, из них
+    /// 15 были одной трассой с арматурой, и все 15 оставались без проверки габаритов, потому что
+    /// объединённым её не делают. Трассы разделяет <see cref="MepPassGrouping"/> по коннекторам.
+    /// </remarks>
     private bool IsUnited(OpeningTask task) {
-        return task.IsUnited || task.MepElements.Count > 1;
+        return task.IsUnited || GetPasses(task).Count > 1;
+    }
+
+    /// <summary>
+    /// Возвращает трассы, проходящие через задание: соединённые между собой элементы - одна трасса.
+    /// </summary>
+    private IReadOnlyCollection<IReadOnlyCollection<Element>> GetPasses(OpeningTask task) {
+        return _passes ??= MepPassGrouping.GetPasses(task.MepElements);
     }
 
     /// <summary>
@@ -277,13 +294,20 @@ public class OpeningTaskStatusUpdater {
     /// поэтому зазор законно отличается от требуемого на этот шаг в обе стороны.
     /// </remarks>
     private OpeningTaskStatus GetSizeStatus(OpeningTask task) {
-        var candidate = _mepElements.Get(task.MepElements.First().Id);
-        if(candidate?.Settings is null) {
+        var pass = GetPasses(task).First();
+        // Зазор задаёт самый крупный элемент трассы: отвод крупнее своего воздуховода,
+        // и требуемый зазор в диапазонах настроек берётся по нему же.
+        var candidate = pass
+            .Select(element => _mepElements.Get(element.Id))
+            .Where(item => item?.Settings is not null)
+            .OrderByDescending(item => item!.Size.GoverningSize)
+            .FirstOrDefault();
+        if(candidate is null) {
             // Вид элемента в настройках отсутствует: требуемый зазор взять негде, судить не о чем.
             return OpeningTaskStatus.Correct;
         }
 
-        var clearance = GetClearance(task, candidate.Element);
+        var clearance = GetClearance(task, pass);
         if(clearance is null) {
             return OpeningTaskStatus.Invalid;
         }
@@ -319,16 +343,30 @@ public class OpeningTaskStatusUpdater {
     /// у семейства в перекрытии - две оси в плане. Ось, идущая сквозь конструкцию, в замер не входит:
     /// по ней отверстие всегда равно толщине конструкции.
     /// </remarks>
-    private (double Along, double Vertical)? GetClearance(OpeningTask task, Element mepElement) {
+    private (double Along, double Vertical)? GetClearance(OpeningTask task, IReadOnlyCollection<Element> pass) {
         var taskSolid = task.GetSolid();
-        var mepSolid = GeometryUtils.Unite(GeometryUtils.GetSolids(mepElement));
+        var mepSolid = GeometryUtils.Unite(pass.SelectMany(GeometryUtils.GetSolids));
         if(taskSolid is null || mepSolid is null) {
+            return null;
+        }
+
+        // Меряется только та часть трассы, что лежит внутри задания. Целиком элемент для этого
+        // не годится: габаритный бокс отвода или клапана включает и то, что уходит вдоль стены,
+        // и зазор выходил бы отрицательным у совершенно нормального отверстия.
+        Solid inside;
+        try {
+            inside = BooleanOperationsUtils.ExecuteBooleanOperation(
+                mepSolid, taskSolid, BooleanOperationsType.Intersect);
+        } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+            return null;
+        }
+        if(inside is null || inside.Volume <= 0) {
             return null;
         }
 
         var toFrame = task.Frame.Inverse;
         var taskBox = GetBoxInFrame(taskSolid, toFrame);
-        var mepBox = GetBoxInFrame(mepSolid, toFrame);
+        var mepBox = GetBoxInFrame(inside, toFrame);
         if(taskBox is null || mepBox is null) {
             return null;
         }
