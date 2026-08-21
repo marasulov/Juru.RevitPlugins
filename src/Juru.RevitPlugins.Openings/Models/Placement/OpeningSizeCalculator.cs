@@ -18,6 +18,26 @@ public class OpeningSizeCalculator {
     private const double _minSizeMm = 5;
 
     /// <summary>
+    /// Допуск перпендикулярности прохода: косинус угла между осью трассы и осью сквозь конструкцию.
+    /// </summary>
+    /// <remarks>
+    /// Bim4Everyone требует точной перпендикулярности (косинус меньше 0.0001), но у нас проверяется
+    /// не сама ось, а её отклонение от нормали, и допуск в полградуса завышает сечение
+    /// на сотые доли миллиметра - меньше, чем погрешность самого замера.
+    /// </remarks>
+    private const double _perpendicularCosine = 0.99996;
+
+    /// <summary>
+    /// Насколько замеренное сечение может превышать номинальное, чтобы считаться тем же сечением, мм.
+    /// </summary>
+    /// <remarks>
+    /// Гранение круга даёт превышение в единицы миллиметров. Если замер больше номинала сильнее,
+    /// значит через конструкцию идёт что-то помимо самого элемента - изоляция, фланец, - и номиналу
+    /// верить нельзя.
+    /// </remarks>
+    private const double _nominalToleranceMm = 5;
+
+    /// <summary>
     /// Возвращает планируемое отверстие, либо <c>null</c>, если габарит оказался недопустимо мал
     /// либо геометрию пересечения вычислить не удалось.
     /// </summary>
@@ -42,7 +62,14 @@ public class OpeningSizeCalculator {
             : UnitUtils.ConvertToInternalUnits(offsetRange.OffsetMm, UnitTypeId.Millimeters);
         var shape = offsetRange?.Shape ?? OpeningShape.Rectangle;
 
-        var sized = ApplyOffsetAndRounding(box, offset, settings.SizeRoundingMm, frame.Kind);
+        // Правило округления зависит от того, откуда взялся габарит. У перпендикулярного прохода
+        // сечение известно точно - это сечение элемента, и оно округляется до ближайшего шага.
+        // Замеренное сечение - величина снизу: наклонный проход, отвод или клапан могут оказаться
+        // больше, чем показал габаритный бокс, поэтому такое округляется вверх. Так же разделяет
+        // эти случаи Bim4Everyone.
+        var sized = TryGetNominalSection(intersection, box, out double nominalAlong, out double nominalVertical)
+            ? ApplyNominalSection(box, nominalAlong, nominalVertical, offset, settings.SizeRoundingMm)
+            : ApplyOffsetAndRounding(box, offset, settings.SizeRoundingMm, frame.Kind);
         double smallest = frame.Kind == StructureKind.Wall
             ? Math.Min(sized.Along, sized.Vertical)
             : Math.Min(sized.Along, sized.Vertical);
@@ -51,6 +78,73 @@ public class OpeningSizeCalculator {
         }
 
         return new PlannedOpening(intersection, sized, shape, frame.Kind);
+    }
+
+    /// <summary>
+    /// Определяет, известно ли сечение прохода точно, и возвращает его в осях конструкции.
+    /// </summary>
+    /// <remarks>
+    /// Точно оно известно у линейного элемента, идущего сквозь конструкцию по нормали: тогда сечение
+    /// отверстия - это сечение самого элемента. Габаритный бокс для такого прохода чуть больше:
+    /// солид круглой трубы гранёный, и Ø104.8 замеряется как 108, а лишние миллиметры при округлении
+    /// вверх стоят целого шага. Номинал раскладывается по осям конструкции по замеру, а не по
+    /// собственным осям элемента: воздуховод может быть повёрнут вокруг своей оси.
+    /// </remarks>
+    private bool TryGetNominalSection(
+        MepStructureIntersection intersection,
+        OpeningBox box,
+        out double along,
+        out double vertical) {
+
+        along = 0;
+        vertical = 0;
+        if(intersection.Mep.IsFitting || intersection.Mep.Element is not MEPCurve curve) {
+            return false;
+        }
+        if(curve.Location is not LocationCurve location || location.Curve is not Line line) {
+            return false;
+        }
+
+        var through = box.Frame.BasisY;
+        if(Math.Abs(line.Direction.Normalize().DotProduct(through)) < _perpendicularCosine) {
+            return false;
+        }
+
+        var size = intersection.Mep.Size;
+        double first = size.IsRound ? size.Diameter : Math.Max(size.Width, size.Height);
+        double second = size.IsRound ? size.Diameter : Math.Min(size.Width, size.Height);
+        if(first <= 0 || second <= 0) {
+            return false;
+        }
+
+        // Больший номинальный габарит ложится на ту ось, по которой замер больше.
+        if(box.Along >= box.Vertical) {
+            along = first;
+            vertical = second;
+        } else {
+            along = second;
+            vertical = first;
+        }
+
+        // Замер, заметно превышающий номинал, означает, что сквозь конструкцию идёт не только сам
+        // элемент: изоляция, фланец. Тогда номинал занизил бы отверстие.
+        double tolerance = UnitUtils.ConvertToInternalUnits(_nominalToleranceMm, UnitTypeId.Millimeters);
+        return box.Along - along <= tolerance && box.Vertical - vertical <= tolerance;
+    }
+
+    /// <summary>
+    /// Строит габариты отверстия по точно известному сечению прохода, округляя до ближайшего шага.
+    /// </summary>
+    private OpeningBox ApplyNominalSection(
+        OpeningBox box,
+        double nominalAlong,
+        double nominalVertical,
+        double offset,
+        int roundingMm) {
+
+        double along = RoundToNearest(nominalAlong + offset * 2, roundingMm, nominalAlong);
+        double vertical = RoundToNearest(nominalVertical + offset * 2, roundingMm, nominalVertical);
+        return Resize(box, along, vertical);
     }
 
     /// <summary>
@@ -63,10 +157,16 @@ public class OpeningSizeCalculator {
         int roundingMm,
         StructureKind kind) {
 
-        double along = Round(box.Along + offset * 2, roundingMm, box.Along);
-        double vertical = Round(box.Vertical + offset * 2, roundingMm, box.Vertical);
+        double along = RoundUp(box.Along + offset * 2, roundingMm);
+        double vertical = RoundUp(box.Vertical + offset * 2, roundingMm);
+        return Resize(box, along, vertical);
+    }
 
-        // Габариты растут симметрично от центра, толщина остаётся как есть.
+    /// <summary>
+    /// Возвращает габариты с новыми размерами в плоскости реза: они растут симметрично от центра,
+    /// толщина остаётся как есть.
+    /// </summary>
+    private OpeningBox Resize(OpeningBox box, double along, double vertical) {
         var center = (box.Min + box.Max) / 2;
         var min = new XYZ(center.X - along / 2, box.Min.Y, center.Z - vertical / 2);
         var max = new XYZ(center.X + along / 2, box.Max.Y, center.Z + vertical / 2);
@@ -243,22 +343,16 @@ public class OpeningSizeCalculator {
     }
 
     /// <summary>
-    /// Округляет размер до ближайшего кратного заданному числу миллиметров, но не ниже сечения
-    /// прохода.
+    /// Округляет размер до ближайшего кратного заданному числу миллиметров, но не ниже сечения прохода.
     /// </summary>
     /// <remarks>
-    /// До ближайшего, а не вверх. У Bim4Everyone правило двойное: перпендикулярный проход он считает
-    /// по номинальному сечению элемента и округляет до ближайшего, а вверх округляет только там, где
-    /// габарит снят с геометрии - наклонные проходы, арматура, объединённые задания. Мы измеряем
-    /// геометрию всегда, и округление вверх на измеренном значении даёт лишний шаг: труба Ø104.8
-    /// в стене замеряется как 108 (тесселяция круга), требует 208, и вверх это 250 против их 200.
-    /// Замер на 78 заданиях: до ближайшего совпало 49, вверх - 42, причём 29 отверстий выходили
-    /// на шаг крупнее. Цена выбора - до половины шага недостающего зазора: труба Ø19 с зазором 50
-    /// с каждой стороны требует 119 мм, а при шаге 50 получает 100.
-    /// Оговорка про сечение нужна для чужих настроек: при зазоре меньше половины шага округление
-    /// вниз могло бы сделать отверстие уже того, что через него проходит.
+    /// До ближайшего округается только точно известное сечение - так делает Bim4Everyone для
+    /// перпендикулярных проходов. Цена правила: до половины шага недостающего зазора - труба Ø19
+    /// с зазором 50 с каждой стороны требует 119 мм, а при шаге 50 получает 100. Оговорка про
+    /// сечение защищает от чужих настроек: при зазоре меньше половины шага округление вниз могло бы
+    /// сделать отверстие уже того, что через него проходит.
     /// </remarks>
-    private double Round(double value, int roundingMm, double sectionSize) {
+    private double RoundToNearest(double value, int roundingMm, double sectionSize) {
         if(roundingMm <= 0) {
             return value;
         }
@@ -266,5 +360,22 @@ public class OpeningSizeCalculator {
         double step = UnitUtils.ConvertToInternalUnits(roundingMm, UnitTypeId.Millimeters);
         double rounded = Math.Round(value / step, MidpointRounding.AwayFromZero) * step;
         return rounded < sectionSize ? rounded + step : rounded;
+    }
+
+    /// <summary>
+    /// Округляет размер вверх до кратного заданному числу миллиметров.
+    /// </summary>
+    /// <remarks>
+    /// Вверх округляется замеренный габарит: замер - величина снизу, и отнимать у него ещё и часть
+    /// зазора нельзя. Деление предварительно округляется до пяти знаков, иначе размер, уже кратный
+    /// шагу, из-за погрешности перевода в футы вырастал бы на целый шаг.
+    /// </remarks>
+    private double RoundUp(double value, int roundingMm) {
+        if(roundingMm <= 0) {
+            return value;
+        }
+
+        double step = UnitUtils.ConvertToInternalUnits(roundingMm, UnitTypeId.Millimeters);
+        return Math.Ceiling(Math.Round(value / step, 5)) * step;
     }
 }
