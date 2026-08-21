@@ -102,7 +102,7 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
         }
 
         var mepElements = new MepElementsIndex(doc, _config);
-        var updater = new OpeningTaskStatusUpdater(doc, mepElements, links, tasks);
+        var updater = new OpeningTaskStatusUpdater(doc, _config, mepElements, links, tasks);
 
         using var progress = new OperationProgress(uiApplication.MainWindowHandle);
         progress.StartStage("Проверка заданий", tasks.Count);

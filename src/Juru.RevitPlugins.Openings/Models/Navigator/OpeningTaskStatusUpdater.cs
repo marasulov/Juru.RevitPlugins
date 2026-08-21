@@ -29,11 +29,21 @@ public class OpeningTaskStatusUpdater {
     /// </summary>
     private const double _overshootDepthMm = 2;
 
+    /// <summary>
+    /// Погрешность сравнения зазоров в мм.
+    /// </summary>
+    /// <remarks>
+    /// Зазор, законно равный границе допуска, приходит из геометрии как 49.99 мм и без этой поправки
+    /// объявлял бы задание слишком маленьким из-за сотой доли миллиметра.
+    /// </remarks>
+    private const double _clearanceEpsilonMm = 0.5;
+
     private readonly Document _doc;
     private readonly MepElementsIndex _mepElements;
     private readonly IReadOnlyCollection<StructureElementsProvider> _structureProviders;
     private readonly ICollection<ElementId> _taskIds;
     private readonly double _minVolume;
+    private readonly double _minPassDepth;
 
     /// <summary>Кандидаты в хосты и связь, из которой они взяты, для обрабатываемого задания.</summary>
     private (IReadOnlyCollection<ElementId> Candidates, StructureElementsProvider? Link) _hosts;
@@ -42,15 +52,20 @@ public class OpeningTaskStatusUpdater {
     private IReadOnlyCollection<IReadOnlyCollection<Element>>? _passes;
 
     /// <param name="doc">Активный документ инженерных систем.</param>
+    /// <param name="config">Настройки выдачи заданий: из них берётся порог глубины прохода.</param>
     /// <param name="mepElements">Инженерные элементы активного файла.</param>
     /// <param name="structureProviders">Связи с конструкциями.</param>
     /// <param name="tasks">Все задания активного файла: по ним ищутся пересечения заданий между собой.</param>
     public OpeningTaskStatusUpdater(
         Document doc,
+        OpeningsConfig config,
         MepElementsIndex mepElements,
         IReadOnlyCollection<StructureElementsProvider> structureProviders,
         IReadOnlyCollection<OpeningTask> tasks) {
 
+        if(config is null) { throw new ArgumentNullException(nameof(config)); }
+        _minPassDepth = UnitUtils.ConvertToInternalUnits(
+            Math.Max(config.MinPassDepthMm, 1), UnitTypeId.Millimeters);
         _doc = doc ?? throw new ArgumentNullException(nameof(doc));
         _mepElements = mepElements ?? throw new ArgumentNullException(nameof(mepElements));
         _structureProviders = structureProviders ?? throw new ArgumentNullException(nameof(structureProviders));
@@ -321,8 +336,9 @@ public class OpeningTaskStatusUpdater {
         double tolerance = UnitUtils.ConvertToInternalUnits(
             Math.Max(candidate.Settings.SizeRoundingMm, 1), UnitTypeId.Millimeters);
 
-        double minimum = Math.Max(required - tolerance, 0);
-        double maximum = required + tolerance;
+        double epsilon = UnitUtils.ConvertToInternalUnits(_clearanceEpsilonMm, UnitTypeId.Millimeters);
+        double minimum = Math.Max(required - tolerance - epsilon, 0);
+        double maximum = required + tolerance + epsilon;
         var (along, vertical) = clearance.Value;
 
         if(along < minimum || vertical < minimum) {
@@ -345,29 +361,19 @@ public class OpeningTaskStatusUpdater {
     /// </remarks>
     private (double Along, double Vertical)? GetClearance(OpeningTask task, IReadOnlyCollection<Element> pass) {
         var taskSolid = task.GetSolid();
-        var mepSolid = GeometryUtils.Unite(pass.SelectMany(GeometryUtils.GetSolids));
-        if(taskSolid is null || mepSolid is null) {
-            return null;
-        }
-
-        // Меряется только та часть трассы, что лежит внутри задания. Целиком элемент для этого
-        // не годится: габаритный бокс отвода или клапана включает и то, что уходит вдоль стены,
-        // и зазор выходил бы отрицательным у совершенно нормального отверстия.
-        Solid inside;
-        try {
-            inside = BooleanOperationsUtils.ExecuteBooleanOperation(
-                mepSolid, taskSolid, BooleanOperationsType.Intersect);
-        } catch(Autodesk.Revit.Exceptions.ApplicationException) {
-            return null;
-        }
-        if(inside is null || inside.Volume <= 0) {
+        if(taskSolid is null) {
             return null;
         }
 
         var toFrame = task.Frame.Inverse;
         var taskBox = GetBoxInFrame(taskSolid, toFrame);
-        var mepBox = GetBoxInFrame(inside, toFrame);
-        if(taskBox is null || mepBox is null) {
+        if(taskBox is null) {
+            return null;
+        }
+
+        int throughAxis = task.IsInWall ? 1 : 2;
+        var mepBox = GetPassBoxInside(pass, taskSolid, toFrame, throughAxis);
+        if(mepBox is null) {
             return null;
         }
 
@@ -376,6 +382,73 @@ public class OpeningTaskStatusUpdater {
         return task.IsInWall
             ? (GetGapSum(taskBox, mepBox, axis: 0), GetGapSum(taskBox, mepBox, axis: 2))
             : (GetGapSum(taskBox, mepBox, axis: 0), GetGapSum(taskBox, mepBox, axis: 1));
+    }
+
+    /// <summary>
+    /// Возвращает габариты той части трассы, что действительно идёт сквозь конструкцию.
+    /// </summary>
+    /// <remarks>
+    /// Меряется только геометрия внутри задания: габаритный бокс целого отвода или клапана включает
+    /// и то, что уходит вдоль стены. И даже внутри задания геометрия мельче порога глубины прохода
+    /// в замер не идёт - фланец клапана сидит на грани стены и заходит в неё на полмиллиметра,
+    /// но он на 50 мм шире своего воздуховода, и по нему отверстие 350x300 объявлялось тесным,
+    /// хотя проходит через него воздуховод 250x200.
+    /// </remarks>
+    private BoundingBoxXYZ? GetPassBoxInside(
+        IReadOnlyCollection<Element> pass,
+        Solid taskSolid,
+        Transform toFrame,
+        int throughAxis) {
+
+        BoundingBoxXYZ? deepEnough = null;
+        BoundingBoxXYZ? anyInside = null;
+
+        foreach(var solid in pass.SelectMany(GeometryUtils.GetSolids)) {
+            Solid inside;
+            try {
+                inside = BooleanOperationsUtils.ExecuteBooleanOperation(
+                    solid, taskSolid, BooleanOperationsType.Intersect);
+            } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+                continue;
+            }
+            if(inside is null || inside.Volume <= 0) {
+                continue;
+            }
+
+            var box = GetBoxInFrame(inside, toFrame);
+            if(box is null) {
+                continue;
+            }
+
+            anyInside = Union(anyInside, box);
+            double depth = GetCoordinate(box.Max, throughAxis) - GetCoordinate(box.Min, throughAxis);
+            if(depth >= _minPassDepth) {
+                deepEnough = Union(deepEnough, box);
+            }
+        }
+
+        // Если сквозь конструкцию не идёт ничего глубже порога, судить приходится по тому, что есть.
+        return deepEnough ?? anyInside;
+    }
+
+    /// <summary>
+    /// Объединяет габариты в одной системе координат.
+    /// </summary>
+    private BoundingBoxXYZ Union(BoundingBoxXYZ? first, BoundingBoxXYZ second) {
+        if(first is null) {
+            return second;
+        }
+
+        return new BoundingBoxXYZ {
+            Min = new XYZ(
+                Math.Min(first.Min.X, second.Min.X),
+                Math.Min(first.Min.Y, second.Min.Y),
+                Math.Min(first.Min.Z, second.Min.Z)),
+            Max = new XYZ(
+                Math.Max(first.Max.X, second.Max.X),
+                Math.Max(first.Max.Y, second.Max.Y),
+                Math.Max(first.Max.Z, second.Max.Z))
+        };
     }
 
     /// <summary>
