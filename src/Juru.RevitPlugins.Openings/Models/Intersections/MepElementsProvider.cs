@@ -80,8 +80,7 @@ public class MepElementsProvider : IElementsProvider {
                 continue;
             }
 
-            double sizeMm = UnitUtils.ConvertFromInternalUnits(size.GoverningSize, UnitTypeId.Millimeters);
-            if(!settings.SizeInRange(sizeMm)) {
+            if(!settings.SizeInRange(size)) {
                 continue;
             }
 

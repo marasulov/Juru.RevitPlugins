@@ -11,6 +11,7 @@ using Juru.RevitPlugins.Core.FileNaming;
 using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.Models.Intersections;
 using Juru.RevitPlugins.Openings.Models.Placement;
+using Juru.RevitPlugins.Openings.Services;
 
 namespace Juru.RevitPlugins.Openings.Commands;
 
@@ -54,16 +55,41 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
             return Result.Cancelled;
         }
 
-        var intersections = new SolidIntersectionFinder(mepProvider).Find(structureProviders);
-        var validation = new IntersectionValidator().Validate(intersections);
+        IReadOnlyCollection<MepStructureIntersection> intersections;
+        IntersectionValidator.ValidationResult validation;
+        IReadOnlyCollection<PlannedOpening> merged;
+        PlacementResult placement;
 
-        var calculator = new OpeningSizeCalculator();
-        var planned = validation.Accepted
-            .Select(calculator.Calculate)
-            .Where(opening => opening is not null)
-            .ToArray();
-        var merged = new OpeningMerger(config).Merge(planned);
-        var placement = new OpeningTaskPlacer(doc, config).Place(merged);
+        using(var progress = new OperationProgress(commandData.Application.MainWindowHandle)) {
+            try {
+                int structureCount = structureProviders.Sum(item => item.GetElements().Count);
+                progress.StartStage("Поиск пересечений", structureCount);
+                intersections = new SolidIntersectionFinder(mepProvider)
+                    .Find(structureProviders, progress, progress.Token);
+
+                progress.StartStage("Расчёт габаритов", intersections.Count);
+                validation = new IntersectionValidator().Validate(intersections);
+
+                var calculator = new OpeningSizeCalculator();
+                var planned = new List<PlannedOpening>();
+                int calculated = 0;
+                foreach(var accepted in validation.Accepted) {
+                    progress.Token.ThrowIfCancellationRequested();
+                    progress.Report(++calculated);
+                    var opening = calculator.Calculate(accepted);
+                    if(opening is not null) {
+                        planned.Add(opening);
+                    }
+                }
+
+                progress.StartStage("Расстановка заданий", planned.Count);
+                merged = new OpeningMerger(config).Merge(planned);
+                placement = new OpeningTaskPlacer(doc, config).Place(merged);
+            } catch(OperationCanceledException) {
+                TaskDialog.Show("Задания на отверстия", "Расчёт отменён, задания не размещены.");
+                return Result.Cancelled;
+            }
+        }
 
         TaskDialog.Show("Задания на отверстия",
             BuildReport(discipline, byStandard, structureProviders, linksProvider,

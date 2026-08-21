@@ -170,7 +170,7 @@ public class OpeningsConfig : ProjectConfig {
         return [
             new MepCategorySettings {
                 Kind = MepKind.Pipe,
-                MinSizeMm = 50,
+                MinDiameterMm = 50,
                 Offsets = [
                     new OffsetRange { FromMm = 0, ToMm = 300, OffsetMm = 50, Shape = OpeningShape.Round },
                     new OffsetRange { FromMm = 300, ToMm = 10000, OffsetMm = 50, Shape = OpeningShape.Rectangle }
@@ -178,7 +178,7 @@ public class OpeningsConfig : ProjectConfig {
             },
             new MepCategorySettings {
                 Kind = MepKind.RoundDuct,
-                MinSizeMm = 100,
+                MinDiameterMm = 100,
                 Offsets = [
                     new OffsetRange { FromMm = 0, ToMm = 300, OffsetMm = 50, Shape = OpeningShape.Round },
                     new OffsetRange { FromMm = 300, ToMm = 10000, OffsetMm = 50, Shape = OpeningShape.Rectangle }
@@ -186,14 +186,16 @@ public class OpeningsConfig : ProjectConfig {
             },
             new MepCategorySettings {
                 Kind = MepKind.RectangleDuct,
-                MinSizeMm = 100,
+                MinWidthMm = 100,
+                MinHeightMm = 100,
                 Offsets = [
                     new OffsetRange { FromMm = 0, ToMm = 10000, OffsetMm = 50, Shape = OpeningShape.Rectangle }
                 ]
             },
             new MepCategorySettings {
                 Kind = MepKind.CableTray,
-                MinSizeMm = 100,
+                MinWidthMm = 100,
+                MinHeightMm = 100,
                 Offsets = [
                     new OffsetRange { FromMm = 0, ToMm = 10000, OffsetMm = 50, Shape = OpeningShape.Rectangle }
                 ]
@@ -201,7 +203,7 @@ public class OpeningsConfig : ProjectConfig {
             new MepCategorySettings {
                 Kind = MepKind.Conduit,
                 IsSelected = false,
-                MinSizeMm = 50,
+                MinDiameterMm = 50,
                 Offsets = [
                     new OffsetRange { FromMm = 0, ToMm = 10000, OffsetMm = 50, Shape = OpeningShape.Round }
                 ]

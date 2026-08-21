@@ -1,6 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using Autodesk.Revit.DB;
+
+using Juru.RevitPlugins.Openings.Models.Intersections;
+
 namespace Juru.RevitPlugins.Openings.Models.Configs;
 
 /// <summary>
@@ -18,10 +22,19 @@ public class MepCategorySettings {
     public bool IsSelected { get; set; } = true;
 
     /// <summary>
-    /// Наименьший габарит элемента в мм, для которого ещё нужно отверстие.
-    /// Для круглых элементов это диаметр, для прямоугольных - большая сторона сечения.
+    /// Наименьший диаметр в мм, для которого ещё нужно отверстие. Ноль - проверять любые.
     /// </summary>
-    public double MinSizeMm { get; set; } = 50;
+    public double MinDiameterMm { get; set; }
+
+    /// <summary>
+    /// Наименьшая ширина сечения в мм для прямоугольных элементов. Ноль - проверять любые.
+    /// </summary>
+    public double MinWidthMm { get; set; }
+
+    /// <summary>
+    /// Наименьшая высота сечения в мм для прямоугольных элементов. Ноль - проверять любые.
+    /// </summary>
+    public double MinHeightMm { get; set; }
 
     /// <summary>
     /// Наибольший габарит элемента в мм. Всё крупнее считается ошибкой черчения и пропускается.
@@ -58,10 +71,30 @@ public class MepCategorySettings {
     }
 
     /// <summary>
-    /// Проверяет, нужно ли выдавать задание для элемента такого габарита.
+    /// Проверяет, нужно ли выдавать задание для элемента с таким сечением.
     /// </summary>
-    /// <param name="sizeMm">Габарит инженерного элемента в мм.</param>
-    public bool SizeInRange(double sizeMm) {
-        return sizeMm >= MinSizeMm && sizeMm <= MaxSizeMm;
+    /// <remarks>
+    /// Пороги задаются по каждому габариту отдельно: у круглых элементов проверяется диаметр,
+    /// у прямоугольных - и ширина, и высота. Прямоугольный воздуховод 500x50 не должен проходить
+    /// порог только за счёт ширины: по высоте он ниже допустимого, и отверстие для него не нужно.
+    /// </remarks>
+    /// <param name="size">Габариты сечения элемента.</param>
+    public bool SizeInRange(MepElementSize size) {
+        if(size is null) {
+            return false;
+        }
+
+        double governingMm = ToMillimeters(size.GoverningSize);
+        if(governingMm > MaxSizeMm) {
+            return false;
+        }
+
+        return size.IsRound
+            ? ToMillimeters(size.Diameter) >= MinDiameterMm
+            : ToMillimeters(size.Width) >= MinWidthMm && ToMillimeters(size.Height) >= MinHeightMm;
+    }
+
+    private static double ToMillimeters(double feet) {
+        return UnitUtils.ConvertFromInternalUnits(feet, UnitTypeId.Millimeters);
     }
 }
