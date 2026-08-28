@@ -31,18 +31,23 @@
                  были сверху: в списке из сотни корректных иначе не найти те, с которыми что-то не так. -->
             <CollectionViewSource
                 x:Key="TasksView"
-                Source="{Binding Tasks}">
+                Source="{Binding Tasks}"
+                Filter="TasksView_Filter">
                 <CollectionViewSource.SortDescriptions>
                     <scm:SortDescription
                         PropertyName="SortOrder" />
                     <scm:SortDescription
                         PropertyName="Status" />
                     <scm:SortDescription
+                        PropertyName="DateGroupText" />
+                    <scm:SortDescription
                         PropertyName="MepSystem" />
                 </CollectionViewSource.SortDescriptions>
                 <CollectionViewSource.GroupDescriptions>
                     <PropertyGroupDescription
                         PropertyName="Status" />
+                    <PropertyGroupDescription
+                        PropertyName="DateGroupText" />
                 </CollectionViewSource.GroupDescriptions>
             </CollectionViewSource>
 
@@ -55,6 +60,15 @@
                 <Setter
                     Property="TextWrapping"
                     Value="Wrap" />
+            </Style>
+
+            <!-- Первый клик по невыделенной ячейке иначе уходит на выбор ячейки, а не на кнопку
+                 внутри неё - см. DataGridCell_PreviewMouseLeftButtonDown в code-behind. -->
+            <Style
+                TargetType="DataGridCell">
+                <EventSetter
+                    Event="PreviewMouseLeftButtonDown"
+                    Handler="DataGridCell_PreviewMouseLeftButtonDown" />
             </Style>
         </ResourceDictionary>
     </Window.Resources>
@@ -70,25 +84,81 @@
                 Height="Auto" />
         </Grid.RowDefinitions>
 
-        <StackPanel
+        <DockPanel
             Grid.Row="0"
             Margin="0 0 0 10">
-            <TextBlock
-                FontWeight="SemiBold"
-                Text="{Binding Summary}" />
-            <TextBlock
-                Style="{StaticResource Hint}"
-                Text="{Binding LinksText}" />
-            <TextBlock
-                Style="{StaticResource Hint}">
-                <Run
-                    Text="Состояния определены по настройкам:" />
-                <Run
-                    Text="{Binding ConfigName, Mode=OneWay}" />
-                <Run
-                    Text="и пересчитываются при каждом обновлении - в модели они не хранятся." />
-            </TextBlock>
-        </StackPanel>
+            <ui:TextBox
+                x:Name="SearchBox"
+                DockPanel.Dock="Right"
+                Width="220"
+                VerticalAlignment="Top"
+                PlaceholderText="Поиск"
+                TextChanged="SearchBox_TextChanged" />
+            <StackPanel>
+                <TextBlock
+                    FontWeight="SemiBold"
+                    Text="{Binding Summary}" />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Text="{Binding LinksText}">
+                    <TextBlock.Style>
+                        <Style
+                            BasedOn="{StaticResource Hint}"
+                            TargetType="TextBlock">
+                            <Style.Triggers>
+                                <DataTrigger
+                                    Binding="{Binding NoLinksLoaded}"
+                                    Value="True">
+                                    <Setter
+                                        Property="Foreground"
+                                        Value="OrangeRed" />
+                                    <Setter
+                                        Property="Opacity"
+                                        Value="1" />
+                                    <Setter
+                                        Property="FontWeight"
+                                        Value="SemiBold" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <!-- Решения приходят с сервера, а состояния считаются локально: если сервер
+                     не ответил, окно всё равно полезно, и об этом нужно сказать явно - иначе
+                     прочерк в колонках решений читается как "никто ещё не ответил". -->
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Text="{Binding ServerText}">
+                    <TextBlock.Style>
+                        <Style
+                            BasedOn="{StaticResource Hint}"
+                            TargetType="TextBlock">
+                            <Style.Triggers>
+                                <DataTrigger
+                                    Binding="{Binding DecisionsUnknown}"
+                                    Value="True">
+                                    <Setter
+                                        Property="Foreground"
+                                        Value="OrangeRed" />
+                                    <Setter
+                                        Property="Opacity"
+                                        Value="1" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock
+                    Style="{StaticResource Hint}">
+                    <Run
+                        Text="Состояния определены по настройкам:" />
+                    <Run
+                        Text="{Binding ConfigName, Mode=OneWay}" />
+                    <Run
+                        Text="и пересчитываются при каждом обновлении - в модели они не хранятся." />
+                </TextBlock>
+            </StackPanel>
+        </DockPanel>
 
         <Border
             Grid.Row="1"
@@ -97,6 +167,8 @@
                 Margin="1"
                 AutoGenerateColumns="False"
                 CanUserAddRows="False"
+                CanUserResizeColumns="True"
+                ColumnHeaderStyle="{StaticResource CustomResizableColumnHeaderStyle}"
                 CanUserDeleteRows="False"
                 GridLinesVisibility="Horizontal"
                 HeadersVisibility="Column"
@@ -157,9 +229,24 @@
                                     Margin="2"
                                     Padding="8 2"
                                     Content="Показать"
-                                    Command="{Binding DataContext.ShowCommand,
-                                        RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}" />
+                                    Click="ShowButton_Click" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Width="40">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Отдельная кнопка на хост - стену/перекрытие, которое пробивает
+                                     задание - как в Bim4Everyone: одна кнопка ведёт к самому
+                                     заданию, другая, лупа, к его основе. -->
+                                <ui:Button
+                                    Margin="2"
+                                    Padding="4 2"
+                                    ToolTip="Показать хост - стену или перекрытие"
+                                    Content="&#128269;"
+                                    IsEnabled="{Binding CanShowHost}"
+                                    Click="ShowHostButton_Click" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -183,14 +270,64 @@
                         Width="90"
                         Binding="{Binding CenterElevation}"
                         Header="Отм. оси" />
+                    <!-- Два решения отдельными колонками, а не один общий статус: инженеру нужно
+                         видеть, кто именно ещё не ответил. -->
+                    <DataGridTextColumn
+                        Width="120"
+                        Binding="{Binding ArcDecisionText}"
+                        Header="Решение ARC">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style
+                                TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <Trigger
+                                        Property="Text"
+                                        Value="отклонено">
+                                        <Setter
+                                            Property="Foreground"
+                                            Value="OrangeRed" />
+                                        <Setter
+                                            Property="FontWeight"
+                                            Value="SemiBold" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn
+                        Width="120"
+                        Binding="{Binding StrDecisionText}"
+                        Header="Решение STR">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style
+                                TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <Trigger
+                                        Property="Text"
+                                        Value="отклонено">
+                                        <Setter
+                                            Property="Foreground"
+                                            Value="OrangeRed" />
+                                        <Setter
+                                            Property="FontWeight"
+                                            Value="SemiBold" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn
+                        Width="200"
+                        Binding="{Binding DecisionComment}"
+                        Header="Причина отклонения" />
                     <DataGridTextColumn
                         Width="180"
                         Binding="{Binding Host}"
                         Header="Конструкция" />
                     <DataGridTextColumn
-                        Width="90"
-                        Binding="{Binding Date}"
-                        Header="Дата" />
+                        Width="70"
+                        Binding="{Binding HostId}"
+                        Header="Id основы" />
                     <DataGridTextColumn
                         Width="*"
                         Binding="{Binding Description}"

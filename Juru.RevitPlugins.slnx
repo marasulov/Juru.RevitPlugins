@@ -91,12 +91,6 @@
     <Project Path="src/Juru.RevitPlugins.Openings/Juru.RevitPlugins.Openings.csproj">
       <BuildType Solution="Debug|*" Project="Debug.R23" />
       <BuildType Solution="Release|*" Project="Release.R23" />
-      <!-- Openings is not finished yet: excluded from Release.RXX builds so it is not bundled into the installer MSI. -->
-      <Build Solution="Release.R23|*" Project="false" />
-      <Build Solution="Release.R24|*" Project="false" />
-      <Build Solution="Release.R25|*" Project="false" />
-      <Build Solution="Release.R26|*" Project="false" />
-      <Build Solution="Release.R27|*" Project="false" />
     </Project>
   </Folder>
 </Solution>

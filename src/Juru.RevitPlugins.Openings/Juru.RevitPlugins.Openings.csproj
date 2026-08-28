@@ -28,14 +28,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="Settings\Settings.json">
-            <Link>Settings.json</Link>
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
+        <ProjectReference Include="..\Juru.RevitPlugins.Core\Juru.RevitPlugins.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Juru.RevitPlugins.Core\Juru.RevitPlugins.Core.csproj" />
+        <Reference Include="System.Net.Http" />
     </ItemGroup>
 
 </Project>

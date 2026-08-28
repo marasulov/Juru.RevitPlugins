@@ -45,6 +45,16 @@ public class OpeningTaskStatusUpdater {
     private readonly double _minVolume;
     private readonly double _minPassDepth;
 
+    /// <summary>
+    /// Категории конструкций, которые задание пробивать не должно: колонны и балки. Список
+    /// не завязан на настройки видов инженерных элементов - запрет действует всегда, независимо
+    /// от того, какие конструкции выбраны для поиска хостов. Тот же список, что у Bim4Everyone.
+    /// </summary>
+    private static readonly BuiltInCategory[] _unacceptableCategories = [
+        BuiltInCategory.OST_StructuralColumns,
+        BuiltInCategory.OST_StructuralFraming
+    ];
+
     /// <summary>Кандидаты в хосты и связь, из которой они взяты, для обрабатываемого задания.</summary>
     private (IReadOnlyCollection<ElementId> Candidates, StructureElementsProvider? Link) _hosts;
 
@@ -104,6 +114,10 @@ public class OpeningTaskStatusUpdater {
             }
             if(IsNotActual(task)) {
                 task.Status = OpeningTaskStatus.NotActual;
+                return;
+            }
+            if(IsInUnacceptableConstruction(task)) {
+                task.Status = OpeningTaskStatus.UnacceptableConstructions;
                 return;
             }
             if(IsInDifferentConstructions(task)) {
@@ -268,6 +282,42 @@ public class OpeningTaskStatusUpdater {
         double area = task.IsRound ? diameter * diameter : width * height;
         double depth = UnitUtils.ConvertToInternalUnits(_overshootDepthMm, UnitTypeId.Millimeters);
         return Math.Max(area * depth, _minVolume);
+    }
+
+    /// <summary>
+    /// Проверяет, пересекается ли задание с колонной или балкой из связей.
+    /// </summary>
+    /// <remarks>
+    /// Отдельный запрос по фиксированным категориям, а не через <see cref="_structureProviders"/>:
+    /// те собирают только стены и перекрытия, которые выбраны в настройках как виды конструкций
+    /// для поиска хостов, а запрет на колонны и балки не должен зависеть от этого выбора.
+    /// </remarks>
+    private bool IsInUnacceptableConstruction(OpeningTask task) {
+        var solid = task.GetSolid();
+        if(solid is null) {
+            return false;
+        }
+
+        foreach(var link in _structureProviders) {
+            Solid inLink;
+            try {
+                inLink = SolidUtils.CreateTransformed(solid, link.MainTransform.Inverse);
+            } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+                continue;
+            }
+
+            bool intersects = new FilteredElementCollector(link.Doc)
+                .WherePasses(new ElementMulticategoryFilter(_unacceptableCategories))
+                .WhereElementIsNotElementType()
+                .WherePasses(new BoundingBoxIntersectsFilter(GeometryUtils.GetOutline(inLink)))
+                .WherePasses(new ElementIntersectsSolidFilter(inLink))
+                .Any();
+            if(intersects) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

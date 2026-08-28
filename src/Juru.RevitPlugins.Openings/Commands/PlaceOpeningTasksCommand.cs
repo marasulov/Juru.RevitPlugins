@@ -55,6 +55,10 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
             return Result.Cancelled;
         }
 
+        // Раньше, чем расстановка построит свой индекс уже стоящих заданий - иначе она сверялась бы
+        // с тем, что вот-вот удалится.
+        int orphansRemoved = new OrphanedTaskCleaner().Remove(doc, config);
+
         IReadOnlyCollection<MepStructureIntersection> intersections;
         IntersectionValidator.ValidationResult validation;
         IReadOnlyCollection<PlannedOpening> merged;
@@ -93,7 +97,7 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
 
         TaskDialog.Show("Задания на отверстия",
             BuildReport(discipline, byStandard, structureProviders, linksProvider,
-                mepProvider, intersections, validation, merged, placement));
+                mepProvider, intersections, validation, merged, placement, orphansRemoved));
 
         if(placement.Placed.Count > 0) {
             uiDocument.Selection.SetElementIds(placement.Placed.Select(item => item.Id).ToList());
@@ -136,11 +140,15 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
         IReadOnlyCollection<MepStructureIntersection> intersections,
         IntersectionValidator.ValidationResult validation,
         IReadOnlyCollection<PlannedOpening> merged,
-        PlacementResult placement) {
+        PlacementResult placement,
+        int orphansRemoved) {
 
         var report = new StringBuilder();
         report.AppendLine("Дисциплина файла: " + discipline
             + (byStandard ? string.Empty : " (по правилу из настроек, имя не по стандарту)"));
+        if(orphansRemoved > 0) {
+            report.AppendLine($"Удалено заданий без исходного элемента: {orphansRemoved}");
+        }
         report.AppendLine("Связи с конструкциями: "
             + string.Join(", ", structureProviders.Select(item => $"{item.LinkName} ({item.Discipline})")));
 
@@ -158,6 +166,9 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
             report.AppendLine($"Объединённых заданий: {unitedCount} (склеено проходов: {mergedSources})");
         }
         report.AppendLine($"Заданий размещено: {placement.Placed.Count}");
+        if(placement.Updated > 0) {
+            report.AppendLine($"  из них подвинуто на месте (элемент сдвинулся): {placement.Updated}");
+        }
         if(placement.SkippedAsDuplicate > 0) {
             report.AppendLine($"Пропущено, задание уже стоит: {placement.SkippedAsDuplicate}");
         }

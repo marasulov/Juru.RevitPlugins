@@ -121,6 +121,14 @@ public class OpeningFamilyNaming {
     public string UnitedParam { get; set; } = "Juru_Opening_United";
 
     /// <summary>
+    /// Ключ задания на сервере (<c>taskKey</c> в <c>docs/OpeningsApi.md</c>). В файле ВИС не пишется -
+    /// им служит собственный <c>UniqueId</c> экземпляра. Заполняется только в файлах АР и КР при
+    /// загрузке задания с сервера - там свой Revit-файл со своими <c>UniqueId</c>, и без этого
+    /// параметра на экземпляре нечем было бы сверить, что задание уже стоит, при следующей загрузке.
+    /// </summary>
+    public string TaskKeyParam { get; set; } = "Juru_Opening_TaskKey";
+
+    /// <summary>
     /// Возвращает имя семейства для типа отверстия.
     /// </summary>
     public string GetFamilyName(OpeningType openingType) {

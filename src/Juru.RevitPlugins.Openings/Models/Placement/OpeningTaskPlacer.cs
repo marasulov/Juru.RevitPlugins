@@ -75,6 +75,22 @@ public class OpeningTaskPlacer {
         var level = GetLevel(opening.Primary.Mep.Element, size.Center);
         var point = InsertionPoint.Get(size, opening.Primary, GetElevationRounding(opening));
 
+        // Тот же инженерный элемент уже когда-то дал задание - опознано не по близости точки,
+        // а по id элемента в описании (OpeningSourceDescription): труба сдвинулась и всё ещё
+        // сдвинулась в пределах того же прохода, но результат мог уехать больше чем на допуск
+        // точки. Такое задание не дублируется, а двигается на месте - см. память проекта,
+        // "обновление на месте вместо orphan-plus-duplicate".
+        var existing = placedTasks.FindBySourceMep(opening.Sources.Select(source => source.Mep.Element.Id));
+        if(existing is not null) {
+            if(placedTasks.MatchesExisting(existing, point, size.BoxVolume)) {
+                // Не сдвинулось за пределы допуска - это то же самое задание на том же месте.
+                result.SkippedAsDuplicate++;
+                return null;
+            }
+
+            return UpdateInstance(existing, placedTasks, opening, size, point, level, result);
+        }
+
         if(placedTasks.AlreadyPlaced(point, size.BoxVolume)) {
             result.SkippedAsDuplicate++;
             return null;
@@ -99,7 +115,42 @@ public class OpeningTaskPlacer {
 
         // Задание учитывается сразу: иначе два отверстия в одном месте внутри одного прогона
         // дали бы два задания.
-        placedTasks.Add(point, size.BoxVolume);
+        placedTasks.Add(instance, point, size.BoxVolume);
+        return instance;
+    }
+
+    /// <summary>
+    /// Двигает уже стоящее задание на новую точку вместо того, чтобы оставить его сиротой
+    /// и поставить рядом новое - тот же экземпляр, тот же <c>UniqueId</c> (и, значит, тот же
+    /// <c>taskKey</c> на сервере), просто на новом месте и с новыми габаритами.
+    /// </summary>
+    private FamilyInstance UpdateInstance(
+        FamilyInstance instance,
+        PlacedTasksIndex placedTasks,
+        PlannedOpening opening,
+        OpeningSize size,
+        XYZ point,
+        Level level,
+        PlacementResult result) {
+
+        placedTasks.Remove(instance);
+
+        var location = (LocationPoint) instance.Location;
+        double currentAngle = OpeningAngle.GetCurrent(instance.GetTotalTransform());
+        location.Point = point;
+
+        double targetAngle = OpeningAngle.Get(opening.Primary);
+        double delta = targetAngle - currentAngle;
+        if(Math.Abs(delta) > 1e-9) {
+            var axis = Line.CreateBound(point, point + XYZ.BasisZ);
+            ElementTransformUtils.RotateElement(_doc, instance.Id, axis, delta);
+        }
+
+        _doc.Regenerate();
+        SetParameters(instance, opening, size, point, level, result);
+
+        placedTasks.Add(instance, point, size.BoxVolume);
+        result.Updated++;
         return instance;
     }
 
@@ -212,12 +263,8 @@ public class OpeningTaskPlacer {
     /// У объединённого задания перечисляются все, иначе после склейки не найти, откуда оно взялось.
     /// </summary>
     private string GetDescription(PlannedOpening opening) {
-        return string.Join("; ", opening.Sources.Select(source => {
-            var mep = source.Mep.Element;
-            var structure = source.StructureElement;
-            return $"{mep.Document.Title}: {mep.Name}: {mep.Id}"
-                + $"; {structure.Document.Title}: {structure.Name}: {structure.Id}";
-        }));
+        return OpeningSourceDescription.Write(
+            opening.Sources.Select(source => (source.Mep.Element, source.StructureElement)));
     }
 
     /// <summary>

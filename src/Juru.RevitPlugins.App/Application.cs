@@ -1,4 +1,6 @@
 ﻿using Juru.RevitPlugins.ClashNavigator.Commands;
+using Juru.RevitPlugins.Openings.Commands;
+
 using Nice3point.Revit.Toolkit.External;
 
 namespace Juru.RevitPlugins.App
@@ -9,24 +11,102 @@ namespace Juru.RevitPlugins.App
     [UsedImplicitly]
     public class Application : ExternalApplication
     {
+        private const string TabName = "JuruPlugins";
+        private const string IconsPath = "/Juru.RevitPlugins.App;component/Resources/Icons/";
+
+        /// <summary>
+        ///     Подпись кнопки, у которой подписи быть не должно. Revit отбивает и пустой текст,
+        ///     и пробел: <c>ButtonData.Text</c> проверяет значение после обрезки пробелов и падает
+        ///     с <c>ArgumentException: The value cannot be empty</c>. U+200B (пробел нулевой
+        ///     ширины) пробелом не считается, обрезку проходит и ничего не рисует.
+        /// </summary>
+        private const string NoText = "\u200b";
+
         public override void OnStartup()
         {
-            CreateRibbon();
+            CreateClashNavigatorPanel();
+            CreateOpeningsPanel();
         }
 
-        private void CreateRibbon()
+        private void CreateClashNavigatorPanel()
         {
-            var panel = Application.CreatePanel("ClashNavigator", "JuruPlugins");
+            var panel = Application.CreatePanel("ClashNavigator", TabName);
 
             panel.AddPushButton<GetClashesCommand>("Навигатор\nколлизий")
-                .SetImage("/Juru.RevitPlugins.App;component/Resources/Icons/NavigatorIcon16Small.png")
-                .SetLargeImage("/Juru.RevitPlugins.App;component/Resources/Icons/NavigatorIcon32.png")
+                .SetImage(IconsPath + "NavigatorIcon16Small.png")
+                .SetLargeImage(IconsPath + "NavigatorIcon32.png")
                 .SetToolTip("Открывает навигатор коллизий");
 
             panel.AddPushButton<SetSettingsCommand>("Настройки")
-                .SetImage("/Juru.RevitPlugins.App;component/Resources/Icons/SettingsIcon16.png")
-                .SetLargeImage("/Juru.RevitPlugins.App;component/Resources/Icons/SettingsIcon32.png")
+                .SetImage(IconsPath + "SettingsIcon16.png")
+                .SetLargeImage(IconsPath + "SettingsIcon32.png")
                 .SetToolTip("Настройки навигатора коллизий");
+        }
+
+        /// <summary>
+        ///     Задания на отверстия. Кнопки разделены по сторонам процесса: слева от разделителя -
+        ///     то, что делает инженер в своём файле (вставил, проверил, отправил), справа - то, что
+        ///     делают АР и КР с полученными заданиями. См. <c>docs/OpeningsApi.md</c>.
+        /// </summary>
+        private void CreateOpeningsPanel()
+        {
+            var panel = Application.CreatePanel("Отверстия", TabName);
+
+            panel.AddPushButton<PlaceOpeningTasksCommand>("Вставить\nзадания")
+                .SetImage(IconsPath + "PlaceOpeningsIcon16.png")
+                .SetLargeImage(IconsPath + "PlaceOpeningsIcon32.png")
+                .SetToolTip("Расставляет задания на отверстия по пересечениям инженерных "
+                            + "элементов с конструкциями из связей");
+
+            // Склейка, навигатор и отправка - шаги вокруг той же вставки, поэтому стоят мелкими
+            // друг над другом, а не наравне с ней. Подписи убраны, чтобы кнопки не растягивали
+            // панель: что делает кнопка, говорит подсказка при наведении. Больше трёх в столбец
+            // не ставить - четвёртая уедет в новый столбец.
+            //
+            // Заголовок подсказки Revit берёт из подписи кнопки, а её тут нет, поэтому имя команды
+            // стоит первой строкой самой подсказки - иначе при наведении видно только описание.
+            var stackPanel = panel.AddStackPanel();
+
+            stackPanel.AddPushButton<UniteOpeningTasksCommand>(NoText)
+                .SetImage(IconsPath + "UniteOpeningsIcon16.png")
+                .SetLargeImage(IconsPath + "UniteOpeningsIcon32.png")
+                .SetToolTip("Объединить задания\n"
+                            + "Объединяет выбранные задания на отверстия в одно");
+
+            stackPanel.AddPushButton<ShowOpeningTasksCommand>(NoText)
+                .SetImage(IconsPath + "OpeningsNavigatorIcon16.png")
+                .SetLargeImage(IconsPath + "OpeningsNavigatorIcon32.png")
+                .SetToolTip("Навигатор заданий\n"
+                            + "Открывает навигатор по заданиям, выданным из этого файла");
+
+            stackPanel.AddPushButton<SendOpeningTasksCommand>(NoText)
+                .SetImage(IconsPath + "SendOpeningsIcon16.png")
+                .SetLargeImage(IconsPath + "SendOpeningsIcon32.png")
+                .SetToolTip("Отправить задания\n"
+                            + "Отправляет задания этого файла на сервер согласования");
+
+            panel.AddSeparator();
+
+            // Загрузка и согласование - два шага одной работы в файле АР или КР, и делает их один
+            // человек подряд, поэтому они делят одно место на панели и переключаются стрелкой.
+            var incomingButton = panel.AddSplitButton("IncomingOpeningTasks", "Задания от инженеров");
+
+            incomingButton.AddPushButton<LoadOpeningTasksCommand>("Загрузить\nзадания")
+                .SetImage(IconsPath + "LoadOpeningsIcon16.png")
+                .SetLargeImage(IconsPath + "LoadOpeningsIcon32.png")
+                .SetToolTip("Загружает задания на отверстия с сервера в файл АР или КР");
+
+            incomingButton.AddPushButton<ShowIncomingOpeningTasksCommand>("Согласование\nзаданий")
+                .SetImage(IconsPath + "ApproveOpeningsIcon16.png")
+                .SetLargeImage(IconsPath + "ApproveOpeningsIcon32.png")
+                .SetToolTip("Открывает навигатор согласования полученных заданий");
+
+            panel.AddSeparator();
+
+            panel.AddPushButton<SetOpeningsSettingsCommand>("Настройки")
+                .SetImage(IconsPath + "SettingsIcon16.png")
+                .SetLargeImage(IconsPath + "SettingsIcon32.png")
+                .SetToolTip("Настройки выдачи заданий на отверстия");
         }
     }
 }

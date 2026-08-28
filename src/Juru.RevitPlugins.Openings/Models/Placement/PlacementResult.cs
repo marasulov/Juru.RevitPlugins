@@ -27,6 +27,13 @@ public class PlacementResult {
     public int SkippedAsDuplicate { get; set; }
 
     /// <summary>
+    /// Сколько уже стоявших заданий подвинуто на новое место - тот же инженерный элемент,
+    /// но прошёл в другой точке (см. <see cref="PlacedTasksIndex.FindBySourceMep"/>), поэтому
+    /// не дубль, а обновление на месте.
+    /// </summary>
+    public int Updated { get; set; }
+
+    /// <summary>
     /// Параметры, которых не оказалось в семействах: значения для них посчитаны, но записать некуда.
     /// </summary>
     public SortedSet<string> MissingParameters { get; } = [];

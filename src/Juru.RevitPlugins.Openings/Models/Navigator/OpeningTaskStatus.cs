@@ -59,6 +59,13 @@ public enum OpeningTaskStatus {
     ManuallyPlaced,
 
     /// <summary>
+    /// Задание пересекается с колонной или балкой: такие конструкции пробивать нельзя,
+    /// решение остаётся за человеком.
+    /// </summary>
+    [Description("Недопустимые конструкции")]
+    UnacceptableConstructions,
+
+    /// <summary>
     /// Задание попало сразу и в стену, и в перекрытие: чинить это должен человек.
     /// </summary>
     [Description("В разных конструкциях")]
@@ -103,6 +110,7 @@ public static class OpeningTaskStatusExtensions {
             or OpeningTaskStatus.TooBig
             or OpeningTaskStatus.NotActual
             or OpeningTaskStatus.Intersects
+            or OpeningTaskStatus.UnacceptableConstructions
             or OpeningTaskStatus.DifferentConstructions
             or OpeningTaskStatus.Invalid;
     }

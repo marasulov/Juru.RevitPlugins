@@ -23,4 +23,14 @@ public static class OpeningAngle {
         double angle = normal.AngleTo(XYZ.BasisY);
         return normal.X <= 0 ? angle : -angle;
     }
+
+    /// <summary>
+    /// Возвращает текущий поворот уже размещённого экземпляра вокруг вертикальной оси, в радианах -
+    /// не пересчитывает его из геометрии конструкции, а читает из фактической трансформации
+    /// экземпляра. Нужен там, где исходного пересечения уже нет: при отправке задания на сервер и
+    /// при постановке входящего задания в файле АР/КР.
+    /// </summary>
+    public static double GetCurrent(Transform frame) {
+        return XYZ.BasisX.AngleOnPlaneTo(frame.BasisX, XYZ.BasisZ);
+    }
 }

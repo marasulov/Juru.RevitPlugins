@@ -47,6 +47,11 @@ public class OpeningsConfig : ProjectConfig {
     public OpeningFamilyNaming Naming { get; set; } = new OpeningFamilyNaming();
 
     /// <summary>
+    /// Имена вырезающих семейств чистовых отверстий и параметров внутри них.
+    /// </summary>
+    public RealOpeningFamilyNaming RealNaming { get; set; } = new RealOpeningFamilyNaming();
+
+    /// <summary>
     /// Соответствия фрагмента имени файла и дисциплины - для файлов не по стандарту наименования.
     /// Применяются, только если имя не разобралось по стандарту.
     /// </summary>
@@ -93,6 +98,15 @@ public class OpeningsConfig : ProjectConfig {
     /// Пустое значение означает адрес по умолчанию.
     /// </summary>
     public string ServerUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Папка с эталонными семействами заданий на отверстия - оттуда плагин догружает семейство,
+    /// если его вовсе нет в проекте при постановке заданий, полученных с сервера, в файле АР или КР.
+    /// Если семейство в проекте уже есть - плагин его не трогает, даже устаревшую версию: не
+    /// перезаписывает типы без явного действия пользователя.
+    /// </summary>
+    public string FamilyLibraryPath { get; set; } =
+        @"G:\Shared drives\8. Knowledge & tools\21. Revit for E&IE\Families\00 Common\OpenngsFamilies";
 
     /// <summary>
     /// Округление габаритов чистового отверстия в мм.
@@ -152,6 +166,7 @@ public class OpeningsConfig : ProjectConfig {
             }
             if(config is not null) {
                 config.Naming ??= new OpeningFamilyNaming();
+                config.RealNaming ??= new RealOpeningFamilyNaming();
                 if(config.DisciplineNameRules is null || config.DisciplineNameRules.Count == 0) {
                     config.DisciplineNameRules = GetDefaultDisciplineRules();
                 }

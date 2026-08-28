@@ -435,6 +435,32 @@
                                 IsChecked="{Binding ShowPlacingErrors}" />
                         </StackPanel>
                     </Border>
+
+                    <Border
+                        Margin="0 12 0 0"
+                        Style="{StaticResource CustomBorder}">
+                        <StackPanel
+                            Margin="12 10">
+                            <TextBlock
+                                Style="{StaticResource SectionTitle}"
+                                Text="Сервер согласования" />
+                            <TextBlock
+                                Style="{StaticResource Hint}"
+                                Text="Куда уходят выданные задания и решения по согласованию. Пусто - берётся адрес из ClashServer.json рядом со сборкой плагина (тот же сервер, что у ClashNavigator)." />
+
+                            <DockPanel
+                                Style="{StaticResource FieldRow}">
+                                <TextBlock
+                                    Style="{StaticResource FieldName}"
+                                    Text="Адрес сервера" />
+                                <ui:TextBox
+                                    Width="300"
+                                    HorizontalAlignment="Left"
+                                    Text="{Binding ServerUrl, UpdateSourceTrigger=PropertyChanged}"
+                                    PlaceholderText="http://localhost:5000" />
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
         </Grid>

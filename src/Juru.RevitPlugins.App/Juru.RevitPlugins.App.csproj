@@ -54,10 +54,23 @@
         <Resource Include="Resources\Icons\NavigatorIcon32.png"/>
         <Resource Include="Resources\Icons\SettingsIcon16.png"/>
         <Resource Include="Resources\Icons\SettingsIcon32.png"/>
+        <Resource Include="Resources\Icons\PlaceOpeningsIcon16.png"/>
+        <Resource Include="Resources\Icons\PlaceOpeningsIcon32.png"/>
+        <Resource Include="Resources\Icons\UniteOpeningsIcon16.png"/>
+        <Resource Include="Resources\Icons\UniteOpeningsIcon32.png"/>
+        <Resource Include="Resources\Icons\OpeningsNavigatorIcon16.png"/>
+        <Resource Include="Resources\Icons\OpeningsNavigatorIcon32.png"/>
+        <Resource Include="Resources\Icons\SendOpeningsIcon16.png"/>
+        <Resource Include="Resources\Icons\SendOpeningsIcon32.png"/>
+        <Resource Include="Resources\Icons\LoadOpeningsIcon16.png"/>
+        <Resource Include="Resources\Icons\LoadOpeningsIcon32.png"/>
+        <Resource Include="Resources\Icons\ApproveOpeningsIcon16.png"/>
+        <Resource Include="Resources\Icons\ApproveOpeningsIcon32.png"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Juru.RevitPlugins.ClashNavigator\Juru.RevitPlugins.ClashNavigator.csproj"/>
+        <ProjectReference Include="..\Juru.RevitPlugins.Openings\Juru.RevitPlugins.Openings.csproj"/>
     </ItemGroup>
 
 </Project>

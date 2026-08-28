@@ -1,4 +1,4 @@
-using System.Windows.Interop;
+﻿using System.Windows.Interop;
 
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -7,6 +7,7 @@ using Autodesk.Revit.UI;
 using Juru.RevitPlugins.Core.FileNaming;
 using Juru.RevitPlugins.Core.Theming;
 using Juru.RevitPlugins.Openings.Models.Configs;
+using Juru.RevitPlugins.Openings.Models.Server;
 using Juru.RevitPlugins.Openings.Services;
 using Juru.RevitPlugins.Openings.ViewModels.Navigator;
 using Juru.RevitPlugins.Openings.Views.Navigator;
@@ -42,7 +43,8 @@ public class ShowOpeningTasksCommand : IExternalCommand {
 
         JuruTheme.Apply();
 
-        var viewModel = new OpeningsNavigatorViewModel(config, new RevitActionRunner());
+        var viewModel = new OpeningsNavigatorViewModel(
+            config, new RevitActionRunner(), GetFileInfo(doc), GetClient(config));
         // Первая загрузка идёт прямо здесь: команда выполняется в контексте API, и внешнее событие
         // для неё не нужно. Обновление из окна пойдёт уже через событие.
         viewModel.Reload(uiApplication);
@@ -53,6 +55,24 @@ public class ShowOpeningTasksCommand : IExternalCommand {
         _window.Show();
 
         return Result.Succeeded;
+    }
+
+    /// <summary>
+    /// Возвращает разобранное имя файла - им адресуются задания на сервере, - либо <c>null</c>,
+    /// если имя не по стандарту.
+    /// </summary>
+    /// <remarks>
+    /// Разбор здесь строже, чем определение дисциплины выше: правила из настроек дают дисциплину,
+    /// но не дают ни проекта, ни объекта, а без них с сервера нечего спрашивать. Навигатор в этом
+    /// случае открывается и работает - без решений: техническое состояние считается по геометрии.
+    /// </remarks>
+    private RevitFileNameInfo? GetFileInfo(Document doc) {
+        return RevitFileNameInfo.TryParse(doc.PathName, out var fileInfo) ? fileInfo : null;
+    }
+
+    private OpeningsServerClient? GetClient(OpeningsConfig config) {
+        string serverUrl = OpeningsServerOptions.ResolveUrl(config);
+        return string.IsNullOrWhiteSpace(serverUrl) ? null : new OpeningsServerClient(serverUrl);
     }
 
     /// <summary>
@@ -69,7 +89,7 @@ public class ShowOpeningTasksCommand : IExternalCommand {
         if(!discipline.IssuesOpeningTasks()) {
             error = "Дисциплина файла - " + discipline
                 + ". Навигатор показывает исходящие задания и работает в файлах WSS, ELE и HVC. "
-                + "Просмотр входящих заданий в файлах ARC и STR появится вместе с их согласованием.";
+                + "Полученные задания в файлах ARC и STR смотрят в окне согласования.";
             return false;
         }
 

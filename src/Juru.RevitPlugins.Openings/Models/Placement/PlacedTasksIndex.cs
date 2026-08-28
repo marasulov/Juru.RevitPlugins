@@ -9,14 +9,16 @@ using Juru.RevitPlugins.Openings.Models.Configs;
 namespace Juru.RevitPlugins.Openings.Models.Placement;
 
 /// <summary>
-/// Задания на отверстия, уже размещённые в файле. Нужен, чтобы повторный запуск не плодил дубли.
+/// Задания на отверстия, уже размещённые в файле. Нужен, чтобы повторный запуск не плодил дубли,
+/// и чтобы сдвинутый инженерный элемент подвигал своё существующее задание, а не оставлял сироту
+/// рядом с новым (см. <see cref="OpeningTaskPlacer.PlaceOne"/>).
 /// </summary>
 /// <remarks>
-/// Опознание идёт по точке вставки и объёму отверстия, как в <c>IsAlreadyPlaced</c> у Bim4Everyone,
-/// но с более широким допуском по точке: у них расстановка воспроизводит точку до миллиметра, а у нас
-/// габариты округляются вверх, и точка круглого отверстия зависит от округлённого габарита.
+/// Опознание по точке и объёму идёт как в <c>IsAlreadyPlaced</c> у Bim4Everyone, но с более широким
+/// допуском по точке: у них расстановка воспроизводит точку до миллиметра, а у нас габариты
+/// округляются вверх, и точка круглого отверстия зависит от округлённого габарита.
 /// Задания, размещённые вручную, считаются занятыми местами при любом размере: их авторасстановка
-/// не должна ни перекрывать, ни дублировать.
+/// не должна ни перекрывать, ни дублировать, ни двигать.
 /// </remarks>
 public class PlacedTasksIndex {
     /// <summary>
@@ -30,6 +32,7 @@ public class PlacedTasksIndex {
     private const double _volumeTolerance = 0.2;
 
     private readonly List<PlacedTask> _tasks = [];
+    private readonly Dictionary<int, PlacedTask> _byMepId = [];
     private readonly double _pointTolerance;
 
     public PlacedTasksIndex(Document doc, OpeningsConfig config) {
@@ -59,7 +62,21 @@ public class PlacedTasksIndex {
 
             bool manuallyPlaced = instance
                 .LookupParameter(config.Naming.ManuallyPlacedParam)?.AsInteger() == 1;
-            _tasks.Add(new PlacedTask(location.Point, GetVolume(instance), manuallyPlaced));
+            string description = instance
+                .LookupParameter(config.Naming.DescriptionParam)?.AsString();
+            var mepIds = OpeningSourceDescription.ParseMepElementIds(description);
+
+            var task = new PlacedTask(instance, location.Point, GetVolume(instance), manuallyPlaced);
+            _tasks.Add(task);
+
+            // Ручное задание из опознания по инженерному элементу исключается - его не должна
+            // подвинуть чужая расстановка, даже если инженерный элемент действительно тот же:
+            // человек мог осознанно поставить его в другом месте под то же пересечение.
+            if(!manuallyPlaced) {
+                foreach(int mepId in mepIds) {
+                    _byMepId.TryAdd(mepId, task);
+                }
+            }
         }
     }
 
@@ -80,10 +97,50 @@ public class PlacedTasksIndex {
     }
 
     /// <summary>
-    /// Добавляет только что размещённое задание, чтобы дубли не появились внутри одного прогона.
+    /// Ищет уже стоящее задание того же инженерного элемента - тот самый проход, что и у нового
+    /// отверстия, опознанный не по близости, а по id элемента, записанному в его описании при
+    /// выдаче. Не возвращает задания, размещённые вручную - их эта расстановка не трогает.
     /// </summary>
-    public void Add(XYZ point, double volume) {
-        _tasks.Add(new PlacedTask(point, volume, manuallyPlaced: false));
+    public FamilyInstance FindBySourceMep(IEnumerable<ElementId> mepElementIds) {
+#pragma warning disable CS0618 // IntegerValue устарел, но так же читается id в PlacedTasksIndex/OpeningSourceDescription
+        foreach(var id in mepElementIds) {
+            if(_byMepId.TryGetValue(id.IntegerValue, out var task)) {
+                return task.Instance;
+            }
+        }
+#pragma warning restore CS0618
+
+        return null;
+    }
+
+    /// <summary>
+    /// Проверяет, совпадает ли уже стоящее задание того же элемента (см. <see cref="FindBySourceMep"/>)
+    /// с новой точкой и объёмом достаточно, чтобы не двигать его - тот же допуск, что у
+    /// <see cref="AlreadyPlaced"/>.
+    /// </summary>
+    public bool MatchesExisting(FamilyInstance instance, XYZ point, double volume) {
+        var task = _tasks.FirstOrDefault(item => item.Instance.Id == instance.Id);
+        return task is not null && task.Matches(point, volume, _pointTolerance, _volumeTolerance);
+    }
+
+    /// <summary>
+    /// Убирает задание из индекса перед тем, как расстановка подвинет его на новое место -
+    /// иначе оно осталось бы числиться на старой точке и мешало бы следующим пересечениям
+    /// в этом же прогоне.
+    /// </summary>
+    public void Remove(FamilyInstance instance) {
+        _tasks.RemoveAll(task => task.Instance.Id == instance.Id);
+        foreach(var key in _byMepId.Where(pair => pair.Value.Instance.Id == instance.Id).Select(pair => pair.Key).ToList()) {
+            _byMepId.Remove(key);
+        }
+    }
+
+    /// <summary>
+    /// Добавляет только что размещённое или подвинутое задание, чтобы дубли не появились внутри
+    /// одного прогона.
+    /// </summary>
+    public void Add(FamilyInstance instance, XYZ point, double volume) {
+        _tasks.Add(new PlacedTask(instance, point, volume, manuallyPlaced: false));
     }
 
     /// <summary>
@@ -103,11 +160,14 @@ public class PlacedTasksIndex {
         private readonly double _volume;
         private readonly bool _manuallyPlaced;
 
-        public PlacedTask(XYZ point, double volume, bool manuallyPlaced) {
+        public PlacedTask(FamilyInstance instance, XYZ point, double volume, bool manuallyPlaced) {
+            Instance = instance;
             _point = point;
             _volume = volume;
             _manuallyPlaced = manuallyPlaced;
         }
+
+        public FamilyInstance Instance { get; }
 
         public bool Matches(XYZ point, double volume, double pointTolerance, double volumeTolerance) {
             if(_point.DistanceTo(point) > pointTolerance) {

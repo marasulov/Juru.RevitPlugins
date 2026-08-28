@@ -33,6 +33,9 @@ public partial class OpeningsSettingsViewModel : ObservableObject {
     private bool _showPlacingErrors;
 
     [ObservableProperty]
+    private string _serverUrl;
+
+    [ObservableProperty]
     private string _errorText;
 
     public OpeningsSettingsViewModel(OpeningsConfig config) {
@@ -53,6 +56,7 @@ public partial class OpeningsSettingsViewModel : ObservableObject {
         _unitedTaskTouchToleranceMm = config.UnitedTaskTouchToleranceMm.ToString();
         _minPassDepthMm = config.MinPassDepthMm.ToString("0.##");
         _showPlacingErrors = config.ShowPlacingErrors;
+        _serverUrl = config.ServerUrl;
 
         AcceptViewCommand = new ToolkitCommand(Accept, CanAccept);
         foreach(var category in Categories) {
@@ -75,6 +79,7 @@ public partial class OpeningsSettingsViewModel : ObservableObject {
         _config.UnitedTaskTouchToleranceMm = int.Parse(UnitedTaskTouchToleranceMm);
         _config.MinPassDepthMm = double.Parse(MinPassDepthMm);
         _config.ShowPlacingErrors = ShowPlacingErrors;
+        _config.ServerUrl = ServerUrl?.Trim() ?? string.Empty;
         _config.SaveProjectConfig();
     }
 

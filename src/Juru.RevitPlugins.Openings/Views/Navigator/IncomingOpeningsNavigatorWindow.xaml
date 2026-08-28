@@ -1,0 +1,430 @@
+<Window
+    x:Class="Juru.RevitPlugins.Openings.Views.Navigator.IncomingOpeningsNavigatorWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vms="clr-namespace:Juru.RevitPlugins.Openings.ViewModels.Navigator"
+    xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    mc:Ignorable="d"
+    Title="Согласование заданий на отверстия"
+    Width="1250"
+    Height="680"
+    MinWidth="820"
+    MinHeight="440"
+    WindowStartupLocation="CenterOwner"
+    d:DataContext="{d:DesignInstance vms:IncomingOpeningsNavigatorViewModel, IsDesignTimeCreatable=False}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary />
+                <ui:ControlsDictionary />
+                <ResourceDictionary
+                    Source="pack://application:,,,/Juru.RevitPlugins.Core;component/Resources/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Три уровня группировки, как в навигаторе Bim4Everyone: откуда пришло задание, его
+                 статус, дата выдачи - каждый со своим счётчиком и раскрытием. Порядок сортировки
+                 должен повторять порядок группировки, иначе один и тот же статус/дата разобьётся
+                 на несколько групп подряд. -->
+            <CollectionViewSource
+                x:Key="TasksView"
+                Source="{Binding Tasks}"
+                Filter="TasksView_Filter">
+                <CollectionViewSource.SortDescriptions>
+                    <scm:SortDescription
+                        PropertyName="TechnicalSortOrder" />
+                    <scm:SortDescription
+                        PropertyName="TechnicalGroupText" />
+                    <scm:SortDescription
+                        PropertyName="SenderGroupText" />
+                    <scm:SortDescription
+                        PropertyName="StatusGroupText" />
+                    <scm:SortDescription
+                        PropertyName="DateGroupText" />
+                    <scm:SortDescription
+                        PropertyName="MepSystem" />
+                </CollectionViewSource.SortDescriptions>
+                <CollectionViewSource.GroupDescriptions>
+                    <PropertyGroupDescription
+                        PropertyName="TechnicalGroupText" />
+                    <PropertyGroupDescription
+                        PropertyName="SenderGroupText" />
+                    <PropertyGroupDescription
+                        PropertyName="StatusGroupText" />
+                    <PropertyGroupDescription
+                        PropertyName="DateGroupText" />
+                </CollectionViewSource.GroupDescriptions>
+            </CollectionViewSource>
+
+            <Style
+                x:Key="Hint"
+                TargetType="TextBlock">
+                <Setter
+                    Property="Opacity"
+                    Value="0.6" />
+                <Setter
+                    Property="TextWrapping"
+                    Value="Wrap" />
+            </Style>
+
+            <BooleanToVisibilityConverter
+                x:Key="BoolToVisibility" />
+
+            <!-- Первый клик по невыделенной ячейке иначе уходит на выбор ячейки, а не на кнопку
+                 внутри неё - см. DataGridCell_PreviewMouseLeftButtonDown в code-behind. -->
+            <Style
+                TargetType="DataGridCell">
+                <EventSetter
+                    Event="PreviewMouseLeftButtonDown"
+                    Handler="DataGridCell_PreviewMouseLeftButtonDown" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid
+        Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition
+                Height="Auto" />
+            <RowDefinition
+                Height="*" />
+            <RowDefinition
+                Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel
+            Grid.Row="0"
+            Margin="0 0 0 10">
+            <ui:TextBox
+                x:Name="SearchBox"
+                DockPanel.Dock="Right"
+                Width="220"
+                VerticalAlignment="Top"
+                PlaceholderText="Поиск"
+                TextChanged="SearchBox_TextChanged" />
+            <StackPanel>
+                <TextBlock
+                    FontWeight="SemiBold"
+                    Text="{Binding Summary}" />
+                <TextBlock
+                    Style="{StaticResource Hint}"
+                    Text="Решения копятся в окне и уходят на сервер одной пачкой по кнопке &quot;Сохранить&quot;." />
+                <TextBlock
+                    Foreground="OrangeRed"
+                    Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}"
+                    Text="{Binding ErrorText}" />
+                <TextBlock
+                    FontWeight="SemiBold"
+                    Foreground="OrangeRed"
+                    TextWrapping="Wrap"
+                    Visibility="{Binding HasCoordinateWarning, Converter={StaticResource BoolToVisibility}}"
+                    Text="{Binding CoordinateWarning}" />
+            </StackPanel>
+        </DockPanel>
+
+        <Border
+            Grid.Row="1"
+            Style="{StaticResource CustomBorder}">
+            <DataGrid
+                Margin="1"
+                AutoGenerateColumns="False"
+                CanUserAddRows="False"
+                CanUserResizeColumns="True"
+                ColumnHeaderStyle="{StaticResource CustomResizableColumnHeaderStyle}"
+                CanUserDeleteRows="False"
+                EnableRowVirtualization="False"
+                EnableColumnVirtualization="False"
+                GridLinesVisibility="Horizontal"
+                HeadersVisibility="Column"
+                ItemsSource="{Binding Source={StaticResource TasksView}}"
+                SelectionMode="Single"
+                SelectionUnit="FullRow">
+
+                <DataGrid.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.ContainerStyle>
+                            <Style
+                                TargetType="GroupItem">
+                                <Setter
+                                    Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate
+                                            TargetType="GroupItem">
+                                            <Expander
+                                                IsExpanded="True"
+                                                Margin="0 4 0 0">
+                                                <Expander.Header>
+                                                    <StackPanel
+                                                        Orientation="Horizontal">
+                                                        <TextBlock
+                                                            FontWeight="SemiBold"
+                                                            Text="{Binding Name}" />
+                                                        <TextBlock
+                                                            Margin="8 0 0 0"
+                                                            Opacity="0.6"
+                                                            Text="{Binding ItemCount, StringFormat=({0})}" />
+                                                    </StackPanel>
+                                                </Expander.Header>
+                                                <ItemsPresenter />
+                                            </Expander>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </GroupStyle.ContainerStyle>
+                    </GroupStyle>
+                </DataGrid.GroupStyle>
+
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn
+                        Width="90"
+                        Header="Показать">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ui:Button
+                                    Margin="2"
+                                    Padding="8 2"
+                                    Content="Показать"
+                                    IsEnabled="{Binding CanShow}"
+                                    Click="ShowButton_Click" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Width="90"
+                        Header="Вставить">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Прорезает вырезающим семейством одно согласованное задание -
+                                     необратимое (в рамках навигатора) изменение модели, поэтому
+                                     по явному клику, а не само по себе при обновлении. -->
+                                <!-- Прорезать может только АР - КР только согласовывает
+                                     (CanCut, решение из этой сессии). Кнопка не просто выключена,
+                                     а скрыта - в файле КР её не должно быть видно вообще. -->
+                                <ui:Button
+                                    Margin="2"
+                                    Padding="8 2"
+                                    Appearance="Success"
+                                    Content="Вставить"
+                                    ToolTip="Прорезать вырезающим семейством вместо задания"
+                                    IsEnabled="{Binding CanInsert}"
+                                    Visibility="{Binding CanCut, Converter={StaticResource BoolToVisibility}}"
+                                    Click="InsertButton_Click" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Width="40"
+                        Header="Хост">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Отдельная кнопка на хост - стену/перекрытие, которое пробивает
+                                     задание - как в Bim4Everyone: одна кнопка ведёт к самому
+                                     заданию, другая, лупа, к его основе. -->
+                                <ui:Button
+                                    Margin="2"
+                                    Padding="4 2"
+                                    ToolTip="Показать хост - стену или перекрытие"
+                                    Content="&#128269;"
+                                    IsEnabled="{Binding CanShowHost}"
+                                    Click="ShowHostButton_Click" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <!-- Id задания, хост и его Id - как у Bim4Everyone: помогают свериться
+                         с моделью напрямую, без похода через "Показать". -->
+                    <DataGridTextColumn
+                        Width="60"
+                        IsReadOnly="True"
+                        Binding="{Binding ElementIdText}"
+                        Header="Id" />
+                    <DataGridTextColumn
+                        Width="150"
+                        IsReadOnly="True"
+                        Binding="{Binding HostName}"
+                        Header="Основа" />
+                    <DataGridTextColumn
+                        Width="70"
+                        IsReadOnly="True"
+                        Binding="{Binding HostElementIdText}"
+                        Header="Id основы" />
+                    <DataGridTextColumn
+                        Width="120"
+                        IsReadOnly="True"
+                        Binding="{Binding OpeningTypeText}"
+                        Header="Тип" />
+                    <DataGridTextColumn
+                        Width="100"
+                        IsReadOnly="True"
+                        Binding="{Binding SizeText}"
+                        Header="Габариты, мм" />
+                    <DataGridTextColumn
+                        Width="90"
+                        IsReadOnly="True"
+                        Binding="{Binding LevelName}"
+                        Header="Уровень" />
+                    <DataGridTextColumn
+                        Width="110"
+                        IsReadOnly="True"
+                        Binding="{Binding MepSystem}"
+                        Header="Система" />
+                    <DataGridTextColumn
+                        Width="80"
+                        IsReadOnly="True"
+                        Binding="{Binding SenderDiscipline}"
+                        Header="Откуда" />
+                    <DataGridTextColumn
+                        Width="130"
+                        IsReadOnly="True"
+                        Binding="{Binding SentByDisplayName}"
+                        Header="Кто выдал" />
+                    <DataGridTextColumn
+                        Width="120"
+                        IsReadOnly="True"
+                        Binding="{Binding SentAtText}"
+                        Header="Когда" />
+                    <DataGridTextColumn
+                        Width="150"
+                        IsReadOnly="True"
+                        Binding="{Binding OtherDisciplineText}"
+                        Header="Другая дисциплина" />
+                    <!-- Пересчитано локально по конструкциям файла АР/КР, плюс "объединённое" -
+                         факт с ВИС-стороны, переданный флагом. Не решение согласующего. -->
+                    <DataGridTextColumn
+                        Width="140"
+                        IsReadOnly="True"
+                        Binding="{Binding TechnicalStatusText}"
+                        Header="Конструкция">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style
+                                TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger
+                                        Binding="{Binding TechnicalStatusNeedsAttention}"
+                                        Value="True">
+                                        <Setter
+                                            Property="Foreground"
+                                            Value="OrangeRed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <DataGridTemplateColumn
+                        Width="160"
+                        Header="Моё решение">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel
+                                    Orientation="Horizontal">
+                                    <ui:Button
+                                        Margin="1"
+                                        Padding="6 2"
+                                        Content="✓"
+                                        ToolTip="Согласовать"
+                                        IsEnabled="{Binding CanApprove}"
+                                        Click="ApproveButton_Click" />
+                                    <ui:Button
+                                        Margin="1"
+                                        Padding="6 2"
+                                        Content="✕"
+                                        ToolTip="Отклонить - нужен комментарий"
+                                        IsEnabled="{Binding CanReject}"
+                                        Click="RejectButton_Click" />
+                                    <!-- Какое решение сейчас выбрано, показывает подпись, а не цвет
+                                         кнопок: динамическая перекраска ui:Button через триггеры стиля
+                                         не переживала смену выделения строки в теме WPF-UI. -->
+                                    <TextBlock
+                                        Margin="6 0 0 0"
+                                        VerticalAlignment="Center"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding OwnStatusText}">
+                                        <TextBlock.Style>
+                                            <Style
+                                                TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger
+                                                        Binding="{Binding IsApproved}"
+                                                        Value="True">
+                                                        <Setter
+                                                            Property="Foreground"
+                                                            Value="Green" />
+                                                    </DataTrigger>
+                                                    <DataTrigger
+                                                        Binding="{Binding IsRejected}"
+                                                        Value="True">
+                                                        <Setter
+                                                            Property="Foreground"
+                                                            Value="Red" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock
+                                        Margin="4 0 0 0"
+                                        VerticalAlignment="Center"
+                                        Foreground="OrangeRed"
+                                        Text="*"
+                                        Visibility="{Binding IsDirty, Converter={StaticResource BoolToVisibility}}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn
+                        Width="200"
+                        IsReadOnly="False"
+                        Binding="{Binding Comment, UpdateSourceTrigger=PropertyChanged}"
+                        Header="Комментарий (обязателен для отклонения)" />
+                    <DataGridTextColumn
+                        Width="*"
+                        IsReadOnly="True"
+                        Binding="{Binding Description}"
+                        Header="Описание" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <DockPanel
+            Grid.Row="2"
+            Margin="0 12 0 0">
+            <TextBlock
+                Style="{StaticResource Hint}"
+                VerticalAlignment="Center"
+                Text="Звёздочка - решение изменено, но ещё не отправлено." />
+
+            <StackPanel
+                HorizontalAlignment="Right"
+                Orientation="Horizontal">
+                <ui:Button
+                    Width="180"
+                    Margin="6 0"
+                    Appearance="Success"
+                    Content="Вставить все согласованные"
+                    ToolTip="Прорезать вырезающим семейством все согласованные задания, которые ещё не прорезаны"
+                    Visibility="{Binding CanCut, Converter={StaticResource BoolToVisibility}}"
+                    Command="{Binding InsertAllApprovedCommand}" />
+                <ui:Button
+                    Width="120"
+                    Margin="6 0"
+                    Content="Обновить"
+                    Command="{Binding RefreshCommand}" />
+                <ui:Button
+                    Width="120"
+                    Margin="6 0"
+                    Appearance="Info"
+                    Content="Сохранить"
+                    Command="{Binding SaveCommand}" />
+                <ui:Button
+                    Width="120"
+                    Margin="6 0"
+                    Content="Закрыть"
+                    Click="ButtonClose_Click" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>
