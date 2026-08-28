@@ -90,6 +90,35 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
     public bool CanInsert => CanCut && !IsCut && Task.Status == "approved";
 
     /// <summary>
+    /// Почему "Вставить" сейчас недоступна - подсказка на самой кнопке.
+    /// </summary>
+    /// <remarks>
+    /// Кнопка выключена чаще, чем этого ждёшь: общий статус задания считает сервер из решений обеих
+    /// дисциплин, поэтому своё "согласовано" включает её не сразу, а после отправки решения
+    /// и перезагрузки. Выключенная кнопка без объяснения выглядит как поломка - это и был первый
+    /// вопрос при обкатке.
+    /// </remarks>
+    public string InsertHint {
+        get {
+            if(IsCut) {
+                return "Уже прорезано";
+            }
+
+            if(Task.Status == "approved") {
+                return "Прорезать вырезающим семейством вместо задания";
+            }
+
+            if(IsDirty) {
+                return "Решение ещё не отправлено: нажмите \"Сохранить\" - общий статус задания "
+                    + "считает сервер из решений обеих дисциплин";
+            }
+
+            return "Прорезают только задания, согласованные обеими дисциплинами. Сейчас: "
+                + GetOverallStatusText(Task.Status);
+        }
+    }
+
+    /// <summary>
     /// Прорезать может и АР, и КР (см. <see cref="IncomingOpeningsNavigatorViewModel.CanCut"/>).
     /// </summary>
     public bool CanCut { get; }
@@ -227,12 +256,14 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
         OnPropertyChanged(nameof(IsApproved));
         OnPropertyChanged(nameof(IsRejected));
         OnPropertyChanged(nameof(OwnStatusText));
+        OnPropertyChanged(nameof(InsertHint));
     }
 
     partial void OnCommentChanged(string value) {
         OnPropertyChanged(nameof(IsDirty));
         OnPropertyChanged(nameof(CanReject));
         OnPropertyChanged(nameof(CanApprove));
+        OnPropertyChanged(nameof(InsertHint));
     }
 
     private static string GetSizeText(OpeningTaskViewDto task) {

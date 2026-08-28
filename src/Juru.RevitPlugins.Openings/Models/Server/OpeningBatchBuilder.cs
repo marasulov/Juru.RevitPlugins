@@ -64,6 +64,7 @@ public class OpeningBatchBuilder {
             SentAt = DateTime.UtcNow,
             WipFilePath = _doc.PathName,
             Scope = scope,
+            Approvers = _config.GetApproverDisciplines().ToList(),
             Items = items,
             CoordinateFingerprint = CoordinateFingerprintReader.Get(_doc)
         };
@@ -75,7 +76,7 @@ public class OpeningBatchBuilder {
         var size = task.GetSize();
 
         return new OpeningItemDto {
-            TaskKey = task.UniqueId,
+            TaskKey = task.TaskKey,
             OpeningType = openingType,
             Location = ToMeters(relative),
             WidthMm = task.IsRound ? null : ToMillimeters(size.Width),

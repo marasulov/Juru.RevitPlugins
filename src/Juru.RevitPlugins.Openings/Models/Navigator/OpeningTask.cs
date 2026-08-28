@@ -38,9 +38,25 @@ public class OpeningTask {
     public ElementId Id => Instance.Id;
 
     /// <summary>
-    /// Неизменяемый идентификатор задания. Им же задание опознаётся на сервере согласования.
+    /// Неизменяемый идентификатор экземпляра в этом файле.
     /// </summary>
     public string UniqueId => Instance.UniqueId;
+
+    /// <summary>
+    /// Ключ, под которым задание опознаётся на сервере согласования (<c>taskKey</c>
+    /// в <c>docs/OpeningsApi.md</c>).
+    /// </summary>
+    /// <remarks>
+    /// Записанный в параметре ключ важнее <c>UniqueId</c>: он переживает удаление экземпляра
+    /// и повторную расстановку, а <c>UniqueId</c> нет - см. <c>TaskKeyReconciler</c>. У задания,
+    /// которое сервер ещё не видел, параметр пуст, и ключом становится <c>UniqueId</c>.
+    /// </remarks>
+    public string TaskKey {
+        get {
+            string? stored = Instance.LookupParameter(_naming.TaskKeyParam)?.AsString();
+            return string.IsNullOrWhiteSpace(stored) ? UniqueId : stored!;
+        }
+    }
 
     /// <summary>
     /// Тип отверстия, либо <c>null</c> у нестандартного семейства, размещаемого вручную.

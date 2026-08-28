@@ -351,6 +351,32 @@
             <StackPanel
                 HorizontalAlignment="Right"
                 Orientation="Horizontal">
+                <!-- С кем согласовывать - решает инженер: на объекте, где КР не работает в Revit,
+                     ожидание его решения означало бы, что не прорежут ни одного отверстия.
+                     Отмеченное уходит в пачке (approvers), и сервер считает общий статус
+                     только по этим дисциплинам. -->
+                <TextBlock
+                    Margin="0 0 8 0"
+                    VerticalAlignment="Center"
+                    Text="Согласовать с:" />
+                <CheckBox
+                    Margin="0 0 8 0"
+                    VerticalAlignment="Center"
+                    Content="АР"
+                    IsChecked="{Binding ApproveWithArc}" />
+                <CheckBox
+                    Margin="0 0 12 0"
+                    VerticalAlignment="Center"
+                    Content="КР"
+                    IsChecked="{Binding ApproveWithStr}" />
+                <ui:Button
+                    Width="180"
+                    Margin="6 0"
+                    Appearance="Success"
+                    Content="Отправить на сервер"
+                    ToolTip="Отправить все задания этого файла на согласование отмеченным дисциплинам"
+                    IsEnabled="{Binding CanSend}"
+                    Command="{Binding SendCommand}" />
                 <ui:Button
                     Width="120"
                     Margin="6 0"

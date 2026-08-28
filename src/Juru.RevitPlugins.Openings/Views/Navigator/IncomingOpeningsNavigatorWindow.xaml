@@ -1,4 +1,4 @@
-<Window
+﻿<Window
     x:Class="Juru.RevitPlugins.Openings.Views.Navigator.IncomingOpeningsNavigatorWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -179,61 +179,6 @@
                 </DataGrid.GroupStyle>
 
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn
-                        Width="90"
-                        Header="Показать">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <ui:Button
-                                    Margin="2"
-                                    Padding="8 2"
-                                    Content="Показать"
-                                    IsEnabled="{Binding CanShow}"
-                                    Click="ShowButton_Click" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn
-                        Width="90"
-                        Header="Вставить">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <!-- Прорезает вырезающим семейством одно согласованное задание -
-                                     необратимое (в рамках навигатора) изменение модели, поэтому
-                                     по явному клику, а не само по себе при обновлении. -->
-                                <!-- Прорезать может только АР - КР только согласовывает
-                                     (CanCut, решение из этой сессии). Кнопка не просто выключена,
-                                     а скрыта - в файле КР её не должно быть видно вообще. -->
-                                <ui:Button
-                                    Margin="2"
-                                    Padding="8 2"
-                                    Appearance="Success"
-                                    Content="Вставить"
-                                    ToolTip="Прорезать вырезающим семейством вместо задания"
-                                    IsEnabled="{Binding CanInsert}"
-                                    Visibility="{Binding CanCut, Converter={StaticResource BoolToVisibility}}"
-                                    Click="InsertButton_Click" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn
-                        Width="40"
-                        Header="Хост">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <!-- Отдельная кнопка на хост - стену/перекрытие, которое пробивает
-                                     задание - как в Bim4Everyone: одна кнопка ведёт к самому
-                                     заданию, другая, лупа, к его основе. -->
-                                <ui:Button
-                                    Margin="2"
-                                    Padding="4 2"
-                                    ToolTip="Показать хост - стену или перекрытие"
-                                    Content="&#128269;"
-                                    IsEnabled="{Binding CanShowHost}"
-                                    Click="ShowHostButton_Click" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
                     <!-- Id задания, хост и его Id - как у Bim4Everyone: помогают свериться
                          с моделью напрямую, без похода через "Показать". -->
                     <DataGridTextColumn
@@ -372,6 +317,61 @@
                                         Text="*"
                                         Visibility="{Binding IsDirty, Converter={StaticResource BoolToVisibility}}" />
                                 </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Width="90"
+                        Header="Показать">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ui:Button
+                                    Margin="2"
+                                    Padding="8 2"
+                                    Content="Показать"
+                                    IsEnabled="{Binding CanShow}"
+                                    Click="ShowButton_Click" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Width="90"
+                        Header="Вставить">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Прорезает вырезающим семейством одно согласованное задание -
+                                     необратимое (в рамках навигатора) изменение модели, поэтому
+                                     по явному клику, а не само по себе при обновлении. -->
+                                <!-- Прорезать может только АР - КР только согласовывает
+                                     (CanCut, решение из этой сессии). Кнопка не просто выключена,
+                                     а скрыта - в файле КР её не должно быть видно вообще. -->
+                                <ui:Button
+                                    Margin="2"
+                                    Padding="8 2"
+                                    Appearance="Success"
+                                    Content="Вставить"
+                                    ToolTip="{Binding InsertHint}"
+                                    IsEnabled="{Binding CanInsert}"
+                                    Visibility="{Binding CanCut, Converter={StaticResource BoolToVisibility}}"
+                                    Click="InsertButton_Click" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Width="40"
+                        Header="Хост">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Отдельная кнопка на хост - стену/перекрытие, которое пробивает
+                                     задание - как в Bim4Everyone: одна кнопка ведёт к самому
+                                     заданию, другая, лупа, к его основе. -->
+                                <ui:Button
+                                    Margin="2"
+                                    Padding="4 2"
+                                    ToolTip="Показать хост - стену или перекрытие"
+                                    Content="&#128269;"
+                                    IsEnabled="{Binding CanShowHost}"
+                                    Click="ShowHostButton_Click" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

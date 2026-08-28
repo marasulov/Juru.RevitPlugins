@@ -23,6 +23,13 @@ public class OpeningBatchDto {
     /// </summary>
     public string Scope { get; set; }
 
+    /// <summary>
+    /// Дисциплины, чьё согласование требуется по этим заданиям: <c>ARC</c>, <c>STR</c> или обе.
+    /// Выбирает инженер при отправке, и от этого зависит общий статус задания на сервере -
+    /// см. "С кем согласовывать" в <c>docs/OpeningsApi.md</c>.
+    /// </summary>
+    public List<Discipline> Approvers { get; set; } = [];
+
     public List<OpeningItemDto> Items { get; set; } = [];
 
     /// <summary>

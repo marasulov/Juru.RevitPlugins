@@ -196,6 +196,20 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         }
 
         BuildRows(doc, [], reverted: 0, placeResult.Placed, placeResult.MissingFamilies);
+
+        // Прорезание молча ничего не делает, когда среди заданий нет согласованных обеими
+        // дисциплинами: сводка в шапке об этом не говорит, а пользователь видит нажатую кнопку
+        // и неизменившуюся модель. Поэтому причина пишется прямо в строку ошибки.
+        if(placeResult.Placed > 0) {
+            ErrorText = string.Empty;
+        } else if(placeResult.MissingFamilies.Count > 0) {
+            ErrorText = "Не прорезано: не загружены вырезающие семейства "
+                + string.Join(", ", placeResult.MissingFamilies) + ".";
+        } else {
+            ErrorText = "Прорезать нечего: среди этих заданий нет согласованных обеими дисциплинами "
+                + "и ещё не прорезанных. Своё решение отправьте кнопкой \"Сохранить\" - общий статус "
+                + "задания считает сервер.";
+        }
     }
 
     /// <summary>
@@ -414,5 +428,13 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
             : "Не отправлено: " + string.Join("; ", result.Failed.Select(failure => $"{failure.TaskKey} - {failure.Message}"));
 
         SaveCommand.NotifyCanExecuteChanged();
+
+        // Общий статус задания - дело сервера: он складывает решения АР и КР, и до перезагрузки
+        // согласованное только что задание всё ещё выглядит как ожидающее решения, а "Вставить"
+        // остаётся выключенной. Без этой перезагрузки после сохранения приходилось нажимать
+        // "Обновить" руками, и выглядело это как неработающая кнопка.
+        if(result.Failed.Count < dirty.Count) {
+            _runner.Run(Reload);
+        }
     }
 }

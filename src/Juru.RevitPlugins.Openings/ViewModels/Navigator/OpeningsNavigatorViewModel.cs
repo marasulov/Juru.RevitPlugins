@@ -53,6 +53,29 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
     [ObservableProperty]
     private bool _decisionsUnknown;
 
+    /// <summary>
+    /// Согласовывать с АР. Вместе с <see cref="ApproveWithStr"/> решает, чьё согласование нужно
+    /// по отправляемым заданиям: на объекте, где КР не работает в Revit, ждать его решения значит
+    /// не прорезать ни одного отверстия. Выбор запоминается в настройках при отправке.
+    /// </summary>
+    [ObservableProperty]
+    private bool _approveWithArc;
+
+    /// <summary>
+    /// Согласовывать с КР - см. <see cref="ApproveWithArc"/>.
+    /// </summary>
+    [ObservableProperty]
+    private bool _approveWithStr;
+
+    /// <summary>
+    /// Отправлять можно, когда есть кому согласовывать и есть куда отправлять.
+    /// </summary>
+    public bool CanSend => (ApproveWithArc || ApproveWithStr) && _client is not null && _fileInfo is not null;
+
+    partial void OnApproveWithArcChanged(bool value) => OnPropertyChanged(nameof(CanSend));
+
+    partial void OnApproveWithStrChanged(bool value) => OnPropertyChanged(nameof(CanSend));
+
     /// <param name="fileInfo">
     /// Разобранное имя файла - им адресуются задания на сервере. <c>null</c>, если имя не по
     /// стандарту: навигатор тогда работает без решений, состояния считаются как и раньше.
@@ -75,6 +98,11 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
         // "Показать"/"Хост" в шаблонных колонках вызываются напрямую из code-behind по Click, см. окно.
         ShowCommand = new ShowTaskCommand(Show, task => task is not null);
         RefreshCommand = new ToolkitCommand(Refresh);
+        SendCommand = new ToolkitCommand(Send, () => CanSend);
+
+        var approvers = _config.GetApproverDisciplines();
+        ApproveWithArc = approvers.Contains(Discipline.ARC);
+        ApproveWithStr = approvers.Contains(Discipline.STR);
     }
 
     /// <summary>
@@ -96,6 +124,12 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
     /// Пересчитывает состояния заново.
     /// </summary>
     public IRelayCommand RefreshCommand { get; }
+
+    /// <summary>
+    /// Отправляет задания на сервер согласования - то же, что кнопка ленты, но здесь рядом видно,
+    /// что именно уходит и с кем это будут согласовывать.
+    /// </summary>
+    public IRelayCommand SendCommand { get; }
 
     /// <summary>
     /// Перечитывает задания и пересчитывает их состояния. Вызывается только в контексте Revit API.
@@ -136,7 +170,7 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
 
         Tasks.Clear();
         foreach(var task in updated) {
-            decisions.TryGetValue(task.UniqueId, out var decision);
+            decisions.TryGetValue(task.TaskKey, out var decision);
             Tasks.Add(new OpeningTaskViewModel(task, decision, serverChecked));
         }
 
@@ -146,7 +180,7 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
 
     /// <summary>
     /// Забирает с сервера решения по заданиям своей дисциплины и раскладывает их по ключу задания -
-    /// <c>UniqueId</c> экземпляра, тот же, под которым задание уходило на сервер.
+    /// тому же, под которым задание уходило на сервер (<c>OpeningTask.TaskKey</c>).
     /// </summary>
     /// <remarks>
     /// Недоступный сервер навигатор не останавливает: техническое состояние считается по геометрии
@@ -391,5 +425,60 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
 
     private void Refresh() {
         _runner.Run(Reload);
+    }
+
+    /// <summary>
+    /// Отправляет задания на сервер и сразу перечитывает решения: после отправки все задания
+    /// в статусе "ожидает решения", и колонки решений должны это показывать, а не прежнее состояние.
+    /// </summary>
+    private void Send() {
+        if(!CanSend) {
+            return;
+        }
+
+        _config.Approvers = GetSelectedApprovers();
+        _config.SaveProjectConfig();
+
+        _runner.Run(uiApplication => {
+            var doc = uiApplication.ActiveUIDocument.Document;
+            var sender = new OpeningTasksSender(doc, _config, _client!);
+            if(sender.NeedsCoordinateWarning && !ConfirmWithoutSharedCoordinates()) {
+                return;
+            }
+
+            try {
+                var outcome = sender.Send(_fileInfo!);
+                TaskDialog.Show("Отправка заданий", outcome.Report);
+            } catch(Exception exception) when(exception is InvalidOperationException or TimeoutException) {
+                ServerText = exception.Message;
+                return;
+            }
+
+            Reload(uiApplication);
+        });
+    }
+
+    private List<Discipline> GetSelectedApprovers() {
+        var approvers = new List<Discipline>();
+        if(ApproveWithArc) {
+            approvers.Add(Discipline.ARC);
+        }
+
+        if(ApproveWithStr) {
+            approvers.Add(Discipline.STR);
+        }
+
+        return approvers;
+    }
+
+    private static bool ConfirmWithoutSharedCoordinates() {
+        var confirm = TaskDialog.Show("Отправка заданий",
+            "В файле не настроены общие координаты (Acquire Coordinates): "
+            + "точка съёмки и базовая точка проекта совпадают с внутренними координатами.\n\n"
+            + "Задания уйдут на сервер относительно базовой точки проекта - если общие координаты "
+            + "не согласованы с файлом АР/КР, они встанут там со смещением.\n\n"
+            + "Отправить всё равно?",
+            TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No, TaskDialogResult.No);
+        return confirm == TaskDialogResult.Yes;
     }
 }
