@@ -85,6 +85,11 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         RefreshCommand = new ToolkitCommand(Refresh);
         SaveCommand = new ToolkitCommand(Save, () => Tasks.Any(task => task.IsDirty));
         InsertAllApprovedCommand = new ToolkitCommand(InsertAllApproved);
+
+        // Строки пересобираются при каждой загрузке и прорезании, а с ними меняется и ответ на
+        // вопрос "есть ли что отправлять". Без этого "Сохранить" оставалась в том состоянии,
+        // в котором её застала прошлая пересборка.
+        Tasks.CollectionChanged += (_, _) => SaveCommand.NotifyCanExecuteChanged();
     }
 
     public ObservableCollection<IncomingOpeningTaskViewModel> Tasks { get; }
@@ -179,7 +184,7 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
             return;
         }
 
-        _runner.Run(uiApplication => InsertApproved(uiApplication, _lastServerTasks));
+        _runner.Run(uiApplication => InsertApproved(uiApplication, taskKeys: null));
     }
 
     /// <summary>
@@ -191,10 +196,43 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
             return;
         }
 
-        _runner.Run(uiApplication => InsertApproved(uiApplication, [task.Task]));
+        string taskKey = task.TaskKey;
+        _runner.Run(uiApplication => InsertApproved(uiApplication, [taskKey]));
     }
 
-    private void InsertApproved(UIApplication uiApplication, IReadOnlyCollection<OpeningTaskViewDto> tasks) {
+    /// <summary>
+    /// Прорезает согласованные задания: сначала отправляет решения на сервер и перечитывает
+    /// статусы, потом заменяет семейства.
+    /// </summary>
+    /// <param name="taskKeys">
+    /// Ключи заданий, которые прорезаем, либо <c>null</c> - все загруженные.
+    /// </param>
+    /// <remarks>
+    /// Порядок именно такой, и он важен. Общий статус задания считает сервер из решений АР и КР,
+    /// и своё "согласовано", пока оно не отправлено и не прочитано обратно, для прорезания не
+    /// считается: кнопка нажималась, а модель не менялась. Поэтому отправка решений - то же самое,
+    /// что кнопка "Сохранить", - и перезагрузка идут здесь сами, до замены семейств. Работает это
+    /// и по ключам, а не по объектам заданий: после перезагрузки объекты уже другие.
+    /// </remarks>
+    private void InsertApproved(UIApplication uiApplication, IReadOnlyCollection<string> taskKeys) {
+        var (_, sendError) = SendDecisions();
+        if(sendError is not null) {
+            // Прорезать по статусам, которых сервер не знает, нельзя: это и есть та самая
+            // рассинхронизация, ради которой решения отправляются первыми.
+            ErrorText = sendError;
+            return;
+        }
+
+        // Свежие статусы - и заодно заново поставленные задания и убранные отклонённые отверстия.
+        Reload(uiApplication);
+        if(HasError) {
+            return;
+        }
+
+        var tasks = _lastServerTasks
+            .Where(task => taskKeys is null || taskKeys.Contains(task.TaskKey))
+            .ToList();
+
         var doc = uiApplication.ActiveUIDocument.Document;
         var placeResult = new RealOpeningReplacer(doc, _config)
             .PlaceApproved(tasks, _lastPlacedElements);
@@ -274,8 +312,8 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         }
 
         return $"Ждут решения второй дисциплины или отклонены: {result.SkippedNotApproved}. "
-            + "Прорезают только задания, согласованные и ARC, и STR; общий статус считает сервер, "
-            + "поэтому своё решение сначала отправьте кнопкой \"Сохранить\", а потом обновите окно.";
+            + "Прорезают только задания, согласованные и ARC, и STR; общий статус считает сервер. "
+            + "Свои решения уже отправлены и статусы перечитаны - значит, дело за второй дисциплиной.";
     }
 
     /// <summary>
@@ -460,9 +498,29 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
     }
 
     private void Save() {
+        var (sent, error) = SendDecisions();
+        ErrorText = error ?? string.Empty;
+
+        // Общий статус задания - дело сервера: он складывает решения АР и КР, и до перезагрузки
+        // согласованное только что задание всё ещё выглядит как ожидающее решения, а "Вставить"
+        // остаётся выключенной. Без этой перезагрузки после сохранения приходилось нажимать
+        // "Обновить" руками, и выглядело это как неработающая кнопка.
+        if(sent > 0) {
+            _runner.Run(Reload);
+        }
+    }
+
+    /// <summary>
+    /// Отправляет отмеченные в окне решения на сервер одной пачкой.
+    /// </summary>
+    /// <returns>
+    /// Сколько решений ушло и что не удалось; причина <c>null</c> значит, что ушло всё либо
+    /// отправлять было нечего.
+    /// </returns>
+    private (int Sent, string Error) SendDecisions() {
         var dirty = Tasks.Where(task => task.IsDirty).ToList();
         if(dirty.Count == 0) {
-            return;
+            return (0, null);
         }
 
         var request = new OpeningStatusUpdateDto {
@@ -481,8 +539,7 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         try {
             result = Task.Run(() => _client.UpdateOpeningStatusesAsync(request)).GetAwaiter().GetResult();
         } catch(Exception exception) when(exception is InvalidOperationException or TimeoutException) {
-            ErrorText = exception.Message;
-            return;
+            return (0, exception.Message);
         }
 
         var failedKeys = new HashSet<string>(result.Failed.Select(failure => failure.TaskKey));
@@ -490,18 +547,12 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
             task.MarkSaved();
         }
 
-        ErrorText = result.Failed.Count == 0
-            ? string.Empty
-            : "Не отправлено: " + string.Join("; ", result.Failed.Select(failure => $"{failure.TaskKey} - {failure.Message}"));
-
         SaveCommand.NotifyCanExecuteChanged();
 
-        // Общий статус задания - дело сервера: он складывает решения АР и КР, и до перезагрузки
-        // согласованное только что задание всё ещё выглядит как ожидающее решения, а "Вставить"
-        // остаётся выключенной. Без этой перезагрузки после сохранения приходилось нажимать
-        // "Обновить" руками, и выглядело это как неработающая кнопка.
-        if(result.Failed.Count < dirty.Count) {
-            _runner.Run(Reload);
-        }
+        string error = result.Failed.Count == 0
+            ? null
+            : "Не отправлено: " + string.Join("; ", result.Failed.Select(failure => $"{failure.TaskKey} - {failure.Message}"));
+
+        return (dirty.Count - result.Failed.Count, error);
     }
 }
