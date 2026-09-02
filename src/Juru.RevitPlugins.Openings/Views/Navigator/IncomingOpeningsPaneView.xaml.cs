@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -31,11 +32,39 @@ public partial class IncomingOpeningsPaneView : UserControl {
     public IncomingOpeningsPaneView() {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        BuildColumnToggles();
+    }
+
+    /// <summary>
+    /// Собирает флажки показа колонок по самому гриду.
+    /// </summary>
+    /// <remarks>
+    /// По гриду, а не отдельным списком в XAML: второй перечень колонок пришлось бы править вместе
+    /// с первым, и он бы отстал от него при первой же новой колонке.
+    /// </remarks>
+    private void BuildColumnToggles() {
+        var style = TryFindResource("DefaultCheckBoxStyle") as Style;
+
+        foreach(var column in TasksGrid.Columns) {
+            var toggle = new CheckBox {
+                Content = column.Header?.ToString(),
+                IsChecked = column.Visibility == System.Windows.Visibility.Visible,
+                Margin = new Thickness(0, 0, 10, 0)
+            };
+            if(style is not null) {
+                toggle.Style = style;
+            }
+
+            var target = column;
+            toggle.Checked += (_, _) => target.Visibility = System.Windows.Visibility.Visible;
+            toggle.Unchecked += (_, _) => target.Visibility = System.Windows.Visibility.Collapsed;
+            ColumnsPanel.Children.Add(toggle);
+        }
     }
 
     private IncomingOpeningsPaneViewModel ViewModel => DataContext as IncomingOpeningsPaneViewModel;
 
-    private void OnDataContextChanged(object sender, System.Windows.DependencyPropertyChangedEventArgs e) {
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e) {
         if(ViewModel is not { } viewModel) {
             _tasksView = null;
             TasksGrid.ItemsSource = null;
@@ -63,10 +92,39 @@ public partial class IncomingOpeningsPaneView : UserControl {
     }
 
     private void TasksView_Filter(object sender, FilterEventArgs e) {
+        if(e.Item is not IncomingOpeningTaskViewModel row) {
+            e.Accepted = true;
+            return;
+        }
+
+        e.Accepted = MatchesSearch(row) && MatchesStatus(row);
+    }
+
+    private bool MatchesSearch(IncomingOpeningTaskViewModel row) {
         string search = SearchBox.Text;
-        e.Accepted = string.IsNullOrWhiteSpace(search)
-            || e.Item is not IncomingOpeningTaskViewModel row
+        return string.IsNullOrWhiteSpace(search)
             || row.SearchIndex.Contains(search, StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    /// <summary>
+    /// Фильтр по своему решению: принятое решение видно в колонке "Моё решение", а не в общем
+    /// статусе задания, который считает сервер из решений обеих дисциплин.
+    /// </summary>
+    private bool MatchesStatus(IncomingOpeningTaskViewModel row) {
+        if(row.IsApproved) {
+            return ShowApprovedBox.IsChecked == true;
+        }
+
+        if(row.IsRejected) {
+            return ShowRejectedBox.IsChecked == true;
+        }
+
+        return ShowPendingBox.IsChecked == true;
+    }
+
+    private void StatusFilter_Changed(object sender, RoutedEventArgs e) {
+        _tasksView?.View?.Refresh();
+        UpdatePosition();
     }
 
     /// <summary>
@@ -89,11 +147,11 @@ public partial class IncomingOpeningsPaneView : UserControl {
         }
     }
 
-    private void PreviousButton_Click(object sender, System.Windows.RoutedEventArgs e) {
+    private void PreviousButton_Click(object sender, RoutedEventArgs e) {
         Move(forward: false);
     }
 
-    private void NextButton_Click(object sender, System.Windows.RoutedEventArgs e) {
+    private void NextButton_Click(object sender, RoutedEventArgs e) {
         Move(forward: true);
     }
 
@@ -101,7 +159,7 @@ public partial class IncomingOpeningsPaneView : UserControl {
     /// Кнопка "Согласовать": решение принимает модель представления, переход к следующему заданию -
     /// вью, потому что порядок задаёт грид.
     /// </summary>
-    private void ApproveButton_Click(object sender, System.Windows.RoutedEventArgs e) {
+    private void ApproveButton_Click(object sender, RoutedEventArgs e) {
         if(ViewModel?.ApproveSelected() == true) {
             Move(forward: true);
         }
@@ -111,7 +169,7 @@ public partial class IncomingOpeningsPaneView : UserControl {
     /// Кнопка "Отклонить": первое нажатие по заданию без причины открывает поле и ставит в него
     /// курсор, второе - принимает решение и переходит к следующему заданию.
     /// </summary>
-    private void RejectButton_Click(object sender, System.Windows.RoutedEventArgs e) {
+    private void RejectButton_Click(object sender, RoutedEventArgs e) {
         var viewModel = ViewModel;
         if(viewModel is null) {
             return;

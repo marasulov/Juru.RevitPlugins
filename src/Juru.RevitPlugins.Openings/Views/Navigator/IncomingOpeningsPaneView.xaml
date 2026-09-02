@@ -75,6 +75,51 @@
                 Margin="0 6 0 0"
                 PlaceholderText="Поиск"
                 TextChanged="SearchBox_TextChanged" />
+
+            <!-- Фильтр по своему решению, а не по общему статусу задания: инженер идёт по тем,
+                 где решение ещё за ним, а согласованные и отклонённые убирает с глаз. -->
+            <WrapPanel
+                Margin="0 6 0 0">
+                <TextBlock
+                    Margin="0 0 8 0"
+                    VerticalAlignment="Center"
+                    Style="{StaticResource Hint}"
+                    Text="Показывать:" />
+                <CheckBox
+                    x:Name="ShowPendingBox"
+                    Margin="0 0 10 0"
+                    Content="Ожидают решения"
+                    IsChecked="True"
+                    ToolTip="Задания, по которым я ещё не решил"
+                    Checked="StatusFilter_Changed"
+                    Unchecked="StatusFilter_Changed" />
+                <CheckBox
+                    x:Name="ShowApprovedBox"
+                    Margin="0 0 10 0"
+                    Content="Согласованные"
+                    IsChecked="True"
+                    ToolTip="Задания, которые я согласовал"
+                    Checked="StatusFilter_Changed"
+                    Unchecked="StatusFilter_Changed" />
+                <CheckBox
+                    x:Name="ShowRejectedBox"
+                    Content="Отклонённые"
+                    IsChecked="True"
+                    ToolTip="Задания, которые я отклонил"
+                    Checked="StatusFilter_Changed"
+                    Unchecked="StatusFilter_Changed" />
+            </WrapPanel>
+
+            <!-- Колонки прячутся по одной: в закреплённой панели ширины мало, и какие из них
+                 нужны, зависит от того, что сейчас разбирают. Список собирается по самому гриду -
+                 см. code-behind, чтобы не заводить второй перечень колонок. -->
+            <Expander
+                Margin="0 6 0 0"
+                Header="Колонки">
+                <WrapPanel
+                    x:Name="ColumnsPanel"
+                    Margin="0 4 0 0" />
+            </Expander>
         </StackPanel>
 
         <Border
@@ -183,13 +228,10 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTextColumn
-                        Width="150"
+                        Width="*"
+                        MinWidth="150"
                         Binding="{Binding Comment}"
                         Header="Причина отклонения" />
-                    <DataGridTextColumn
-                        Width="*"
-                        Binding="{Binding Description}"
-                        Header="Описание" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
