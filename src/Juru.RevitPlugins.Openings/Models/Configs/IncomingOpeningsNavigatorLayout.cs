@@ -9,17 +9,17 @@ using Juru.RevitPlugins.Core.Profiles;
 namespace Juru.RevitPlugins.Openings.Models.Configs;
 
 /// <summary>
-/// Что пользователь настроил под себя в панели согласования: какие колонки скрыты и какие решения
+/// Что пользователь настроил под себя в окне согласования: какие колонки скрыты и какие решения
 /// показывать.
 /// </summary>
 /// <remarks>
 /// Отдельный файл в профиле пользователя, а не поле в <see cref="OpeningsConfig"/>: тот раскатывает
-/// BIM-менеджер на всех, а ширина панели и нужные колонки - дело того, кто за ней сидит. Общего
+/// BIM-менеджер на всех, а нужные колонки и фильтр - дело того, кто согласовывает. Общего
 /// варианта у этих настроек нет, поэтому и чтения из сетевого профиля здесь нет.
 /// </remarks>
-public class IncomingOpeningsPaneLayout {
+public class IncomingOpeningsNavigatorLayout {
     private const string _pluginFolderName = "Openings";
-    private const string _fileName = nameof(IncomingOpeningsPaneLayout) + ".json";
+    private const string _fileName = nameof(IncomingOpeningsNavigatorLayout) + ".json";
 
     private static readonly JsonSerializerOptions _options = new() { WriteIndented = true };
 
@@ -36,25 +36,25 @@ public class IncomingOpeningsPaneLayout {
     public bool ShowRejected { get; set; } = true;
 
     /// <summary>
-    /// Читает настройки панели. Если файла нет или он испорчен - настройки по умолчанию: показывать
-    /// всё. Панель не должна открываться с ошибкой из-за своих же украшений.
+    /// Читает настройки окна. Если файла нет или он испорчен - настройки по умолчанию: показывать
+    /// всё. Окно не должно открываться с ошибкой из-за своих же украшений.
     /// </summary>
-    public static IncomingOpeningsPaneLayout Load() {
+    public static IncomingOpeningsNavigatorLayout Load() {
         try {
             string path = GetPath();
             return File.Exists(path)
-                ? JsonSerializer.Deserialize<IncomingOpeningsPaneLayout>(File.ReadAllText(path), _options)
-                    ?? new IncomingOpeningsPaneLayout()
-                : new IncomingOpeningsPaneLayout();
+                ? JsonSerializer.Deserialize<IncomingOpeningsNavigatorLayout>(File.ReadAllText(path), _options)
+                    ?? new IncomingOpeningsNavigatorLayout()
+                : new IncomingOpeningsNavigatorLayout();
         } catch(Exception exception) when(exception is IOException
             or UnauthorizedAccessException
             or JsonException) {
-            return new IncomingOpeningsPaneLayout();
+            return new IncomingOpeningsNavigatorLayout();
         }
     }
 
     /// <summary>
-    /// Сохраняет настройки панели. Ошибку записи глотает: сорванное сохранение украшений не должно
+    /// Сохраняет настройки окна. Ошибку записи глотает: сорванное сохранение украшений не должно
     /// прерывать согласование.
     /// </summary>
     public void Save() {

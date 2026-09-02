@@ -122,6 +122,51 @@
                     TextWrapping="Wrap"
                     Visibility="{Binding HasCoordinateWarning, Converter={StaticResource BoolToVisibility}}"
                     Text="{Binding CoordinateWarning}" />
+
+                <!-- Фильтр по своему решению, а не по общему статусу задания: разбирают те, где
+                     решение ещё за тобой, а решённые убирают с глаз. Работает вместе с поиском. -->
+                <WrapPanel
+                    Margin="0 8 0 0">
+                    <TextBlock
+                        Margin="0 0 8 0"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource Hint}"
+                        Text="Показывать:" />
+                    <CheckBox
+                        x:Name="ShowPendingBox"
+                        Margin="0 0 10 0"
+                        Content="Ожидают решения"
+                        IsChecked="True"
+                        ToolTip="Задания, по которым я ещё не решил"
+                        Checked="StatusFilter_Changed"
+                        Unchecked="StatusFilter_Changed" />
+                    <CheckBox
+                        x:Name="ShowApprovedBox"
+                        Margin="0 0 10 0"
+                        Content="Согласованные"
+                        IsChecked="True"
+                        ToolTip="Задания, которые я согласовал"
+                        Checked="StatusFilter_Changed"
+                        Unchecked="StatusFilter_Changed" />
+                    <CheckBox
+                        x:Name="ShowRejectedBox"
+                        Margin="0 0 16 0"
+                        Content="Отклонённые"
+                        IsChecked="True"
+                        ToolTip="Задания, которые я отклонил"
+                        Checked="StatusFilter_Changed"
+                        Unchecked="StatusFilter_Changed" />
+
+                    <!-- Список флажков собирается по самому гриду - см. code-behind, чтобы
+                         не заводить второй перечень колонок. -->
+                    <Expander
+                        Header="Колонки"
+                        ToolTip="Какие колонки показывать">
+                        <WrapPanel
+                            x:Name="ColumnsPanel"
+                            Margin="0 4 0 0" />
+                    </Expander>
+                </WrapPanel>
             </StackPanel>
         </DockPanel>
 
@@ -129,6 +174,7 @@
             Grid.Row="1"
             Style="{StaticResource CustomBorder}">
             <DataGrid
+                x:Name="TasksGrid"
                 Margin="1"
                 AutoGenerateColumns="False"
                 CanUserAddRows="False"
@@ -392,6 +438,29 @@
         <DockPanel
             Grid.Row="2"
             Margin="0 12 0 0">
+            <StackPanel
+                Margin="0 0 14 0"
+                Orientation="Horizontal">
+                <!-- Идти по списку подряд, не выцеливая строки мышью: выделенное задание сразу
+                     показывается в модели, как по кнопке "Показать". -->
+                <ui:Button
+                    Width="110"
+                    Content="◀ Назад"
+                    ToolTip="Предыдущее задание в списке - с показом в модели"
+                    Click="PreviousButton_Click" />
+                <ui:Button
+                    Width="110"
+                    Margin="8 0 0 0"
+                    Content="Вперёд ▶"
+                    ToolTip="Следующее задание в списке - с показом в модели"
+                    Click="NextButton_Click" />
+                <TextBlock
+                    x:Name="PositionText"
+                    Margin="12 0 0 0"
+                    VerticalAlignment="Center"
+                    Style="{StaticResource Hint}" />
+            </StackPanel>
+
             <TextBlock
                 Style="{StaticResource Hint}"
                 VerticalAlignment="Center"

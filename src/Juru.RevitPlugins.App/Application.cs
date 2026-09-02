@@ -1,6 +1,5 @@
 ﻿using Juru.RevitPlugins.ClashNavigator.Commands;
 using Juru.RevitPlugins.Openings.Commands;
-using Juru.RevitPlugins.Openings.Views.Navigator;
 
 using Nice3point.Revit.Toolkit.External;
 
@@ -27,10 +26,6 @@ namespace Juru.RevitPlugins.App
         {
             CreateClashNavigatorPanel();
             CreateOpeningsPanel();
-
-            // Закрепляемую панель Revit принимает только на старте приложения. Само содержимое
-            // она создаст позже, когда панель первый раз покажут, - см. IncomingOpeningsPane.
-            IncomingOpeningsPane.Register(Application);
         }
 
         private void CreateClashNavigatorPanel()
@@ -105,15 +100,6 @@ namespace Juru.RevitPlugins.App
                 .SetImage(IconsPath + "ApproveOpeningsIcon16.png")
                 .SetLargeImage(IconsPath + "ApproveOpeningsIcon32.png")
                 .SetToolTip("Открывает навигатор согласования полученных заданий");
-
-            // Второй способ согласовать те же задания: не окно со списком и решением в каждой
-            // строке, а закреплённая панель рядом с видом, где решение принимают по одному заданию,
-            // переходя по списку кнопками. Иконка та же - работа одна и та же, отличает подпись.
-            incomingButton.AddPushButton<ShowIncomingOpeningsPaneCommand>("Панель\nсогласования")
-                .SetImage(IconsPath + "ApproveOpeningsIcon16.png")
-                .SetLargeImage(IconsPath + "ApproveOpeningsIcon32.png")
-                .SetToolTip("Открывает закреплённую панель согласования: задание за заданием, "
-                            + "с переходом по списку и показом в модели");
 
             panel.AddSeparator();
 
