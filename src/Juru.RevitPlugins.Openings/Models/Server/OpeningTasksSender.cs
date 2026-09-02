@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +9,7 @@ using Autodesk.Revit.DB;
 using Juru.RevitPlugins.Core.FileNaming;
 using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.Models.Server.Dto;
+using Juru.RevitPlugins.Openings.Services;
 
 namespace Juru.RevitPlugins.Openings.Models.Server;
 
@@ -116,15 +117,7 @@ public class OpeningTasksSender {
     /// знал бы задания, которых нет в файле, который увидит архитектор.
     /// </summary>
     private void SaveOrSynchronize() {
-        if(!_doc.IsModified) {
-            return;
-        }
-
-        if(_doc.IsWorkshared) {
-            _doc.SynchronizeWithCentral(new TransactWithCentralOptions(), new SynchronizeWithCentralOptions());
-        } else {
-            _doc.Save();
-        }
+        DocumentSaver.SaveOrSynchronize(_doc);
     }
 
     private string BuildReport(

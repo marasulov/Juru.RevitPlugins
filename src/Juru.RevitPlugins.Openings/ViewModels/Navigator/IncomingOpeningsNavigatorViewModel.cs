@@ -43,6 +43,11 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
     /// чтобы не ходить на сервер заново ради того, что уже загружено.
     /// </summary>
     private OpeningTaskViewDto[] _lastServerTasks = [];
+
+    /// <summary>
+    /// Что сталось с файлом при последнем прорезании - приписка к сводке.
+    /// </summary>
+    private string _saveNote = string.Empty;
     private IReadOnlyDictionary<string, ElementId> _lastPlacedElements = new Dictionary<string, ElementId>();
     private readonly Dictionary<string, ElementId> _realElements = [];
 
@@ -112,6 +117,9 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         }
 
         ErrorText = string.Empty;
+        // Приписка о сохранении относилась к прошлому прорезанию: после перезагрузки она сказала бы
+        // про этот заход то, чего в нём не было.
+        _saveNote = string.Empty;
         var doc = uiApplication.ActiveUIDocument.Document;
 
         OpeningTaskViewDto[] serverTasks;
@@ -195,15 +203,44 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
             _realElements[pair.Key] = pair.Value;
         }
 
+        // Файл сохраняется сразу, а не оставляется на усмотрение пользователя: решение уже ушло
+        // на сервер, и там задание согласовано. Выйди согласующий без сохранения - вырезающего
+        // семейства в файле нет, а на сервере всё в порядке, и заметить это некому: своё
+        // согласованное задание он больше не разбирает.
+        string saveError = placeResult.Placed > 0 ? SaveModel(doc) : null;
+        _saveNote = placeResult.Placed > 0 && saveError is null
+            ? doc.IsWorkshared ? " Изменения синхронизированы." : " Файл сохранён."
+            : string.Empty;
+
         BuildRows(doc, [], reverted: 0, placeResult.Placed, placeResult.MissingFamilies);
 
         // Прорезание молча ничего не делает, когда среди заданий нет согласованных обеими
         // дисциплинами: сводка в шапке об этом не говорит, а пользователь видит нажатую кнопку
         // и неизменившуюся модель. Поэтому причина пишется прямо в строку ошибки.
-        if(placeResult.Placed > 0) {
-            ErrorText = string.Empty;
-        } else {
+        if(placeResult.Placed == 0) {
             ErrorText = "Не прорезано ни одного задания. " + GetSkipReason(placeResult, tasks);
+        } else if(saveError is not null) {
+            ErrorText = $"Прорезано заданий: {placeResult.Placed}, но файл не сохранён: {saveError} "
+                + "Сохраните файл сами - иначе на сервере задание останется согласованным, "
+                + "а вырезающего семейства в файле не будет.";
+        } else {
+            ErrorText = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Сохраняет файл после прорезания. Возвращает <c>null</c>, если сохранён, иначе причину:
+    /// центральная модель бывает занята, а файл - открыт только для чтения, и в этом случае
+    /// согласующий должен узнать, что сохранять придётся самому.
+    /// </summary>
+    private static string SaveModel(Document doc) {
+        try {
+            DocumentSaver.SaveOrSynchronize(doc);
+            return null;
+        } catch(Autodesk.Revit.Exceptions.ApplicationException exception) {
+            return exception.Message;
+        } catch(InvalidOperationException exception) {
+            return exception.Message;
         }
     }
 
@@ -306,6 +343,7 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         }
         if(placed > 0 || reverted > 0) {
             summary.Append($" Прорезано: {placed}, возвращено в задание: {reverted}.");
+            summary.Append(_saveNote);
         }
         if(missingFamilies.Count > 0) {
             summary.Append($" Семейства не загружены: {string.Join(", ", missingFamilies)}.");
