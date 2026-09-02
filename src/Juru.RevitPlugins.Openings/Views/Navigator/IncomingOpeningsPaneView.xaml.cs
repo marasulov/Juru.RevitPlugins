@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 
+using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.ViewModels.Navigator;
 
 namespace Juru.RevitPlugins.Openings.Views.Navigator;
@@ -29,10 +30,45 @@ public partial class IncomingOpeningsPaneView : UserControl {
     /// </remarks>
     private CollectionViewSource _tasksView;
 
+    /// <summary>
+    /// Скрытые колонки и фильтр решений, запомненные с прошлого раза.
+    /// </summary>
+    private readonly IncomingOpeningsPaneLayout _layout = IncomingOpeningsPaneLayout.Load();
+
+    /// <summary>
+    /// Идёт восстановление запомненных настроек - обработчики флажков в это время не пересохраняют
+    /// их и не дёргают фильтр: списка ещё нет, а файл настроек перезаписался бы трижды подряд.
+    /// </summary>
+    private bool _restoring;
+
     public IncomingOpeningsPaneView() {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        RestoreLayout();
         BuildColumnToggles();
+    }
+
+    private void RestoreLayout() {
+        _restoring = true;
+        ShowPendingBox.IsChecked = _layout.ShowPending;
+        ShowApprovedBox.IsChecked = _layout.ShowApproved;
+        ShowRejectedBox.IsChecked = _layout.ShowRejected;
+        _restoring = false;
+    }
+
+    /// <summary>
+    /// "Обновить": до первой загрузки в панели нет и модели представления, поэтому загрузку в этом
+    /// случае начинает сама панель - через внешнее событие, в контексте API. Дальше обновляет уже
+    /// навигатор. Сама, без нажатия, панель не грузит ничего - см.
+    /// <see cref="IncomingOpeningsPane.RequestLoad"/>.
+    /// </summary>
+    private void RefreshButton_Click(object sender, RoutedEventArgs e) {
+        if(ViewModel is { } viewModel) {
+            viewModel.RefreshCommand.Execute(null);
+            return;
+        }
+
+        IncomingOpeningsPane.RequestLoad();
     }
 
     /// <summary>
@@ -46,18 +82,24 @@ public partial class IncomingOpeningsPaneView : UserControl {
         var style = TryFindResource("DefaultCheckBoxStyle") as Style;
 
         foreach(var column in TasksGrid.Columns) {
+            var target = column;
+            string header = column.Header?.ToString() ?? string.Empty;
+            bool visible = !_layout.HiddenColumns.Contains(header);
+            target.Visibility = visible
+                ? System.Windows.Visibility.Visible
+                : System.Windows.Visibility.Collapsed;
+
             var toggle = new CheckBox {
-                Content = column.Header?.ToString(),
-                IsChecked = column.Visibility == System.Windows.Visibility.Visible,
+                Content = header,
+                IsChecked = visible,
                 Margin = new Thickness(0, 0, 10, 0)
             };
             if(style is not null) {
                 toggle.Style = style;
             }
 
-            var target = column;
-            toggle.Checked += (_, _) => target.Visibility = System.Windows.Visibility.Visible;
-            toggle.Unchecked += (_, _) => target.Visibility = System.Windows.Visibility.Collapsed;
+            toggle.Checked += (_, _) => SetColumnVisible(target, header, visible: true);
+            toggle.Unchecked += (_, _) => SetColumnVisible(target, header, visible: false);
             ColumnsPanel.Children.Add(toggle);
         }
     }
@@ -81,6 +123,7 @@ public partial class IncomingOpeningsPaneView : UserControl {
         _tasksView.Filter += TasksView_Filter;
 
         TasksGrid.ItemsSource = _tasksView.View;
+        EmptyHint.Visibility = System.Windows.Visibility.Collapsed;
         UpdatePosition();
     }
 
@@ -123,8 +166,31 @@ public partial class IncomingOpeningsPaneView : UserControl {
     }
 
     private void StatusFilter_Changed(object sender, RoutedEventArgs e) {
+        if(_restoring) {
+            return;
+        }
+
+        _layout.ShowPending = ShowPendingBox.IsChecked == true;
+        _layout.ShowApproved = ShowApprovedBox.IsChecked == true;
+        _layout.ShowRejected = ShowRejectedBox.IsChecked == true;
+        _layout.Save();
+
         _tasksView?.View?.Refresh();
         UpdatePosition();
+    }
+
+    private void SetColumnVisible(DataGridColumn column, string header, bool visible) {
+        column.Visibility = visible
+            ? System.Windows.Visibility.Visible
+            : System.Windows.Visibility.Collapsed;
+
+        if(visible) {
+            _layout.HiddenColumns.Remove(header);
+        } else if(!_layout.HiddenColumns.Contains(header)) {
+            _layout.HiddenColumns.Add(header);
+        }
+
+        _layout.Save();
     }
 
     /// <summary>

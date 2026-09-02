@@ -4,6 +4,7 @@ using System.Windows;
 using Autodesk.Revit.UI;
 
 using Juru.RevitPlugins.Core.Theming;
+using Juru.RevitPlugins.Openings.Services;
 
 using Nice3point.Revit.Toolkit.Decorators;
 
@@ -30,6 +31,7 @@ public static class IncomingOpeningsPane {
 
     private static IncomingOpeningsPaneView _view;
     private static object _dataContext;
+    private static ExternalEvent _loadEvent;
 
     /// <summary>
     /// Панель не зарегистрировалась - почему. <c>null</c>, если всё в порядке.
@@ -45,6 +47,11 @@ public static class IncomingOpeningsPane {
         }
 
         try {
+            // Внешнее событие заводится здесь же: ExternalEvent.Create требует контекста API,
+            // а OnStartup им является. Через него панель грузит задания по кнопке "Обновить",
+            // когда её ещё нечем обновлять - модели представления у неё пока нет.
+            _loadEvent = ExternalEvent.Create(new LoadHandler());
+
             DockablePaneProvider
                 .Register(application, PaneId, Title)
                 .SetConfiguration(data => {
@@ -81,10 +88,40 @@ public static class IncomingOpeningsPane {
     }
 
     /// <summary>
+    /// Загружает задания в панель - только по кнопке "Обновить".
+    /// </summary>
+    /// <remarks>
+    /// Сама, при показе панели, загрузка не идёт и идти не должна: она обращается к серверу и ставит
+    /// задания в модель. Панель, которую Revit открыл при запуске, успевала полезть в модель, пока
+    /// он ещё открывал вид, и файл после этого не открывался вовсе - "не удалось прочитать
+    /// содержимое вида". Поэтому загрузку начинает только явное нажатие.
+    /// </remarks>
+    public static void RequestLoad() {
+        _loadEvent?.Raise();
+    }
+
+    /// <summary>
     /// Модель представления, которую панель показывает сейчас, - команде ленты нужно понять,
     /// собрана ли панель уже по этому файлу.
     /// </summary>
     public static object DataContext => _dataContext;
+
+    /// <summary>
+    /// Собирает панель по активному файлу в контексте API. Причину отказа показываем: нажатие
+    /// на "Обновить" - явное действие, и молчать в ответ на него нельзя.
+    /// </summary>
+    private sealed class LoadHandler : IExternalEventHandler {
+        public void Execute(UIApplication uiApplication) {
+            string error = IncomingOpeningsPaneLoader.Load(uiApplication);
+            if(error is not null) {
+                TaskDialog.Show("Согласование заданий", error);
+            }
+        }
+
+        public string GetName() {
+            return "Juru.Openings.IncomingOpeningsPaneLoad";
+        }
+    }
 
     /// <summary>
     /// Создаёт содержимое панели по запросу Revit - когда панель первый раз показывают.
