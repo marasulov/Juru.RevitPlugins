@@ -93,6 +93,8 @@
                 Height="*" />
             <RowDefinition
                 Height="Auto" />
+            <RowDefinition
+                Height="Auto" />
         </Grid.RowDefinitions>
 
         <DockPanel
@@ -435,42 +437,43 @@
             </DataGrid>
         </Border>
 
-        <DockPanel
+        <!-- Переход по списку - отдельной строкой над кнопками окна: он относится к строкам грида,
+             а в одном ряду с "Сохранить"/"Закрыть" читался как ещё одно действие над всей пачкой. -->
+        <StackPanel
             Grid.Row="2"
-            Margin="0 12 0 0">
-            <StackPanel
-                Margin="0 0 14 0"
-                Orientation="Horizontal">
-                <!-- Идти по списку подряд, не выцеливая строки мышью: выделенное задание сразу
-                     показывается в модели, как по кнопке "Показать". -->
-                <ui:Button
-                    Width="110"
-                    Content="◀ Назад"
-                    ToolTip="Предыдущее задание в списке - с показом в модели"
-                    Click="PreviousButton_Click" />
-                <ui:Button
-                    Width="110"
-                    Margin="8 0 0 0"
-                    Content="Вперёд ▶"
-                    ToolTip="Следующее задание в списке - с показом в модели"
-                    Click="NextButton_Click" />
-                <TextBlock
-                    x:Name="PositionText"
-                    Margin="12 0 0 0"
-                    VerticalAlignment="Center"
-                    Style="{StaticResource Hint}" />
-            </StackPanel>
-
+            Margin="0 10 0 0"
+            Orientation="Horizontal">
+            <ui:Button
+                Width="110"
+                Content="◀ Назад"
+                ToolTip="Предыдущее задание в списке - с показом в модели"
+                Click="PreviousButton_Click" />
+            <ui:Button
+                Width="110"
+                Margin="8 0 0 0"
+                Content="Вперёд ▶"
+                ToolTip="Следующее задание в списке - с показом в модели"
+                Click="NextButton_Click" />
             <TextBlock
-                Style="{StaticResource Hint}"
+                x:Name="PositionText"
+                Margin="12 0 0 0"
                 VerticalAlignment="Center"
+                Style="{StaticResource Hint}" />
+            <TextBlock
+                Margin="16 0 0 0"
+                VerticalAlignment="Center"
+                Style="{StaticResource Hint}"
                 Text="Звёздочка - решение изменено, но ещё не отправлено." />
+        </StackPanel>
 
+        <DockPanel
+            Grid.Row="3"
+            Margin="0 12 0 0">
             <StackPanel
                 HorizontalAlignment="Right"
                 Orientation="Horizontal">
                 <ui:Button
-                    Width="180"
+                    Width="215"
                     Margin="6 0"
                     Appearance="Success"
                     Content="Вставить все согласованные"
