@@ -215,7 +215,14 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
 
         serverChecked = true;
         DecisionsUnknown = false;
-        ServerText = $"Решения с сервера: {_client.BaseUrl}. Заданий этой дисциплины на сервере: {serverTasks.Length}.";
+
+        // Удалённые записи считаются отдельно: сервер хранит их вместе с решением и историей и
+        // отдаёт наравне с живыми, поэтому одно число "заданий на сервере" всегда больше, чем
+        // заданий в файле, и выглядит как расхождение, которого нет.
+        int deleted = serverTasks.Count(task => task.Deleted);
+        ServerText = $"Решения с сервера: {_client.BaseUrl}. "
+            + $"Заданий этой дисциплины на сервере: {serverTasks.Length - deleted}"
+            + (deleted > 0 ? $" плюс {deleted} помеченных удалёнными (запись хранит решение и историю)." : ".");
 
         var byKey = new Dictionary<string, OpeningTaskViewDto>();
         foreach(var task in serverTasks) {

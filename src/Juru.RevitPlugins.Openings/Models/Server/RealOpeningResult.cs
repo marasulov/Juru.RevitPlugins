@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using Autodesk.Revit.DB;
 
@@ -24,6 +24,23 @@ public class RealOpeningResult {
     /// пропущено, а не провалено молча.
     /// </summary>
     public List<string> MissingFamilies { get; } = [];
+
+    /// <summary>
+    /// Согласовано не обеими дисциплинами - прорезать такое задание нельзя.
+    /// </summary>
+    public int SkippedNotApproved { get; set; }
+
+    /// <summary>
+    /// Экземпляра-задания в модели не нашлось, а вырезающее отверстие строится по его точке
+    /// и уровню - чаще всего это значит, что само задание поставить не удалось.
+    /// </summary>
+    public int SkippedNoTaskInstance { get; set; }
+
+    /// <summary>
+    /// Под точкой задания нет стены или перекрытия, в которое можно вставить хостовое
+    /// вырезающее семейство.
+    /// </summary>
+    public int SkippedNoHost { get; set; }
 
     /// <summary>
     /// Действующие сейчас чистовые отверстия по ключу задания - и уже стоявшие, и только что

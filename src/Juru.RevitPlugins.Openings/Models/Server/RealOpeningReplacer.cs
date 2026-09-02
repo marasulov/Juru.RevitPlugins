@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -66,7 +66,7 @@ public class RealOpeningReplacer {
             // Прорезание требует общего статуса "approved" (обе дисциплины), а не решения только
             // своей - иначе отклонение другой стороны никак не убирало бы уже прорезанное
             // отверстие, вставленное до того, как отклонили (rejected побеждает по контракту).
-            if(!task.Deleted && task.Status == "approved") {
+            if(!task.Deleted && OpeningApproval.IsApproved(task)) {
                 result.RealElements[task.TaskKey] = real.Id;
             } else {
                 _doc.Delete(real.Id);
@@ -99,7 +99,12 @@ public class RealOpeningReplacer {
 
         foreach(var task in tasks) {
             // Общий статус - обе дисциплины должны согласовать (contract), не только своя.
-            if(task.Deleted || task.Status != "approved") {
+            if(task.Deleted) {
+                continue;
+            }
+
+            if(!OpeningApproval.IsApproved(task)) {
+                result.SkippedNotApproved++;
                 continue;
             }
 
@@ -112,11 +117,13 @@ public class RealOpeningReplacer {
             }
 
             if(!placedElements.TryGetValue(task.TaskKey, out var previewId)) {
+                result.SkippedNoTaskInstance++;
                 continue;
             }
 
             var preview = _doc.GetElement(previewId) as FamilyInstance;
             if(preview?.Location is not LocationPoint location) {
+                result.SkippedNoTaskInstance++;
                 continue;
             }
 
@@ -145,6 +152,9 @@ public class RealOpeningReplacer {
 
         var host = HostFinder.Find(_doc, point, task.OpeningType);
         if(host is null) {
+            // Вырезающее семейство хостовое: без стены или перекрытия под точкой вставки его
+            // не создать. Молчать об этом нельзя - задание согласовано, а отверстия не появилось.
+            result.SkippedNoHost++;
             return null;
         }
 

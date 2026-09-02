@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using Autodesk.Revit.DB;
 
@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using Juru.RevitPlugins.Core.FileNaming;
 using Juru.RevitPlugins.Openings.Models.Navigator;
+using Juru.RevitPlugins.Openings.Models.Server;
 using Juru.RevitPlugins.Openings.Models.Server.Dto;
 
 namespace Juru.RevitPlugins.Openings.ViewModels.Navigator;
@@ -87,7 +88,7 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
     /// с сервера при загрузке - отклонение любой стороны побеждает по контракту, поэтому
     /// решения только своей дисциплины недостаточно) и ещё не прорезано.
     /// </summary>
-    public bool CanInsert => CanCut && !IsCut && Task.Status == "approved";
+    public bool CanInsert => CanCut && !IsCut && OpeningApproval.IsApproved(Task);
 
     /// <summary>
     /// Почему "Вставить" сейчас недоступна - подсказка на самой кнопке.
@@ -104,7 +105,7 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
                 return "Уже прорезано";
             }
 
-            if(Task.Status == "approved") {
+            if(OpeningApproval.IsApproved(Task)) {
                 return "Прорезать вырезающим семейством вместо задания";
             }
 
@@ -113,8 +114,11 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
                     + "считает сервер из решений обеих дисциплин";
             }
 
-            return "Прорезают только задания, согласованные обеими дисциплинами. Сейчас: "
-                + GetOverallStatusText(Task.Status);
+            string approvers = OpeningApproval.GetApproversText(Task);
+            return (approvers.Length == 0
+                    ? "Прорезают задания, согласованные всеми, кому они адресованы. "
+                    : $"Задание адресовано: {approvers}. Прорезают согласованные всеми ими. ")
+                + "Сейчас: " + GetOverallStatusText(Task.Status);
         }
     }
 

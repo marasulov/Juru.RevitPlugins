@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 
 using Juru.RevitPlugins.Core.FileNaming;
 using Juru.RevitPlugins.Openings.Models.Configs;
@@ -44,6 +45,12 @@ public class OpeningTaskViewDto {
     /// конкретное задание.
     /// </summary>
     public bool SenderCoordinatesChanged { get; set; }
+
+    /// <summary>
+    /// Дисциплины, чьё согласование требуется по этому заданию, - то, что инженер отметил при
+    /// отправке. Пусто, если сервер состав не вернул: тогда, как и раньше, требуются обе.
+    /// </summary>
+    public List<Discipline> Approvers { get; set; } = [];
 
     /// <summary>
     /// Общий статус, посчитанный сервером из <see cref="ArcDecision"/> и <see cref="StrDecision"/>:

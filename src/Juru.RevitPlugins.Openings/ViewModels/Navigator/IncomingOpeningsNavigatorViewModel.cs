@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -202,14 +202,43 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         // и неизменившуюся модель. Поэтому причина пишется прямо в строку ошибки.
         if(placeResult.Placed > 0) {
             ErrorText = string.Empty;
-        } else if(placeResult.MissingFamilies.Count > 0) {
-            ErrorText = "Не прорезано: не загружены вырезающие семейства "
-                + string.Join(", ", placeResult.MissingFamilies) + ".";
         } else {
-            ErrorText = "Прорезать нечего: среди этих заданий нет согласованных обеими дисциплинами "
-                + "и ещё не прорезанных. Своё решение отправьте кнопкой \"Сохранить\" - общий статус "
-                + "задания считает сервер.";
+            ErrorText = "Не прорезано ни одного задания. " + GetSkipReason(placeResult, tasks);
         }
+    }
+
+    /// <summary>
+    /// Возвращает причину, по которой прорезание ничего не сделало.
+    /// </summary>
+    /// <remarks>
+    /// Причин несколько, и они требуют разных действий: одно дело - ждать решения второй дисциплины,
+    /// другое - загрузить вырезающее семейство, третье - разобраться, почему под согласованным
+    /// заданием нет конструкции. Общая фраза "прорезать нечего" отправляла бы искать не там.
+    /// </remarks>
+    private string GetSkipReason(RealOpeningResult result, IReadOnlyCollection<OpeningTaskViewDto> tasks) {
+        if(result.MissingFamilies.Count > 0) {
+            return "Не загружены вырезающие семейства: " + string.Join(", ", result.MissingFamilies) + ".";
+        }
+
+        if(result.SkippedNoHost > 0) {
+            return $"У {result.SkippedNoHost} согласованных заданий под точкой вставки нет стены "
+                + "или перекрытия: вырезающее семейство хостовое, вставлять его не во что. "
+                + "Проверьте, совпадают ли общие координаты с файлом отправителя.";
+        }
+
+        if(result.SkippedNoTaskInstance > 0) {
+            return $"У {result.SkippedNoTaskInstance} согласованных заданий нет экземпляра в модели - "
+                + "их не удалось поставить при загрузке. Обновите окно и посмотрите, что в сводке.";
+        }
+
+        int cut = tasks.Count(task => _realElements.ContainsKey(task.TaskKey));
+        if(cut == tasks.Count && tasks.Count > 0) {
+            return "Всё уже прорезано.";
+        }
+
+        return $"Ждут решения второй дисциплины или отклонены: {result.SkippedNotApproved}. "
+            + "Прорезают только задания, согласованные и ARC, и STR; общий статус считает сервер, "
+            + "поэтому своё решение сначала отправьте кнопкой \"Сохранить\", а потом обновите окно.";
     }
 
     /// <summary>
@@ -270,7 +299,7 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
 
         var summary = new StringBuilder();
         summary.Append($"Заданий: {Tasks.Count}. ");
-        summary.Append($"Ожидают моего решения: {Tasks.Count(task => task.Status == "sent")}.");
+        summary.Append($"Ожидают моего решения: {Tasks.Count(task => OpeningDecisionStatus.IsSent(task.Status))}.");
         int approvedNotCut = Tasks.Count(task => task.CanInsert);
         if(approvedNotCut > 0) {
             summary.Append($" Согласовано, но не прорезано: {approvedNotCut} - кнопка \"Вставить\"/\"Вставить все согласованные\".");
