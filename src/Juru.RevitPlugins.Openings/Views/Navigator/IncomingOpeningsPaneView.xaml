@@ -5,7 +5,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vms="clr-namespace:Juru.RevitPlugins.Openings.ViewModels.Navigator"
-    xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     mc:Ignorable="d"
     d:DataContext="{d:DesignInstance vms:IncomingOpeningsPaneViewModel, IsDesignTimeCreatable=False}">
@@ -19,20 +18,6 @@
                     Source="pack://application:,,,/Juru.RevitPlugins.Core;component/Resources/CustomStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Порядок как в окне навигатора: проблемные конструкции первыми, дальше по системе.
-                 Группировки здесь нет - в панели идут по списку подряд, а раскрытые группы этому
-                 только мешают. -->
-            <CollectionViewSource
-                x:Key="TasksView"
-                Source="{Binding Navigator.Tasks}"
-                Filter="TasksView_Filter">
-                <CollectionViewSource.SortDescriptions>
-                    <scm:SortDescription
-                        PropertyName="TechnicalSortOrder" />
-                    <scm:SortDescription
-                        PropertyName="MepSystem" />
-                </CollectionViewSource.SortDescriptions>
-            </CollectionViewSource>
 
             <Style
                 x:Key="Hint"
@@ -73,18 +58,18 @@
             <TextBlock
                 FontWeight="SemiBold"
                 TextWrapping="Wrap"
-                Text="{Binding Navigator.Summary}" />
+                Text="{Binding Summary}" />
             <TextBlock
                 Foreground="OrangeRed"
                 TextWrapping="Wrap"
-                Visibility="{Binding Navigator.HasError, Converter={StaticResource BoolToVisibility}}"
-                Text="{Binding Navigator.ErrorText}" />
+                Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}"
+                Text="{Binding ErrorText}" />
             <TextBlock
                 FontWeight="SemiBold"
                 Foreground="OrangeRed"
                 TextWrapping="Wrap"
-                Visibility="{Binding Navigator.HasCoordinateWarning, Converter={StaticResource BoolToVisibility}}"
-                Text="{Binding Navigator.CoordinateWarning}" />
+                Visibility="{Binding HasCoordinateWarning, Converter={StaticResource BoolToVisibility}}"
+                Text="{Binding CoordinateWarning}" />
             <ui:TextBox
                 x:Name="SearchBox"
                 Margin="0 6 0 0"
@@ -106,7 +91,6 @@
                 GridLinesVisibility="Horizontal"
                 HeadersVisibility="Column"
                 IsReadOnly="True"
-                ItemsSource="{Binding Source={StaticResource TasksView}}"
                 SelectedItem="{Binding SelectedTask}"
                 SelectionChanged="TasksGrid_SelectionChanged"
                 SelectionMode="Single"
@@ -289,18 +273,18 @@
                 Appearance="Success"
                 Content="Вставить все согласованные"
                 ToolTip="Прорезать вырезающим семейством все согласованные задания, которые ещё не прорезаны"
-                Command="{Binding Navigator.InsertAllApprovedCommand}" />
+                Command="{Binding InsertAllApprovedCommand}" />
             <ui:Button
                 Width="110"
                 Margin="8 0 0 0"
                 Content="Обновить"
-                Command="{Binding Navigator.RefreshCommand}" />
+                Command="{Binding RefreshCommand}" />
             <ui:Button
                 Width="110"
                 Margin="8 0 0 0"
                 Appearance="Info"
                 Content="Сохранить"
-                Command="{Binding Navigator.SaveCommand}" />
+                Command="{Binding SaveCommand}" />
         </StackPanel>
     </Grid>
 </UserControl>

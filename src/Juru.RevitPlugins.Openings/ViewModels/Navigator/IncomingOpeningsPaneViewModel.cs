@@ -1,7 +1,10 @@
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using Juru.RevitPlugins.Openings.Models.Server;
 
@@ -44,6 +47,13 @@ public partial class IncomingOpeningsPaneViewModel : ObservableObject {
     public IncomingOpeningsPaneViewModel(IncomingOpeningsNavigatorViewModel navigator) {
         Navigator = navigator ?? throw new System.ArgumentNullException(nameof(navigator));
         ((INotifyCollectionChanged) Navigator.Tasks).CollectionChanged += OnTasksChanged;
+
+        // Сводку и ошибки навигатор меняет у себя - панель показывает их как свои свойства,
+        // поэтому переизвещает о них сама. Через путь "Navigator.Summary" в XAML это делать нельзя:
+        // тот же путь в ресурсах (CollectionViewSource грида) молча не разрешался, и панель
+        // оставалась пустой при полном списке заданий.
+        Navigator.PropertyChanged += OnNavigatorPropertyChanged;
+
         SelectedTask = Navigator.Tasks.FirstOrDefault();
     }
 
@@ -52,6 +62,30 @@ public partial class IncomingOpeningsPaneViewModel : ObservableObject {
     /// "Обновить", "Сохранить" и "Вставить все согласованные". XAML привязывается через него.
     /// </summary>
     public IncomingOpeningsNavigatorViewModel Navigator { get; }
+
+    /// <summary>
+    /// Задания - те же самые объекты строк, что у навигатора.
+    /// </summary>
+    public ObservableCollection<IncomingOpeningTaskViewModel> Tasks => Navigator.Tasks;
+
+    public string Summary => Navigator.Summary;
+
+    public string ErrorText => Navigator.ErrorText;
+
+    public bool HasError => Navigator.HasError;
+
+    public string CoordinateWarning => Navigator.CoordinateWarning;
+
+    public bool HasCoordinateWarning => Navigator.HasCoordinateWarning;
+
+    /// <summary>
+    /// Перечитывает задания с сервера и заново ставит их в модели.
+    /// </summary>
+    public IRelayCommand RefreshCommand => Navigator.RefreshCommand;
+
+    public IRelayCommand SaveCommand => Navigator.SaveCommand;
+
+    public IRelayCommand InsertAllApprovedCommand => Navigator.InsertAllApprovedCommand;
 
     /// <summary>
     /// Панель решает по своим правилам: "Отклонить" доступна всегда, потому что причину здесь
@@ -167,6 +201,22 @@ public partial class IncomingOpeningsPaneViewModel : ObservableObject {
         if(SelectedTask is null || !Navigator.Tasks.Contains(SelectedTask)) {
             SelectedTask = Navigator.Tasks.FirstOrDefault(task => task.TaskKey == _selectedKey)
                 ?? Navigator.Tasks[0];
+        }
+    }
+
+    private void OnNavigatorPropertyChanged(object sender, PropertyChangedEventArgs e) {
+        switch(e.PropertyName) {
+            case nameof(IncomingOpeningsNavigatorViewModel.Summary):
+                OnPropertyChanged(nameof(Summary));
+                break;
+            case nameof(IncomingOpeningsNavigatorViewModel.ErrorText):
+                OnPropertyChanged(nameof(ErrorText));
+                OnPropertyChanged(nameof(HasError));
+                break;
+            case nameof(IncomingOpeningsNavigatorViewModel.CoordinateWarning):
+                OnPropertyChanged(nameof(CoordinateWarning));
+                OnPropertyChanged(nameof(HasCoordinateWarning));
+                break;
         }
     }
 

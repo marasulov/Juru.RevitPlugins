@@ -1,4 +1,5 @@
 using System;
+using System.Windows;
 
 using Autodesk.Revit.UI;
 
@@ -47,7 +48,12 @@ public static class IncomingOpeningsPane {
             DockablePaneProvider
                 .Register(application, PaneId, Title)
                 .SetConfiguration(data => {
-                    data.FrameworkElement = GetOrCreateView();
+                    // Именно Creator, а не готовый FrameworkElement: Revit спрашивает провайдера
+                    // уже на регистрации, то есть на старте, а создавать элементы WPF тогда нельзя -
+                    // созданные до JuruTheme.Apply, они оставляли без оформления кнопки и здесь,
+                    // и в остальных окнах плагина. Creator Revit зовёт, когда панель реально
+                    // понадобилась.
+                    data.FrameworkElementCreator = new ViewCreator();
 
                     // Справа, как свойства и диспетчер видов: список и панель решения стоят друг
                     // под другом, то есть панели нужна высота, а не ширина. Ширину пользователь
@@ -80,13 +86,21 @@ public static class IncomingOpeningsPane {
     /// </summary>
     public static object DataContext => _dataContext;
 
+    /// <summary>
+    /// Создаёт содержимое панели по запросу Revit - когда панель первый раз показывают.
+    /// </summary>
+    private sealed class ViewCreator : IFrameworkElementCreator {
+        public FrameworkElement CreateFrameworkElement() {
+            return GetOrCreateView();
+        }
+    }
+
     private static IncomingOpeningsPaneView GetOrCreateView() {
         if(_view is not null) {
             return _view;
         }
 
-        // Тему применяем до создания элементов, а не после: WPF-UI раскрашивает то, что создаётся
-        // после Apply, и панель, собранная раньше, оставалась серой.
+        // Тему применяем до создания элементов: WPF-UI раскрашивает то, что создано после Apply.
         JuruTheme.Apply();
         _view = new IncomingOpeningsPaneView { DataContext = _dataContext };
         return _view;

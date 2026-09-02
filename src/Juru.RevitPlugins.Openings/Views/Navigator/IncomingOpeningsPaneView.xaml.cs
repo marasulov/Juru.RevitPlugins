@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -17,14 +18,45 @@ namespace Juru.RevitPlugins.Openings.Views.Navigator;
 /// следующему заданию окно делает само.
 /// </remarks>
 public partial class IncomingOpeningsPaneView : UserControl {
+    /// <summary>
+    /// Отсортированный и отфильтрованный поиском список - именно он привязан к гриду.
+    /// </summary>
+    /// <remarks>
+    /// Задаётся кодом, а не <c>CollectionViewSource</c> в ресурсах: ресурс не входит в дерево
+    /// элементов, привязка его <c>Source</c> к свойству модели представления не разрешилась, и грид
+    /// оставался пустым при полном списке заданий - выглядело это как "ничего не грузится".
+    /// </remarks>
+    private CollectionViewSource _tasksView;
+
     public IncomingOpeningsPaneView() {
         InitializeComponent();
+        DataContextChanged += OnDataContextChanged;
     }
 
     private IncomingOpeningsPaneViewModel ViewModel => DataContext as IncomingOpeningsPaneViewModel;
 
+    private void OnDataContextChanged(object sender, System.Windows.DependencyPropertyChangedEventArgs e) {
+        if(ViewModel is not { } viewModel) {
+            _tasksView = null;
+            TasksGrid.ItemsSource = null;
+            return;
+        }
+
+        // Порядок как в окне навигатора: проблемные конструкции первыми, дальше по системе.
+        // Группировки здесь нет - в панели идут по списку подряд, и раскрытые группы этому мешают.
+        _tasksView = new CollectionViewSource { Source = viewModel.Tasks };
+        _tasksView.SortDescriptions.Add(new SortDescription(
+            nameof(IncomingOpeningTaskViewModel.TechnicalSortOrder), ListSortDirection.Ascending));
+        _tasksView.SortDescriptions.Add(new SortDescription(
+            nameof(IncomingOpeningTaskViewModel.MepSystem), ListSortDirection.Ascending));
+        _tasksView.Filter += TasksView_Filter;
+
+        TasksGrid.ItemsSource = _tasksView.View;
+        UpdatePosition();
+    }
+
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) {
-        (Resources["TasksView"] as CollectionViewSource)?.View?.Refresh();
+        _tasksView?.View?.Refresh();
 
         // Номер задания считается по видимым строкам - после поиска их стало меньше.
         UpdatePosition();
