@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 using Autodesk.Revit.DB;
@@ -108,8 +108,10 @@ public static class HostHighlighter {
         var typeNameId = new ElementId(BuiltInParameter.ALL_MODEL_TYPE_NAME);
         var sizeId = new ElementId(fingerprint.Value.SizeParam);
 
+        // Двухаргументная перегрузка: правило и так сравнивает без учёта регистра, а та, что
+        // принимала это третьим аргументом, в Revit 2026 убрана.
         var typeNameNotEquals = new ElementParameterFilter(
-            ParameterFilterRuleFactory.CreateNotEqualsRule(typeNameId, fingerprint.Value.TypeName, false));
+            ParameterFilterRuleFactory.CreateNotEqualsRule(typeNameId, fingerprint.Value.TypeName));
         // Эпсилон вместо точного равенства: то же измерение геометрии, которое дало отпечаток,
         // может при следующем запросе на сотую долю миллиметра отличаться от самого себя.
         double epsilon = UnitUtils.ConvertToInternalUnits(0.1, UnitTypeId.Millimeters);

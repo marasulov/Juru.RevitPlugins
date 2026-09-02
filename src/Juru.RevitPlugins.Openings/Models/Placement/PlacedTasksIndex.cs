@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -97,18 +97,29 @@ public class PlacedTasksIndex {
     }
 
     /// <summary>
+    /// Id элемента числом: в Revit 2024 <c>IntegerValue</c> сменился на <c>Value</c> типа long,
+    /// а в 2026 старое свойство убрали совсем. Id элемента внутри файла в int укладывается -
+    /// в описании задания он и записан числом.
+    /// </summary>
+    private static int GetIdValue(ElementId elementId) {
+#if REVIT2024_OR_GREATER
+        return (int) elementId.Value;
+#else
+        return elementId.IntegerValue;
+#endif
+    }
+
+    /// <summary>
     /// Ищет уже стоящее задание того же инженерного элемента - тот самый проход, что и у нового
     /// отверстия, опознанный не по близости, а по id элемента, записанному в его описании при
     /// выдаче. Не возвращает задания, размещённые вручную - их эта расстановка не трогает.
     /// </summary>
     public FamilyInstance FindBySourceMep(IEnumerable<ElementId> mepElementIds) {
-#pragma warning disable CS0618 // IntegerValue устарел, но так же читается id в PlacedTasksIndex/OpeningSourceDescription
         foreach(var id in mepElementIds) {
-            if(_byMepId.TryGetValue(id.IntegerValue, out var task)) {
+            if(_byMepId.TryGetValue(GetIdValue(id), out var task)) {
                 return task.Instance;
             }
         }
-#pragma warning restore CS0618
 
         return null;
     }

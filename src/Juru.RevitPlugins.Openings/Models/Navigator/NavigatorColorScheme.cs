@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 using Autodesk.Revit.DB;
@@ -81,11 +81,9 @@ public static class NavigatorColorScheme {
 
         var all = new HashSet<BuiltInCategory>();
         foreach(Category category in doc.Settings.Categories) {
-#pragma warning disable CS0618 // IntegerValue устарел, но BuiltInCategory из Category иначе не получить
             if(category.CategoryType == CategoryType.Model) {
-                all.Add((BuiltInCategory) category.Id.IntegerValue);
+                all.Add(category.BuiltInCategory);
             }
-#pragma warning restore CS0618
         }
 
         all.ExceptWith(main);
