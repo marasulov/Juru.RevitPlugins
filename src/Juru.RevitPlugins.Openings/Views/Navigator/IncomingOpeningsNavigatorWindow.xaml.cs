@@ -27,23 +27,30 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
     private readonly IncomingOpeningsNavigatorLayout _layout = IncomingOpeningsNavigatorLayout.Load();
 
     /// <summary>
-    /// Идёт восстановление запомненных настроек: обработчики флажков в это время не пересохраняют
-    /// их и не дёргают фильтр - файл настроек иначе перезаписывался бы трижды подряд.
+    /// Окно собрано целиком.
     /// </summary>
-    private bool _restoring;
+    /// <remarks>
+    /// Обработчики из разметки стреляют уже во время <c>InitializeComponent</c>: поиск и флажки
+    /// сообщают о своём начальном значении, когда элементы ниже по разметке - счётчик заданий,
+    /// соседние флажки - ещё не созданы, и обращение к ним падало с
+    /// <c>NullReferenceException</c> прямо при открытии окна. До конца сборки обработчики молчат,
+    /// а начальное состояние окно наводит само, в конце конструктора.
+    /// </remarks>
+    private bool _initialized;
 
     public IncomingOpeningsNavigatorWindow() {
         InitializeComponent();
         RestoreLayout();
         BuildColumnToggles();
+
+        _initialized = true;
+        UpdatePosition();
     }
 
     private void RestoreLayout() {
-        _restoring = true;
         ShowPendingBox.IsChecked = _layout.ShowPending;
         ShowApprovedBox.IsChecked = _layout.ShowApproved;
         ShowRejectedBox.IsChecked = _layout.ShowRejected;
-        _restoring = false;
     }
 
     /// <summary>
@@ -80,6 +87,10 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
     private void SetColumnVisible(DataGridColumn column, string header, bool visible) {
         column.Visibility = visible ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 
+        if(!_initialized) {
+            return;
+        }
+
         if(visible) {
             _layout.HiddenColumns.Remove(header);
         } else if(!_layout.HiddenColumns.Contains(header)) {
@@ -90,7 +101,7 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
     }
 
     private void StatusFilter_Changed(object sender, RoutedEventArgs e) {
-        if(_restoring) {
+        if(!_initialized) {
             return;
         }
 
@@ -142,6 +153,10 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
     }
 
     private void UpdatePosition() {
+        if(!_initialized) {
+            return;
+        }
+
         int index = TasksGrid.Items.IndexOf(TasksGrid.SelectedItem);
         PositionText.Text = index < 0
             ? string.Empty
@@ -153,6 +168,10 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
     }
 
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) {
+        if(!_initialized) {
+            return;
+        }
+
         (Resources["TasksView"] as CollectionViewSource)?.View?.Refresh();
 
         // Номер задания считается по видимым строкам - после поиска их стало меньше.
@@ -169,7 +188,7 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
     }
 
     private bool MatchesSearch(IncomingOpeningTaskViewModel row) {
-        string search = SearchBox.Text;
+        string search = SearchBox?.Text;
         return string.IsNullOrWhiteSpace(search)
             || row.SearchIndex.Contains(search, StringComparison.CurrentCultureIgnoreCase);
     }
@@ -180,14 +199,22 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
     /// </summary>
     private bool MatchesStatus(IncomingOpeningTaskViewModel row) {
         if(row.IsApproved) {
-            return ShowApprovedBox.IsChecked == true;
+            return IsShown(ShowApprovedBox);
         }
 
         if(row.IsRejected) {
-            return ShowRejectedBox.IsChecked == true;
+            return IsShown(ShowRejectedBox);
         }
 
-        return ShowPendingBox.IsChecked == true;
+        return IsShown(ShowPendingBox);
+    }
+
+    /// <summary>
+    /// Флажок фильтра включён. Флажка может ещё не быть - фильтр успевает сработать во время
+    /// сборки окна; пока его нет, показываем всё.
+    /// </summary>
+    private static bool IsShown(CheckBox box) {
+        return box?.IsChecked != false;
     }
 
     private void ShowButton_Click(object sender, RoutedEventArgs e) {
