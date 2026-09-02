@@ -49,6 +49,7 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
         SizeText = GetSizeText(task);
         OverallStatusText = GetOverallStatusText(task.Status);
         OtherDisciplineText = GetOtherDisciplineText(task, ownDiscipline);
+        IsRejectedByOther = OpeningDecisionStatus.IsRejected(GetOtherDecision(task, ownDiscipline)?.Status);
         JustReset = ownDecision.ChangedAfterApproval;
         TechnicalStatusText = GetTechnicalStatusText(technicalStatus, task.IsUnited);
         TechnicalStatusNeedsAttention = technicalStatus is
@@ -84,11 +85,25 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
     public bool IsCut { get; }
 
     /// <summary>
-    /// "Вставить" доступна: согласовали обе дисциплины (общий <c>Task.Status</c>, как пришло
-    /// с сервера при загрузке - отклонение любой стороны побеждает по контракту, поэтому
-    /// решения только своей дисциплины недостаточно) и ещё не прорезано.
+    /// Вторая дисциплина задание отклонила - прорезать его нельзя, отклонение перевешивает
+    /// по контракту.
     /// </summary>
-    public bool CanInsert => CanCut && !IsCut && OpeningApproval.IsApproved(Task);
+    public bool IsRejectedByOther { get; }
+
+    /// <summary>
+    /// "Вставить" доступна: задание не прорезано, вторая дисциплина его не отклоняла, и оно либо
+    /// уже согласовано всеми, кому адресовано (общий статус с сервера), либо согласовано мной
+    /// только что, здесь, в окне.
+    /// </summary>
+    /// <remarks>
+    /// Своего свежего "согласовано" для прорезания мало - общий статус считает сервер, - но кнопка
+    /// на него включается: прорезание сначала отправляет решения и перечитывает статусы
+    /// (<see cref="IncomingOpeningsNavigatorViewModel.Insert"/>), поэтому нажать её сразу после
+    /// согласования можно. Раньше строчная кнопка в этот момент оставалась выключенной, и
+    /// прорезать одно задание получалось только через "Вставить все согласованные".
+    /// </remarks>
+    public bool CanInsert => CanCut && !IsCut && !IsRejectedByOther
+        && (OpeningApproval.IsApproved(Task) || IsApproved);
 
     /// <summary>
     /// Почему "Вставить" сейчас недоступна - подсказка на самой кнопке.
@@ -109,9 +124,13 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
                 return "Прорезать вырезающим семейством вместо задания";
             }
 
-            if(IsDirty) {
-                return "Решение ещё не отправлено: нажмите \"Сохранить\" - общий статус задания "
-                    + "считает сервер из решений обеих дисциплин";
+            if(IsApproved) {
+                return "Отправит моё решение на сервер, перечитает статусы и прорежет, если "
+                    + "задание согласовали все, кому оно адресовано";
+            }
+
+            if(IsRejectedByOther) {
+                return "Задание отклонила вторая дисциплина - прорезать его нельзя";
             }
 
             string approvers = OpeningApproval.GetApproversText(Task);
@@ -259,6 +278,7 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
         OnPropertyChanged(nameof(IsDirty));
         OnPropertyChanged(nameof(IsApproved));
         OnPropertyChanged(nameof(IsRejected));
+        OnPropertyChanged(nameof(CanInsert));
         OnPropertyChanged(nameof(OwnStatusText));
         OnPropertyChanged(nameof(InsertHint));
     }
@@ -297,6 +317,10 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
             return OpeningTaskStatus.United.GetDescription();
         }
         return technicalStatus?.GetDescription() ?? "Нет данных";
+    }
+
+    private static OpeningDecisionDto GetOtherDecision(OpeningTaskViewDto task, Discipline ownDiscipline) {
+        return ownDiscipline == Discipline.ARC ? task.StrDecision : task.ArcDecision;
     }
 
     private static string GetOtherDisciplineText(OpeningTaskViewDto task, Discipline ownDiscipline) {
