@@ -124,19 +124,21 @@ public static class IncomingOpeningsPane {
     }
 
     /// <summary>
-    /// Создаёт содержимое панели по запросу Revit - когда панель первый раз показывают.
+    /// Создаёт содержимое панели по запросу Revit.
     /// </summary>
+    /// <remarks>
+    /// Каждый раз новое, а не один раз созданное и запомненное: Revit спрашивает содержимое заново
+    /// всякий раз, когда пересобирает панель, и тот же самый элемент WPF пытался встать вторым
+    /// родителем в чужое дерево. Элемент уже в дереве второй раз не вставляется, и падает это не
+    /// исключением в плагине, а Revit целиком.
+    /// </remarks>
     private sealed class ViewCreator : IFrameworkElementCreator {
         public FrameworkElement CreateFrameworkElement() {
-            return GetOrCreateView();
+            return CreateView();
         }
     }
 
-    private static IncomingOpeningsPaneView GetOrCreateView() {
-        if(_view is not null) {
-            return _view;
-        }
-
+    private static IncomingOpeningsPaneView CreateView() {
         // Тему применяем до создания элементов: WPF-UI раскрашивает то, что создано после Apply.
         JuruTheme.Apply();
         _view = new IncomingOpeningsPaneView { DataContext = _dataContext };
