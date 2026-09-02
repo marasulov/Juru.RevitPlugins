@@ -2,10 +2,7 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 
-using Juru.RevitPlugins.Core.FileNaming;
 using Juru.RevitPlugins.Core.Theming;
-using Juru.RevitPlugins.Openings.Models.Configs;
-using Juru.RevitPlugins.Openings.Models.Server;
 using Juru.RevitPlugins.Openings.Services;
 using Juru.RevitPlugins.Openings.ViewModels.Navigator;
 using Juru.RevitPlugins.Openings.Views.Navigator;
@@ -25,30 +22,6 @@ namespace Juru.RevitPlugins.Openings.Commands;
 public class ShowIncomingOpeningsPaneCommand : IExternalCommand {
     public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements) {
         var uiApplication = commandData.Application;
-        var doc = uiApplication.ActiveUIDocument.Document;
-        var config = OpeningsConfig.GetOpeningsConfig();
-
-        if(!RevitFileNameInfo.TryParse(doc.PathName, out var fileInfo)) {
-            TaskDialog.Show("Согласование заданий",
-                "Имя файла не соответствует стандарту наименования "
-                + "(Проект-Объект-Дисциплина-vNN): без него нельзя определить проект и объект "
-                + "для сервера.");
-            return Result.Cancelled;
-        }
-
-        if(!fileInfo.Discipline.ReceivesOpeningTasks()) {
-            TaskDialog.Show("Согласование заданий",
-                "Дисциплина файла - " + fileInfo.Discipline
-                + ". Согласование работает в файлах ARC и STR.");
-            return Result.Cancelled;
-        }
-
-        string serverUrl = OpeningsServerOptions.ResolveUrl(config);
-        if(string.IsNullOrWhiteSpace(serverUrl)) {
-            TaskDialog.Show("Согласование заданий",
-                "Адрес сервера не задан ни в настройках плагина, ни в ClashServer.json рядом со сборкой.");
-            return Result.Cancelled;
-        }
 
         if(IncomingOpeningsPane.RegistrationError is { } registrationError) {
             TaskDialog.Show("Согласование заданий",
@@ -61,22 +34,23 @@ public class ShowIncomingOpeningsPaneCommand : IExternalCommand {
 
         var pane = uiApplication.GetDockablePane(IncomingOpeningsPane.PaneId);
 
-        // Панель уже собрана - показываем как есть: кнопку ленты нажимают и просто чтобы вернуть
-        // её на экран, а пересборка потеряла бы решения, отмеченные но ещё не отправленные.
-        // Перечитать задания с сервера - кнопка "Обновить" в самой панели.
-        if(IncomingOpeningsPane.DataContext is IncomingOpeningsPaneViewModel) {
+        // Панель уже собрана и с заданиями - показываем как есть: кнопку ленты нажимают и просто
+        // чтобы вернуть её на экран, а пересборка потеряла бы решения, отмеченные но ещё не
+        // отправленные. Перечитать задания с сервера - кнопка "Обновить" в самой панели.
+        if(IncomingOpeningsPane.DataContext is IncomingOpeningsPaneViewModel loaded && loaded.Tasks.Count > 0) {
             pane.Show();
             return Result.Succeeded;
         }
 
-        var client = new OpeningsServerClient(serverUrl);
-        var navigator = new IncomingOpeningsNavigatorViewModel(
-            config, new RevitActionRunner(), fileInfo.Discipline, fileInfo, client);
-        // Первая загрузка идёт прямо здесь: команда выполняется в контексте API, и внешнее событие
-        // для неё не нужно. Обновление из панели пойдёт уже через событие.
-        navigator.Reload(uiApplication);
+        // Проверки файла и адреса сервера - внутри загрузчика: панель просит у него загрузку и сама,
+        // когда Revit открыл её при запуске. Разница только в том, что причину отказа команда,
+        // в отличие от той автозагрузки, объясняет пользователю.
+        string error = IncomingOpeningsPaneLoader.Load(uiApplication);
+        if(error is not null) {
+            TaskDialog.Show("Согласование заданий", error);
+            return Result.Cancelled;
+        }
 
-        IncomingOpeningsPane.Attach(new IncomingOpeningsPaneViewModel(navigator));
         pane.Show();
 
         return Result.Succeeded;

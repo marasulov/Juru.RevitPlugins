@@ -4,6 +4,7 @@ using System.Windows;
 using Autodesk.Revit.UI;
 
 using Juru.RevitPlugins.Core.Theming;
+using Juru.RevitPlugins.Openings.Services;
 
 using Nice3point.Revit.Toolkit.Decorators;
 
@@ -30,6 +31,7 @@ public static class IncomingOpeningsPane {
 
     private static IncomingOpeningsPaneView _view;
     private static object _dataContext;
+    private static ExternalEvent _loadEvent;
 
     /// <summary>
     /// Панель не зарегистрировалась - почему. <c>null</c>, если всё в порядке.
@@ -45,6 +47,22 @@ public static class IncomingOpeningsPane {
         }
 
         try {
+            // Внешнее событие заводится здесь же: ExternalEvent.Create требует контекста API,
+            // а OnStartup им является. Через него панель просит загрузку, когда Revit открыл её
+            // при запуске и кнопку ленты никто не нажимал.
+            _loadEvent = ExternalEvent.Create(new LoadHandler());
+
+            // Панель, открытую при запуске Revit, он показывает раньше, чем открыт файл, - тогда
+            // загружать нечего, и просьба панели уходит впустую. Пробуем ещё раз, когда
+            // активировали вид: к этому моменту файл открыт. Уже собранную панель это не трогает,
+            // а закрытую не собирает - загрузка ставит задания в модель, и делать это без открытой
+            // панели значило бы менять модель, о чём никто не просил.
+            application.ViewActivated += (_, _) => {
+                if(_view?.IsVisible == true) {
+                    RequestLoad();
+                }
+            };
+
             DockablePaneProvider
                 .Register(application, PaneId, Title)
                 .SetConfiguration(data => {
@@ -81,10 +99,35 @@ public static class IncomingOpeningsPane {
     }
 
     /// <summary>
+    /// Просит Revit собрать панель по активному файлу - панель зовёт это, когда оказалась на экране
+    /// пустой. Уже собранную не пересобирает: непринятые решения в ней терять нельзя.
+    /// </summary>
+    public static void RequestLoad() {
+        if(_dataContext is null) {
+            _loadEvent?.Raise();
+        }
+    }
+
+    /// <summary>
     /// Модель представления, которую панель показывает сейчас, - команде ленты нужно понять,
     /// собрана ли панель уже по этому файлу.
     /// </summary>
     public static object DataContext => _dataContext;
+
+    /// <summary>
+    /// Загружает задания в контексте API по просьбе самой панели. Причину, по которой собрать её
+    /// нельзя, здесь не показываем: панель просто остаётся пустой, а объяснение пользователь
+    /// получит, когда нажмёт кнопку ленты.
+    /// </summary>
+    private sealed class LoadHandler : IExternalEventHandler {
+        public void Execute(UIApplication uiApplication) {
+            IncomingOpeningsPaneLoader.Load(uiApplication);
+        }
+
+        public string GetName() {
+            return "Juru.Openings.IncomingOpeningsPaneLoad";
+        }
+    }
 
     /// <summary>
     /// Создаёт содержимое панели по запросу Revit - когда панель первый раз показывают.
