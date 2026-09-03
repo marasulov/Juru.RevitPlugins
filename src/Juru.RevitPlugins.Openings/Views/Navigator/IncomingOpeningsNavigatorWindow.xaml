@@ -70,6 +70,39 @@
                     Value="Wrap" />
             </Style>
 
+            <!-- Панель всплывающего списка живёт в отдельном визуальном дереве, поэтому фон и
+                 цвет текста берём из темы явно: иначе в тёмной теме светлый текст ложится
+                 на светлую панель. -->
+            <Style
+                x:Key="ColumnsPopupPanelStyle"
+                TargetType="Border">
+                <Setter
+                    Property="Background"
+                    Value="{ui:ThemeResource ApplicationBackgroundBrush}" />
+                <Setter
+                    Property="BorderBrush"
+                    Value="{ui:ThemeResource ControlElevationBorderBrush}" />
+                <Setter
+                    Property="BorderThickness"
+                    Value="1" />
+                <Setter
+                    Property="Padding"
+                    Value="8" />
+                <Setter
+                    Property="TextBlock.Foreground"
+                    Value="{ui:ThemeResource TextFillColorPrimaryBrush}" />
+            </Style>
+
+            <!-- Флажкам цвет задаём отдельно: их собственный стиль WPF-UI перекрывает
+                 наследование от панели. -->
+            <Style
+                x:Key="ColumnsPopupCheckBoxStyle"
+                TargetType="CheckBox">
+                <Setter
+                    Property="Foreground"
+                    Value="{ui:ThemeResource TextFillColorPrimaryBrush}" />
+            </Style>
+
             <BooleanToVisibilityConverter
                 x:Key="BoolToVisibility" />
 
@@ -160,14 +193,30 @@
                         Unchecked="StatusFilter_Changed" />
 
                     <!-- Список флажков собирается по самому гриду - см. code-behind, чтобы
-                         не заводить второй перечень колонок. -->
-                    <Expander
-                        Header="Колонки"
-                        ToolTip="Какие колонки показывать">
-                        <WrapPanel
-                            x:Name="ColumnsPanel"
-                            Margin="0 4 0 0" />
-                    </Expander>
+                         не заводить второй перечень колонок. Всплывающим списком, а не Expander:
+                         раскрытый Expander закрывался только повторным щелчком по стрелке,
+                         а Popup со StaysOpen=False уходит от клика мимо него.
+                         ClickMode=Press: иначе клик по кнопке при открытом Popup перехватывается им,
+                         и кнопка остаётся нажатой при закрытом списке. -->
+                    <ToggleButton
+                        x:Name="ColumnsToggle"
+                        ClickMode="Press"
+                        Content="Колонки"
+                        ToolTip="Какие колонки показывать" />
+                    <Popup
+                        AllowsTransparency="False"
+                        IsOpen="{Binding IsChecked, ElementName=ColumnsToggle}"
+                        Placement="Bottom"
+                        PlacementTarget="{Binding ElementName=ColumnsToggle}"
+                        StaysOpen="False">
+                        <Border
+                            MinWidth="180"
+                            Style="{StaticResource ColumnsPopupPanelStyle}">
+                            <WrapPanel
+                                x:Name="ColumnsPanel"
+                                MaxWidth="420" />
+                        </Border>
+                    </Popup>
                 </WrapPanel>
             </StackPanel>
         </DockPanel>

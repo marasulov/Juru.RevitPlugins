@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -61,7 +61,7 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
     /// с первым, и он отстал бы от него при первой же новой колонке.
     /// </remarks>
     private void BuildColumnToggles() {
-        var style = TryFindResource("DefaultCheckBoxStyle") as Style;
+        var style = TryFindResource("ColumnsPopupCheckBoxStyle") as Style;
 
         foreach(var column in TasksGrid.Columns) {
             var target = column;
