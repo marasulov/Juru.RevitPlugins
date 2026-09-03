@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +30,7 @@ public class OpeningsServerClient {
     };
 
     private readonly HttpClient _httpClient;
+    private readonly ConcurrentDictionary<string, (string ProjectCode, string ObjectName)> _resolvedNames = new();
 
     public OpeningsServerClient(string baseUrl) {
         if(string.IsNullOrWhiteSpace(baseUrl)) {
@@ -55,32 +56,97 @@ public class OpeningsServerClient {
     /// <summary>
     /// Отправляет пачку выданных заданий. Повторная отправка того же <c>taskKey</c> - обновление.
     /// </summary>
-    public Task<OpeningSubmitResultDto> SubmitOpeningsAsync(OpeningBatchDto batch) {
+    /// <remarks>
+    /// Имена проекта и объекта перед отправкой приводятся к тем, что стоят в базе сервера:
+    /// иначе <c>Dormitory_building</c> из имени файла заводит на сервере объект-двойник рядом
+    /// с <c>Dormitory building</c>, и отправленных заданий не видит ни фронт, ни соседний плагин.
+    /// </remarks>
+    public async Task<OpeningSubmitResultDto> SubmitOpeningsAsync(OpeningBatchDto batch) {
         if(batch is null) {
             throw new ArgumentNullException(nameof(batch));
         }
 
-        return PostAsync<OpeningSubmitResultDto>("api/openings", batch);
+        var names = await ResolveNamesAsync(batch.ProjectCode, batch.ObjectName).ConfigureAwait(false);
+        batch.ProjectCode = names.ProjectCode;
+        batch.ObjectName = names.ObjectName;
+
+        return await PostAsync<OpeningSubmitResultDto>("api/openings", batch).ConfigureAwait(false);
     }
 
     /// <summary>
     /// Загружает задания объекта с их геометрией и обоими решениями по согласованию.
     /// </summary>
     /// <param name="disciplines">Чьи задания показать. Пусто - все дисциплины объекта.</param>
-    public Task<OpeningTaskViewDto[]> GetOpeningsAsync(
+    public async Task<OpeningTaskViewDto[]> GetOpeningsAsync(
         string projectCode,
         string objectName,
         IEnumerable<Discipline> disciplines = null) {
 
+        var names = await ResolveNamesAsync(projectCode, objectName).ConfigureAwait(false);
+
         string url = "api/openings"
-            + $"?projectCode={Uri.EscapeDataString(projectCode)}"
-            + $"&objectName={Uri.EscapeDataString(objectName)}";
+            + $"?projectCode={Uri.EscapeDataString(names.ProjectCode)}"
+            + $"&objectName={Uri.EscapeDataString(names.ObjectName)}";
 
         foreach(var discipline in disciplines ?? []) {
             url += $"&discipline={Uri.EscapeDataString(discipline.ToString())}";
         }
 
-        return GetAsync<OpeningTaskViewDto[]>(url);
+        return await GetAsync<OpeningTaskViewDto[]>(url).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Проекты справочника сервера - те же, что читает ClashNavigator.
+    /// </summary>
+    public Task<ServerProjectDto[]> GetProjectsAsync() {
+        return GetAsync<ServerProjectDto[]>("api/projects");
+    }
+
+    /// <summary>
+    /// Объекты проекта.
+    /// </summary>
+    public Task<ServerObjectDto[]> GetObjectsAsync(int projectId) {
+        return GetAsync<ServerObjectDto[]>($"api/projects/{projectId}/objects");
+    }
+
+    /// <summary>
+    /// Возвращает имена проекта и объекта так, как они записаны в базе сервера: в имени файла
+    /// пробел пишут подчёркиванием (<c>Dormitory_building</c>), а объект на сервере называется
+    /// <c>Dormitory building</c> - см. <see cref="ServerNames"/>.
+    /// </summary>
+    /// <remarks>
+    /// Ответ справочника кэшируется на время жизни клиента: имена нужны каждому вызову, а меняются
+    /// они реже, чем идёт работа. Если справочник недоступен или имени в нём нет - возвращаются
+    /// имена из файла: сорвать из-за этого отправку хуже, чем отправить как раньше.
+    /// </remarks>
+    private async Task<(string ProjectCode, string ObjectName)> ResolveNamesAsync(
+        string projectCode,
+        string objectName) {
+
+        string key = projectCode + "|" + objectName;
+        if(_resolvedNames.TryGetValue(key, out var cached)) {
+            return cached;
+        }
+
+        var resolved = (ProjectCode: projectCode, ObjectName: objectName);
+        try {
+            var projects = await GetProjectsAsync().ConfigureAwait(false);
+            var project = projects?.FirstOrDefault(item => ServerNames.Match(item.Name, projectCode));
+            if(project is not null) {
+                resolved.ProjectCode = project.Name;
+
+                var objects = await GetObjectsAsync(project.Id).ConfigureAwait(false);
+                var found = objects?.FirstOrDefault(item => ServerNames.Match(item.Name, objectName));
+                if(found is not null) {
+                    resolved.ObjectName = found.Name;
+                }
+            }
+        } catch(Exception exception) when(exception is InvalidOperationException or TimeoutException) {
+            // Справочник не ответил - работаем с именами из файла, как работали раньше.
+        }
+
+        _resolvedNames[key] = resolved;
+        return resolved;
     }
 
     /// <summary>

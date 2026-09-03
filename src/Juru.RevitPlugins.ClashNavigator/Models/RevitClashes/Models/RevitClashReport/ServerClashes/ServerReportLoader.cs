@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -27,7 +27,7 @@ internal static class ServerReportLoader {
         if(revitRepository is null) { throw new ArgumentNullException(nameof(revitRepository)); }
 
         var projects = await client.GetProjectsAsync().ConfigureAwait(false);
-        var project = projects?.FirstOrDefault(p => NamesMatch(p.Name, fileInfo.ProjectCode));
+        var project = projects?.FirstOrDefault(p => ServerNames.Match(p.Name, fileInfo.ProjectCode));
         if(project is null) {
             throw new ArgumentException(
                 $"На сервере не найден проект \"{fileInfo.ProjectCode}\". "
@@ -35,7 +35,7 @@ internal static class ServerReportLoader {
         }
 
         var objects = await client.GetObjectsAsync(project.Id).ConfigureAwait(false);
-        var obj = objects?.FirstOrDefault(o => NamesMatch(o.Name, fileInfo.ObjectName));
+        var obj = objects?.FirstOrDefault(o => ServerNames.Match(o.Name, fileInfo.ObjectName));
         if(obj is null) {
             throw new ArgumentException(
                 $"На сервере не найден объект \"{fileInfo.ObjectName}\" в проекте \"{fileInfo.ProjectCode}\". "
@@ -55,22 +55,6 @@ internal static class ServerReportLoader {
 
         string reportName = $"{fileInfo.ProjectCode}-{fileInfo.ObjectName}-{disciplineCode} (сервер)";
         return new ReportModel(reportName, clashModels);
-    }
-
-    /// <summary>
-    /// Сравнивает имя из названия файла Revit с именем на сервере.
-    /// В названиях файлов пробел записывают подчёркиванием, в базе сервера имя хранится с пробелами.
-    /// </summary>
-    private static bool NamesMatch(string serverName, string fileName) {
-        return string.Equals(NormalizeName(serverName), NormalizeName(fileName), StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static string NormalizeName(string name) {
-        if(string.IsNullOrWhiteSpace(name)) {
-            return string.Empty;
-        }
-
-        return string.Join(" ", name.Replace('_', ' ').Split([' '], StringSplitOptions.RemoveEmptyEntries));
     }
 
     private static string FormatNames(IEnumerable<string> names) {
