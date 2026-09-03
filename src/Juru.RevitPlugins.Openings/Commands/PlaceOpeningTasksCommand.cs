@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -187,6 +187,18 @@ public class PlaceOpeningTasksCommand : IExternalCommand {
             foreach(var reason in placement.GetFailureSummary()) {
                 report.AppendLine($"  {reason.Value} - {reason.Key}");
             }
+        }
+
+        if(placement.LoadedFamilies.Count > 0) {
+            report.AppendLine();
+            report.AppendLine("Загружены из папки эталонных семейств (в проекте их не было): "
+                + string.Join(", ", placement.LoadedFamilies));
+        }
+
+        if(placement.UpdatedFamilies.Count > 0) {
+            report.AppendLine();
+            report.AppendLine("Обновлены эталоном (в проекте стояла не последняя версия): "
+                + string.Join(", ", placement.UpdatedFamilies));
         }
 
         if(placement.MissingParameters.Count > 0) {

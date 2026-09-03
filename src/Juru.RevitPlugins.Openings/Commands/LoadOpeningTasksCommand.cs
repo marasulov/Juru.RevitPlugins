@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -75,6 +75,18 @@ public class LoadOpeningTasksCommand : IExternalCommand {
         if(result.MissingFamilies.Count > 0) {
             report.AppendLine();
             report.AppendLine("Семейства не загружены в проект: " + string.Join(", ", result.MissingFamilies));
+        }
+
+        if(result.LoadedFamilies.Count > 0) {
+            report.AppendLine();
+            report.AppendLine("Загружены из папки эталонных семейств (в проекте их не было): "
+                + string.Join(", ", result.LoadedFamilies));
+        }
+
+        if(result.UpdatedFamilies.Count > 0) {
+            report.AppendLine();
+            report.AppendLine("Обновлены эталоном (в проекте стояла не последняя версия): "
+                + string.Join(", ", result.UpdatedFamilies));
         }
 
         if(result.MissingParameters.Count > 0) {

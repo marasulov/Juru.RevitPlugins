@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -18,11 +18,13 @@ namespace Juru.RevitPlugins.Openings.Models.Placement;
 public class OpeningTaskPlacer {
     private readonly Document _doc;
     private readonly OpeningsConfig _config;
+    private readonly OpeningFamilyLibrary _library;
     private readonly Dictionary<OpeningType, FamilySymbol> _symbols = [];
 
     public OpeningTaskPlacer(Document doc, OpeningsConfig config) {
         _doc = doc ?? throw new ArgumentNullException(nameof(doc));
         _config = config ?? throw new ArgumentNullException(nameof(config));
+        _library = new OpeningFamilyLibrary(doc, config.FamilyLibraryPath, "Расстановка заданий на отверстия");
     }
 
     /// <summary>
@@ -55,6 +57,9 @@ public class OpeningTaskPlacer {
         }
 
         transaction.Commit();
+
+        result.UpdatedFamilies.UnionWith(_library.UpdatedFamilies);
+        result.LoadedFamilies.UnionWith(_library.LoadedFamilies);
         return result;
     }
 
@@ -182,6 +187,13 @@ public class OpeningTaskPlacer {
             : opening.Primary.Settings.ElevationRoundingMm;
     }
 
+    /// <summary>
+    /// Записывает параметры задания. Если чего-то не нашлось - не сразу сдаётся: возможно, семейство
+    /// в проекте устарело, а не действительно лишено параметра. Тогда семейство один раз за запуск
+    /// обновляется эталоном с сервера семейств (с уведомлением) и те же параметры пишутся заново
+    /// на том же экземпляре: перезагрузка с перезаписью значений типов обновляет уже стоящие
+    /// в проекте экземпляры на месте, пересоздавать их не нужно.
+    /// </summary>
     private void SetParameters(
         FamilyInstance instance,
         PlannedOpening opening,
@@ -190,25 +202,45 @@ public class OpeningTaskPlacer {
         Level level,
         PlacementResult result) {
 
+        var missing = WriteParameters(instance, opening, size, point, level);
+
+        if(missing.Count > 0 && _library.ReloadOutdated(_config.Naming.GetFamilyName(size.OpeningType))) {
+            _doc.Regenerate();
+            missing = WriteParameters(instance, opening, size, point, level);
+        }
+
+        foreach(string paramName in missing) {
+            result.MissingParameters.Add(paramName);
+        }
+    }
+
+    private List<string> WriteParameters(
+        FamilyInstance instance,
+        PlannedOpening opening,
+        OpeningSize size,
+        XYZ point,
+        Level level) {
+
         var naming = _config.Naming;
+        var missing = new List<string>();
 
         // Отсутствие параметра в семействе не срывает расстановку, но должно попасть в отчёт:
         // иначе задание встанет без данных, и узнается это только на чертеже.
         void Length(string paramName, double value) {
             if(!ParameterWriter.SetLength(instance, paramName, value)) {
-                result.MissingParameters.Add(paramName);
+                missing.Add(paramName);
             }
         }
 
         void Text(string paramName, string value) {
             if(!ParameterWriter.SetText(instance, paramName, value)) {
-                result.MissingParameters.Add(paramName);
+                missing.Add(paramName);
             }
         }
 
         void Flag(string paramName, int value) {
             if(!ParameterWriter.SetInteger(instance, paramName, value)) {
-                result.MissingParameters.Add(paramName);
+                missing.Add(paramName);
             }
         }
 
@@ -236,6 +268,8 @@ public class OpeningTaskPlacer {
         Text(naming.AuthorParam, GetAuthor());
         Flag(naming.ManuallyPlacedParam, 0);
         Flag(naming.UnitedParam, opening.IsUnited ? 1 : 0);
+
+        return missing;
     }
 
     /// <summary>
@@ -302,10 +336,10 @@ public class OpeningTaskPlacer {
         }
 
         string familyName = _config.Naming.GetFamilyName(openingType);
-        var symbol = new FilteredElementCollector(_doc)
-            .OfClass(typeof(FamilySymbol))
-            .Cast<FamilySymbol>()
-            .FirstOrDefault(item => item.FamilyName.Equals(familyName, StringComparison.CurrentCultureIgnoreCase));
+        var symbol = _library.FindSymbol(familyName);
+
+        // Семейства нет в проекте вовсе - догружаем эталон, иначе задание некуда ставить.
+        symbol ??= _library.LoadMissing(familyName);
 
         _symbols[openingType] = symbol;
         return symbol;

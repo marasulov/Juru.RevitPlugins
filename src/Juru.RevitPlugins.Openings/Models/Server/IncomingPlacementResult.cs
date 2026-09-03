@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using Autodesk.Revit.DB;
 
@@ -32,6 +32,17 @@ public class IncomingPlacementResult {
     /// Параметры, которых не оказалось в семействах.
     /// </summary>
     public SortedSet<string> MissingParameters { get; } = [];
+
+    /// <summary>
+    /// Семейства, обновлённые эталоном из папки эталонных семейств: в стоявших в проекте
+    /// не хватало параметров - значит, они не последней версии.
+    /// </summary>
+    public SortedSet<string> UpdatedFamilies { get; } = [];
+
+    /// <summary>
+    /// Семейства, которых в проекте не было и которые пришлось загрузить из папки эталонных семейств.
+    /// </summary>
+    public SortedSet<string> LoadedFamilies { get; } = [];
 
     /// <summary>
     /// Экземпляры, стоящие в модели после этого запуска, по ключу задания - и только что созданные,

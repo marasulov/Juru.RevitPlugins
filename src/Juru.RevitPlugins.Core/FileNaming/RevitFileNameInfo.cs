@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text.RegularExpressions;
 
@@ -8,12 +8,19 @@ namespace Juru.RevitPlugins.Core.FileNaming;
 /// Компоненты имени файла Revit, разобранные по стандарту наименования организации:
 /// Проект-Название_объекта-Дисциплина(3 символа)-v24(версия ревита).rvt
 /// </summary>
+/// <remarks>
+/// Версия ревита и хвост после дисциплины необязательны: связи других дисциплин обычно подгружают
+/// копиями с постфиксом (`-ARC_shared`, `_detached`), а версия в имени есть не у всех файлов.
+/// </remarks>
 public sealed class RevitFileNameInfo {
     // Длину кода проекта не проверяем: кодов ровно в 5 символов стандарт не гарантирует
     // (на сервере есть и "BASH2", и "O&M", и "DEMO"). Существование проекта всё равно
     // проверяется по списку с сервера - см. ServerReportLoader.
+    // Хвост после дисциплины отделён разделителем (`_shared`, ` (копия)`), чтобы `ARCHIVE`
+    // не разобрался как дисциплина ARC с хвостом `HIVE`.
     private static readonly Regex _pattern = new(
-        @"^(?<project>[^-]+)-(?<object>.+)-(?<discipline>ARC|STR|WSS|ELE|HVC|FAD)-v(?<version>\d+)$",
+        @"^(?<project>[^-]+)-(?<object>.+)-(?<discipline>ARC|STR|WSS|ELE|HVC|FAD)"
+        + @"(?:-v(?<version>\d+))?(?<suffix>[ _-].*)?$",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private RevitFileNameInfo(string projectCode, string objectName, Discipline discipline, int revitVersion) {
@@ -50,9 +57,8 @@ public sealed class RevitFileNameInfo {
             return false;
         }
 
-        if(!int.TryParse(match.Groups["version"].Value, out int version)) {
-            return false;
-        }
+        // Версии в имени может не быть - тогда 0, её всё равно никто не спрашивает.
+        int.TryParse(match.Groups["version"].Value, out int version);
 
         info = new RevitFileNameInfo(match.Groups["project"].Value, match.Groups["object"].Value, discipline, version);
         return true;

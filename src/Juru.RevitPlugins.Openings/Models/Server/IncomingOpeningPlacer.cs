@@ -1,14 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using Autodesk.Revit.UI;
-
-using Nice3point.Revit.Toolkit.Options;
 
 using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.Models.Placement;
@@ -29,19 +25,13 @@ namespace Juru.RevitPlugins.Openings.Models.Server;
 public class IncomingOpeningPlacer {
     private readonly Document _doc;
     private readonly OpeningsConfig _config;
+    private readonly OpeningFamilyLibrary _library;
     private readonly Dictionary<OpeningType, FamilySymbol> _symbols = [];
-
-    /// <summary>
-    /// Типы отверстий, для которых уже пробовали перезагрузить семейство из-за нехватки параметра
-    /// в этом запуске - не больше одной перезагрузки на тип за раз, иначе первый же реально
-    /// отсутствующий параметр (опечатка в имени, не устаревшее семейство) перезагружал бы семейство
-    /// заново на каждом следующем задании этого типа.
-    /// </summary>
-    private readonly HashSet<OpeningType> _reloadAttempted = [];
 
     public IncomingOpeningPlacer(Document doc, OpeningsConfig config) {
         _doc = doc ?? throw new ArgumentNullException(nameof(doc));
         _config = config ?? throw new ArgumentNullException(nameof(config));
+        _library = new OpeningFamilyLibrary(doc, config.FamilyLibraryPath, "Загрузка заданий");
     }
 
     /// <summary>
@@ -91,6 +81,9 @@ public class IncomingOpeningPlacer {
         }
 
         transaction.Commit();
+
+        result.UpdatedFamilies.UnionWith(_library.UpdatedFamilies);
+        result.LoadedFamilies.UnionWith(_library.LoadedFamilies);
         return result;
     }
 
@@ -208,11 +201,10 @@ public class IncomingOpeningPlacer {
 
     /// <summary>
     /// Записывает параметры задания. Если чего-то не нашлось - не сразу сдаётся: возможно, семейство
-    /// в проекте устарело, а не действительно лишено параметра. Перезагружает его с сервера семейств
-    /// один раз за запуск (сверяться с сервером на каждое задание было бы дорого - см. обсуждение
-    /// в памяти проекта) и пробует записать те же параметры заново на том же экземпляре: перезагрузка
-    /// с перезаписью значений типов обновляет уже стоящие в проекте экземпляры на месте, отдельно
-    /// пересоздавать их не нужно.
+    /// в проекте устарело, а не действительно лишено параметра. Тогда семейство один раз за запуск
+    /// обновляется эталоном с сервера семейств (с уведомлением) и те же параметры пишутся заново
+    /// на том же экземпляре: перезагрузка с перезаписью значений типов обновляет уже стоящие
+    /// в проекте экземпляры на месте, отдельно пересоздавать их не нужно.
     /// </summary>
     private void SetParameters(
         FamilyInstance instance,
@@ -223,12 +215,9 @@ public class IncomingOpeningPlacer {
 
         var missing = WriteParameters(instance, task, point, level);
 
-        if(missing.Count > 0 && _reloadAttempted.Add(task.OpeningType)) {
-            string familyName = _config.Naming.GetFamilyName(task.OpeningType);
-            if(ReloadFromLibrary(familyName)) {
-                _doc.Regenerate();
-                missing = WriteParameters(instance, task, point, level);
-            }
+        if(missing.Count > 0 && _library.ReloadOutdated(_config.Naming.GetFamilyName(task.OpeningType))) {
+            _doc.Regenerate();
+            missing = WriteParameters(instance, task, point, level);
         }
 
         foreach(string paramName in missing) {
@@ -313,61 +302,15 @@ public class IncomingOpeningPlacer {
         }
 
         string familyName = _config.Naming.GetFamilyName(openingType);
-        var symbol = FindSymbol(familyName);
+        var symbol = _library.FindSymbol(familyName);
 
-        // В проекте семейства нет вовсе - догружаем эталон с сервера семейств. Версию, уже стоящую
-        // в проекте, не трогаем и не сравниваем с эталонной: перезаписывать типы без явного действия
-        // пользователя не должны, только восполнять то, чего действительно нет.
-        if(symbol is null) {
-            symbol = LoadFromLibrary(familyName);
-        }
+        // В проекте семейства нет вовсе - догружаем эталон с сервера семейств. Стоящее в проекте
+        // семейство здесь не трогаем: устаревшее обновится позже, когда параметр действительно
+        // не запишется, - перезаписывать типы без причины не должны.
+        symbol ??= _library.LoadMissing(familyName);
 
         _symbols[openingType] = symbol;
         return symbol;
-    }
-
-    private FamilySymbol FindSymbol(string familyName) {
-        return new FilteredElementCollector(_doc)
-            .OfClass(typeof(FamilySymbol))
-            .Cast<FamilySymbol>()
-            .FirstOrDefault(item => item.FamilyName.Equals(familyName, StringComparison.CurrentCultureIgnoreCase));
-    }
-
-    private FamilySymbol LoadFromLibrary(string familyName) {
-        string message = $"Семейства {familyName} нет в проекте - загружаю эталон с сервера семейств:\n{{0}}";
-        return LoadFamilyFile(familyName, message, out var family) ? FindSymbol(family.Name) : null;
-    }
-
-    /// <summary>
-    /// Перезагружает уже стоящее в проекте семейство эталоном с сервера семейств, перезаписывая
-    /// значения его типов - у экземпляров, уже размещённых в проекте, появятся все параметры
-    /// эталона без пересоздания. Вызывается только когда обычная запись параметра не удалась:
-    /// сверяться с сервером на каждое задание было бы дорого без причины.
-    /// </summary>
-    private bool ReloadFromLibrary(string familyName) {
-        string message = $"В семействе {familyName} не нашлось нужных параметров - "
-            + "перезагружаю его эталоном с сервера семейств:\n{0}";
-        return LoadFamilyFile(familyName, message, out _);
-    }
-
-    private bool LoadFamilyFile(string familyName, string messageFormat, out Family family) {
-        family = null;
-        string libraryPath = _config.FamilyLibraryPath;
-        if(string.IsNullOrWhiteSpace(libraryPath)) {
-            return false;
-        }
-
-        string familyPath = Path.Combine(libraryPath, familyName + ".rfa");
-        if(!File.Exists(familyPath)) {
-            return false;
-        }
-
-        TaskDialog.Show("Загрузка заданий", string.Format(messageFormat, familyPath));
-
-        // FamilyLoadOptions() по умолчанию перезаписывает значения параметров уже существующих
-        // типов - ровно то, что нужно и для впервые загружаемого семейства (перезаписывать нечего),
-        // и для устаревшего (подхватит недостающие параметры на уже стоящих экземплярах).
-        return _doc.LoadFamily(familyPath, new FamilyLoadOptions(), out family);
     }
 
     /// <summary>
