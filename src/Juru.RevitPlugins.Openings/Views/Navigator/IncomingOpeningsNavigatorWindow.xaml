@@ -454,7 +454,11 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
+                    <!-- Колонка пустует, пока инженер ничего не удалял, поэтому окно её прячет
+                         целиком - см. UpdateRemoveColumn в code-behind: заголовок без единой
+                         кнопки под ним читается как поломка. -->
                     <DataGridTemplateColumn
+                        x:Name="RemoveColumn"
                         Width="90"
                         Header="Убрать">
                         <DataGridTemplateColumn.CellTemplate>
