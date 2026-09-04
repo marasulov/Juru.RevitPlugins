@@ -455,6 +455,26 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn
+                        Width="90"
+                        Header="Убрать">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Появляется только у заданий, которые инженер удалил, а
+                                     отверстие по ним уже прорезано: обновление такое отверстие
+                                     не трогает - конструкция прорезана по согласованному
+                                     заданию, и зарастить её молча нельзя. -->
+                                <ui:Button
+                                    Margin="2"
+                                    Padding="8 2"
+                                    Appearance="Danger"
+                                    Content="Убрать"
+                                    ToolTip="Инженер удалил задание - убрать прорезанное по нему отверстие"
+                                    Visibility="{Binding CanRemove, Converter={StaticResource BoolToVisibility}}"
+                                    Click="RemoveButton_Click" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
                         Width="40"
                         Header="Хост">
                         <DataGridTemplateColumn.CellTemplate>

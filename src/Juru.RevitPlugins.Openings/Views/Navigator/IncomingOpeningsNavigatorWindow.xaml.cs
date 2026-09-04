@@ -235,6 +235,12 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
         }
     }
 
+    private void RemoveButton_Click(object sender, RoutedEventArgs e) {
+        if(GetRow(sender) is { } row && DataContext is IncomingOpeningsNavigatorViewModel vm) {
+            vm.Remove(row);
+        }
+    }
+
     private void ApproveButton_Click(object sender, RoutedEventArgs e) {
         if(GetRow(sender) is { } row && DataContext is IncomingOpeningsNavigatorViewModel vm) {
             vm.Approve(row);
