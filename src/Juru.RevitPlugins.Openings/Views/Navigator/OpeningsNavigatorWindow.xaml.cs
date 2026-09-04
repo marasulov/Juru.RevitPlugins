@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -140,6 +141,45 @@ public partial class OpeningsNavigatorWindow : Window {
         PositionText.Text = index < 0
             ? string.Empty
             : $"Задание {index + 1} из {TasksGrid.Items.Count}";
+    }
+
+    private void DeleteButton_Click(object sender, RoutedEventArgs e) {
+        DeleteSelected();
+    }
+
+    /// <summary>
+    /// Delete по гриду - то же удаление: список читают клавишами, и тянуться к кнопке после каждой
+    /// найденной пачки неудобно. <c>CanUserDeleteRows="False"</c> оставляет клавишу свободной -
+    /// сам грид на неё ничего не делает.
+    /// </summary>
+    private void TasksGrid_PreviewKeyDown(object sender, KeyEventArgs e) {
+        if(e.Key != Key.Delete) {
+            return;
+        }
+
+        e.Handled = true;
+        DeleteSelected();
+    }
+
+    /// <summary>
+    /// Отдаёт во ViewModel выделенные строки: <c>DataGrid.SelectedItems</c> не привязывается,
+    /// поэтому множественное выделение доходит до неё только отсюда.
+    /// </summary>
+    private void DeleteSelected() {
+        if(DataContext is not OpeningsNavigatorViewModel vm) {
+            return;
+        }
+
+        vm.Delete(TasksGrid.SelectedItems.OfType<OpeningTaskViewModel>().ToList());
+    }
+
+    /// <summary>
+    /// Номер задания в списке должен следовать за выделением, кем бы оно ни менялось: щелчком
+    /// по строке, кнопками перехода или удалением, после которого ViewModel встаёт на первое
+    /// оставшееся задание уже без участия окна.
+    /// </summary>
+    private void TasksGrid_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+        UpdatePosition();
     }
 
     private void ButtonClose_Click(object sender, RoutedEventArgs e) {

@@ -18,6 +18,7 @@ using Juru.RevitPlugins.Core.FileNaming;
 using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.Models.Intersections;
 using Juru.RevitPlugins.Openings.Models.Navigator;
+using Juru.RevitPlugins.Openings.Models.Placement;
 using Juru.RevitPlugins.Openings.Models.Server;
 using Juru.RevitPlugins.Openings.Models.Server.Dto;
 using Juru.RevitPlugins.Openings.Services;
@@ -34,6 +35,17 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
     private readonly OpeningsServerClient? _client;
     private View3D? _view;
     private HostReference? _highlightedHost;
+
+    /// <summary>
+    /// Сколько заданий удалено в этом сеансе после последней отправки.
+    /// </summary>
+    /// <remarks>
+    /// Пока не отправили, согласующие видят удалённые задания живыми: сервер узнаёт об удалении
+    /// только из следующей полной выгрузки, где ключа больше нет (<c>docs/OpeningsApi.md</c>).
+    /// Поэтому счётчик висит в сводке до отправки - иначе удаление выглядит завершённым, а до АР
+    /// и КР не доходит.
+    /// </remarks>
+    private int _pendingDeletions;
 
     [ObservableProperty]
     private OpeningTaskViewModel? _selectedTask;
@@ -182,7 +194,7 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
             Tasks.Add(new OpeningTaskViewModel(task, decision, serverChecked));
         }
 
-        Summary = GetSummary(Tasks, serverChecked) + colorWarning;
+        Summary = GetSummary(Tasks, serverChecked) + colorWarning + GetPendingDeletionsText();
         SelectedTask = Tasks.FirstOrDefault();
     }
 
@@ -454,23 +466,110 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
         _config.Approvers = GetSelectedApprovers();
         _config.SaveProjectConfig();
 
+        _runner.Run(SendCore);
+    }
+
+    /// <summary>
+    /// Сама отправка. Вызывается только в контексте Revit API - либо кнопкой, либо сразу после
+    /// удаления заданий, где своё <see cref="RevitActionRunner.Run"/> заводить нельзя: внешнее
+    /// событие держит одно действие, и вложенный вызов затёр бы то, что уже выполняется.
+    /// </summary>
+    private void SendCore(UIApplication uiApplication) {
+        var doc = uiApplication.ActiveUIDocument.Document;
+        var sender = new OpeningTasksSender(doc, _config, _client!);
+        if(sender.NeedsCoordinateWarning && !ConfirmWithoutSharedCoordinates()) {
+            return;
+        }
+
+        try {
+            var outcome = sender.Send(_fileInfo!);
+            TaskDialog.Show("Отправка заданий", outcome.Report);
+        } catch(Exception exception) when(exception is InvalidOperationException or TimeoutException) {
+            ServerText = exception.Message;
+            return;
+        }
+
+        // Выгрузка ушла со scope = all, и удалённых заданий в ней нет - сервер пометил их сам.
+        _pendingDeletions = 0;
+        Reload(uiApplication);
+    }
+
+    /// <summary>
+    /// Удаляет выбранные задания из модели и предлагает сразу отправить выгрузку, чтобы удаление
+    /// дошло до согласующих.
+    /// </summary>
+    /// <remarks>
+    /// Отдельного запроса на удаление записи у сервера нет и не нужно: он считает задание удалённым
+    /// по тому, что его ключ не пришёл в полной выгрузке, и оставляет запись с решением и историей
+    /// (<c>docs/OpeningsApi.md</c>, "Удалённые задания"). Поэтому здесь удаляются экземпляры,
+    /// а запись закрывает следующая отправка.
+    /// </remarks>
+    public void Delete(IReadOnlyCollection<OpeningTaskViewModel> rows) {
+        // Всё, включая вопросы пользователю, происходит в контексте Revit API - как и в остальном
+        // окне: оно немодальное и живёт вне этого контекста.
         _runner.Run(uiApplication => {
+            if(rows is null || rows.Count == 0) {
+                TaskDialog.Show("Удаление заданий", "Выделите в списке задания, которые нужно удалить.");
+                return;
+            }
+
+            if(!Confirm(rows)) {
+                return;
+            }
+
             var doc = uiApplication.ActiveUIDocument.Document;
-            var sender = new OpeningTasksSender(doc, _config, _client!);
-            if(sender.NeedsCoordinateWarning && !ConfirmWithoutSharedCoordinates()) {
-                return;
+            int removed = new OpeningTaskRemover().Remove(doc, rows.Select(row => row.Task.Id).ToList());
+
+            foreach(var row in rows) {
+                Tasks.Remove(row);
             }
 
-            try {
-                var outcome = sender.Send(_fileInfo!);
-                TaskDialog.Show("Отправка заданий", outcome.Report);
-            } catch(Exception exception) when(exception is InvalidOperationException or TimeoutException) {
-                ServerText = exception.Message;
-                return;
-            }
+            SelectedTask = Tasks.FirstOrDefault();
+            _pendingDeletions += removed;
+            Summary = GetSummary(Tasks, serverChecked: !DecisionsUnknown) + GetPendingDeletionsText();
 
-            Reload(uiApplication);
+            if(CanSend && ConfirmSendAfterDelete(removed)) {
+                _config.Approvers = GetSelectedApprovers();
+                _config.SaveProjectConfig();
+                SendCore(uiApplication);
+            }
         });
+    }
+
+    /// <summary>
+    /// Спрашивает подтверждение, отдельно называя задания, которые уже согласованы: их удаление
+    /// отменяет чужую работу - согласующий разбирал именно это отверстие.
+    /// </summary>
+    private static bool Confirm(IReadOnlyCollection<OpeningTaskViewModel> rows) {
+        int approved = rows.Count(row => row.IsApproved);
+        string text = $"Удалить из модели заданий: {rows.Count}?";
+        if(approved > 0) {
+            text += $"\n\nИз них уже согласованы: {approved}. "
+                + "Согласующий увидит, что отверстие больше не требуется; его решение и переписка "
+                + "останутся в истории на сервере.";
+        }
+
+        text += "\n\nДо отправки на сервер удаление видно только в этом файле.";
+
+        var confirm = TaskDialog.Show("Удаление заданий", text,
+            TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No, TaskDialogResult.No);
+        return confirm == TaskDialogResult.Yes;
+    }
+
+    private static bool ConfirmSendAfterDelete(int removed) {
+        var confirm = TaskDialog.Show("Удаление заданий",
+            $"Удалено заданий: {removed}.\n\n"
+            + "Отправить задания на сервер сейчас, чтобы АР и КР увидели, что удалённых заданий "
+            + "больше нет? Пока выгрузка не ушла, у них эти задания остаются живыми.",
+            TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No, TaskDialogResult.Yes);
+        return confirm == TaskDialogResult.Yes;
+    }
+
+    private string GetPendingDeletionsText() {
+        return _pendingDeletions == 0
+            ? string.Empty
+            : $" Удалено и не отправлено: {_pendingDeletions} - "
+                + "до отправки согласующие видят эти задания живыми.";
     }
 
     private List<Discipline> GetSelectedApprovers() {

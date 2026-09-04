@@ -1,4 +1,4 @@
-<Window
+﻿<Window
     x:Class="Juru.RevitPlugins.Openings.Views.Navigator.OpeningsNavigatorWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -240,8 +240,10 @@
                 IsReadOnly="True"
                 ItemsSource="{Binding Source={StaticResource TasksView}}"
                 SelectedItem="{Binding SelectedTask}"
-                SelectionMode="Single"
-                SelectionUnit="FullRow">
+                SelectionMode="Extended"
+                SelectionUnit="FullRow"
+                PreviewKeyDown="TasksGrid_PreviewKeyDown"
+                SelectionChanged="TasksGrid_SelectionChanged">
 
                 <DataGrid.InputBindings>
                     <MouseBinding
@@ -421,7 +423,7 @@
                 Margin="16 0 0 0"
                 VerticalAlignment="Center"
                 Style="{StaticResource Hint}"
-                Text="Двойной щелчок по строке показывает задание в модели." />
+                Text="Двойной щелчок по строке показывает задание в модели, Delete удаляет выделенные." />
         </StackPanel>
 
         <!-- WrapPanel, а не StackPanel в DockPanel: подсказка рядом забирала себе ширину,
@@ -451,6 +453,16 @@
                 Content="STR"
                 ToolTip="Согласовать с конструкторами"
                 IsChecked="{Binding ApproveWithStr}" />
+            <!-- Удаление стоит до отправки, потому что в таком порядке им и пользуются: убрал лишние
+                 задания - отправил остаток. Работает по выделению в гриде, а не по строке-кнопке:
+                 удаляют обычно пачкой, найденной поиском. -->
+            <ui:Button
+                Width="120"
+                Margin="6 0"
+                Appearance="Danger"
+                Content="Удалить"
+                ToolTip="Удалить выделенные задания из модели. Согласующие узнают об этом со следующей отправки"
+                Click="DeleteButton_Click" />
             <ui:Button
                 Width="180"
                 Margin="6 0"
