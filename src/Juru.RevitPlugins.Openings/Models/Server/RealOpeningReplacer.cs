@@ -86,6 +86,25 @@ public class RealOpeningReplacer {
     }
 
     /// <summary>
+    /// Возвращает ключи заданий, которые инженер удалил, а отверстия по ним в этом файле уже
+    /// прорезаны. Модель не меняет - это вопрос, а не уборка.
+    /// </summary>
+    /// <remarks>
+    /// Нужен загрузке заданий: она ставит только экземпляры-задания и про вырезающие семейства
+    /// не знает, поэтому сама по себе даже не замечает, что согласованное отверстие больше
+    /// не требуется. Убирают такие отверстия в окне согласования, где видно, какое именно.
+    /// </remarks>
+    public IReadOnlyCollection<string> FindCutDeleted(IReadOnlyCollection<OpeningTaskViewDto> tasks) {
+        if(tasks is null) { throw new ArgumentNullException(nameof(tasks)); }
+
+        var realByTaskKey = GetExistingRealInstances();
+        return tasks
+            .Where(task => task.Deleted && realByTaskKey.ContainsKey(task.TaskKey))
+            .Select(task => task.TaskKey)
+            .ToList();
+    }
+
+    /// <summary>
     /// Прорезает вырезающим семейством те задания из <paramref name="tasks"/>, что согласовала
     /// своя дисциплина и что ещё не прорезаны - по кнопке "Вставить"/"Вставить все согласованные".
     /// <paramref name="placedElements"/> - результат последнего <see cref="IncomingOpeningPlacer.Place"/>
