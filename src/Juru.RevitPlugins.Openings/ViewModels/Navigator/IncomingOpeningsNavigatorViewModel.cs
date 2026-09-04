@@ -163,7 +163,12 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         // (docs/OpeningsApi.md), поэтому зелёного слоя, как у исходящего навигатора, здесь нет.
         _view = NavigatorViewProvider.GetOrCreate(doc, "Входящие");
         _highlightedHost = null;
-        NavigatorColorScheme.ApplyIncoming(doc, _view, [BuiltInCategory.OST_Walls, BuiltInCategory.OST_Floors]);
+        try {
+            NavigatorColorScheme.ApplyIncoming(doc, _view, [BuiltInCategory.OST_Walls, BuiltInCategory.OST_Floors]);
+        } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+            // Раскраска - удобство, а не работа навигатора: из-за неё нельзя терять весь список
+            // заданий, см. исходящий навигатор.
+        }
 
         _lastServerTasks = serverTasks;
         _lastPlacedElements = result.PlacedElements;

@@ -1,3 +1,4 @@
+﻿using System;
 using System.Windows.Interop;
 
 using Autodesk.Revit.Attributes;
@@ -27,6 +28,16 @@ public class ShowIncomingOpeningTasksCommand : IExternalCommand {
     private static IncomingOpeningsNavigatorWindow _window;
 
     public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements) {
+        // Необработанное исключение здесь Revit показывает как безымянную внутреннюю ошибку,
+        // по которой причину не найти, - поэтому показываем своё окно с типом и стеком.
+        try {
+            return ShowNavigator(commandData);
+        } catch(Exception exception) {
+            return CommandErrorReport.Show("Согласование заданий", exception);
+        }
+    }
+
+    private Result ShowNavigator(ExternalCommandData commandData) {
         var uiApplication = commandData.Application;
         var doc = uiApplication.ActiveUIDocument.Document;
         var config = OpeningsConfig.GetOpeningsConfig();

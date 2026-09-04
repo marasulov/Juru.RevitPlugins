@@ -97,19 +97,41 @@ public static class NavigatorColorScheme {
         IReadOnlyCollection<BuiltInCategory> categories,
         OverrideGraphicSettings settings) {
 
+        var categoryIds = GetFilterableIds(categories);
+        if(categoryIds.Count == 0) {
+            return;
+        }
+
         var filter = new FilteredElementCollector(doc)
             .OfClass(typeof(ParameterFilterElement))
             .Cast<ParameterFilterElement>()
             .FirstOrDefault(item => item.Name == name)
-            ?? ParameterFilterElement.Create(doc, name, categories.Select(category => new ElementId(category)).ToList());
+            ?? ParameterFilterElement.Create(doc, name, categoryIds);
 
-        filter.SetCategories(categories.Select(category => new ElementId(category)).ToList());
+        filter.SetCategories(categoryIds);
 
         if(!view.GetFilters().Contains(filter.Id)) {
             view.AddFilter(filter.Id);
         }
         view.SetFilterOverrides(filter.Id, settings);
         view.SetFilterVisibility(filter.Id, true);
+    }
+
+    /// <summary>
+    /// Оставляет от набора только те категории, по которым Revit разрешает делать фильтр вида.
+    /// </summary>
+    /// <remarks>
+    /// Нефильтруемая категория в наборе валит создание <see cref="ParameterFilterElement"/>
+    /// внутренней ошибкой Revit, а не понятным исключением. Набор модельных категорий зависит
+    /// от версии Revit и от того, что загружено в файл, поэтому проверять его надо в рантайме,
+    /// а не составлять список руками: для фильтра "Прочее" в него попадают все категории модели.
+    /// </remarks>
+    private static IList<ElementId> GetFilterableIds(IReadOnlyCollection<BuiltInCategory> categories) {
+        var filterable = ParameterFilterUtilities.GetAllFilterableCategories();
+        return categories
+            .Select(category => new ElementId(category))
+            .Where(filterable.Contains)
+            .ToList();
     }
 
     private static OverrideGraphicSettings GetColorSettings(Document doc, Color color, int surfaceTransparency) {

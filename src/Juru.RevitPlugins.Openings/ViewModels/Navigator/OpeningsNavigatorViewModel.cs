@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -166,7 +166,15 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
         // от настроек, которые пользователь может поменять между обновлениями.
         _view = NavigatorViewProvider.GetOrCreate(doc, "Исходящие");
         _highlightedHost = null;
-        NavigatorColorScheme.ApplyOutgoing(doc, _view, GetMepCategories(), GetStructureCategories());
+
+        string colorWarning = string.Empty;
+        try {
+            NavigatorColorScheme.ApplyOutgoing(doc, _view, GetMepCategories(), GetStructureCategories());
+        } catch(Autodesk.Revit.Exceptions.ApplicationException exception) {
+            // Раскраска - удобство, а не работа навигатора: из-за неё нельзя терять весь список
+            // заданий. Причина остаётся в сводке, чтобы было видно, почему вид выглядит обычным.
+            colorWarning = " Вид навигатора не раскрашен: " + exception.Message;
+        }
 
         Tasks.Clear();
         foreach(var task in updated) {
@@ -174,7 +182,7 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
             Tasks.Add(new OpeningTaskViewModel(task, decision, serverChecked));
         }
 
-        Summary = GetSummary(Tasks, serverChecked);
+        Summary = GetSummary(Tasks, serverChecked) + colorWarning;
         SelectedTask = Tasks.FirstOrDefault();
     }
 

@@ -9,6 +9,19 @@
         <ResourceDictionary
             Source="pack://application:,,,/Wpf.Ui;component/Controls/ToggleSwitch/ToggleSwitch.xaml" />
     </ResourceDictionary.MergedDictionaries>
+
+    <!-- Отмеченный флажок под курсором и в нажатии в WPF-UI 4.3 заливается прозрачной кистью
+         (CheckBoxCheckBackgroundFillChecked*  = #00FFFFFF), а рамка у отмеченного состояния
+         прозрачна по замыслу - в сумме квадрат флажка пропадал целиком, стоило навести мышь.
+         Проверено в пустом приложении с теми же словарями, к Revit отношения не имеет.
+         Задаём заливку акцентом, как это сделано у прочих состояний: Secondary под курсором,
+         Tertiary в нажатии - тогда флажок темнеет, а не исчезает. -->
+    <SolidColorBrush
+        x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver"
+        Color="{DynamicResource SystemAccentColorSecondary}" />
+    <SolidColorBrush
+        x:Key="CheckBoxCheckBackgroundFillCheckedPressed"
+        Color="{DynamicResource SystemAccentColorTertiary}" />
     <Style
         x:Key="CustomColumnCheckBoxStyle"
         TargetType="CheckBox"

@@ -325,8 +325,8 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
 
     private static string GetOtherDisciplineText(OpeningTaskViewDto task, Discipline ownDiscipline) {
         var (label, decision) = ownDiscipline == Discipline.ARC
-            ? ("КР", task.StrDecision)
-            : ("АР", task.ArcDecision);
+            ? ("STR", task.StrDecision)
+            : ("ARC", task.ArcDecision);
         return $"{label}: {GetOverallStatusText(decision.Status)}";
     }
 }
