@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <IsPackable>false</IsPackable>
+        <LangVersion>latest</LangVersion>
+        <Configurations>Debug.R23;Debug.R24;Debug.R25;Debug.R26;Debug.R27</Configurations>
+        <Configurations>$(Configurations);Release.R23;Release.R24;Release.R25;Release.R26;Release.R27</Configurations>
+    </PropertyGroup>
+
+    <!-- Целевая платформа повторяет ту, что Nice3point.Revit.Sdk выбирает для тестируемого
+         проекта: иначе ссылка на него не соберётся. Ревит 2027 перешёл на .NET, остальные годы
+         остаются на .NET Framework. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug.R27' Or '$(Configuration)' == 'Release.R27'">
+        <TargetFramework>net10.0-windows7.0</TargetFramework>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(TargetFramework)' == ''">
+        <TargetFramework>net48</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+        <PackageReference Include="xunit" Version="2.9.2" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    </ItemGroup>
+
+    <!-- Только Core: здесь лежит логика, у которой нет ни одной ссылки на Revit API, и она
+         единственная, что честно проверяется обычными тестами. Почему не больше - см. Readme.md
+         рядом. -->
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Juru.RevitPlugins.Core\Juru.RevitPlugins.Core.csproj" />
+    </ItemGroup>
+
+</Project>

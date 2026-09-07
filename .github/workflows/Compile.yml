@@ -29,3 +29,8 @@ jobs:
         working-directory: "build"
         env:
           DOTNET_ENVIRONMENT: ${{ github.ref_name == 'main' && 'Production' || 'Development' }}
+
+      # Тесты покрывают только логику без Revit API - Ревит на раннере не установлен.
+      # Почему так и что из-за этого остаётся непокрытым - tests/Juru.RevitPlugins.Tests/Readme.md.
+      - name: Run tests
+        run: dotnet test tests/Juru.RevitPlugins.Tests/Juru.RevitPlugins.Tests.csproj -c Debug.R24 --nologo

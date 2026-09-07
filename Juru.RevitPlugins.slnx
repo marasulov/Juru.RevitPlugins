@@ -65,6 +65,18 @@
     <File Path="Changelog.md" />
     <File Path="Readme.md" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Juru.RevitPlugins.Tests/Juru.RevitPlugins.Tests.csproj">
+      <BuildType Solution="Debug|*" Project="Debug.R23" />
+      <BuildType Solution="Release|*" Project="Release.R23" />
+      <!-- В установщик тесты не входят. -->
+      <Build Solution="Release.R23|*" Project="false" />
+      <Build Solution="Release.R24|*" Project="false" />
+      <Build Solution="Release.R25|*" Project="false" />
+      <Build Solution="Release.R26|*" Project="false" />
+      <Build Solution="Release.R27|*" Project="false" />
+    </Project>
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Juru.RevitPlugins.App/Juru.RevitPlugins.App.csproj">
       <BuildType Solution="Debug|*" Project="Debug.R23" />
