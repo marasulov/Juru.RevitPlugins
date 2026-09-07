@@ -50,7 +50,7 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
         _settingsConfig = settingsConfig ?? throw new ArgumentNullException(nameof(settingsConfig));
         _filtersConfig = filtersConfig ?? throw new ArgumentNullException(nameof(filtersConfig));
         _contentDialogService = contentDialogService ?? throw new ArgumentNullException(nameof(contentDialogService));
-        Name = check?.Name ?? _localizationService.GetLocalizedString("MainWindow.CheckDefaultName");
+        Name = check?.Name ?? _localizationService.GetLocalizedString("ChecksWindow.DefaultCheckName");
 
         if(check == null) {
             InitializeSelections();
@@ -135,25 +135,38 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
         return clashDetector.FindClashes();
     }
 
-    public void SaveClashes() {
+    /// <summary>
+    /// Ищет коллизии, сохраняет отчёт и возвращает итог прогона для сводки.
+    /// </summary>
+    /// <remarks>
+    /// Сравнение с прошлым прогоном идёт по тем же правилам, что и перенос статусов
+    /// (<c>ClashModel.Equals</c> - по паре элементов в любом порядке), поэтому "новых" и "ушло"
+    /// считаются ровно по тем коллизиям, для которых <c>ClashesMarker</c> не нашёл или потерял
+    /// пару в старом отчёте.
+    /// </remarks>
+    public CheckSearchResult SaveClashes() {
         var config = ClashesConfig.GetClashesConfig(_revitRepository.GetObjectName(), ReportName);
         var oldClashes = ClashesConfig.GetClashesConfig(_revitRepository.GetObjectName(), $"{_revitRepository.GetDocumentName()}_{Name}").Clashes;
         var newClashes = GetClashes();
+
+        int added = ClashesMarker.CountAdded(newClashes, oldClashes);
+        int gone = ClashesMarker.CountGone(newClashes, oldClashes);
+
         config.Clashes = ClashesMarker.MarkSolvedClashes(newClashes, oldClashes).ToList();
         config.SaveProjectConfig();
         HasReport = true;
+
+        return new CheckSearchResult(Name, newClashes.Count, added, gone, oldClashes.Count > 0);
     }
 
     private void InitializeSelections(Check check = null) {
         FirstSelection = new SelectionViewModel(_revitRepository,
             _filtersConfig,
             _localizationService,
-            _contentDialogService,
             check?.FirstSelection);
         SecondSelection = new SelectionViewModel(_revitRepository,
             _filtersConfig,
             _localizationService,
-            _contentDialogService,
             check?.SecondSelection);
     }
 
@@ -162,23 +175,27 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
 
         string firstFiles = FirstSelection.GetMissedFiles();
         if(!string.IsNullOrEmpty(firstFiles)) {
-            ErrorText = _localizationService.GetLocalizedString("MainWindow.Validation.MissingFiles1", firstFiles)
+            ErrorText = _localizationService.GetLocalizedString(
+                    "ChecksWindow.Validation.MissingFiles1", firstFiles)
                 + Environment.NewLine;
         }
         string firstFilters = FirstSelection.GetMissedFilters();
         if(!string.IsNullOrEmpty(firstFilters)) {
-            ErrorText += _localizationService.GetLocalizedString("MainWindow.Validation.MissingFilters1", firstFilters)
+            ErrorText += _localizationService.GetLocalizedString(
+                    "ChecksWindow.Validation.MissingFilters1", firstFilters)
                 + Environment.NewLine;
         }
 
         string secondFiles = SecondSelection.GetMissedFiles();
         if(!string.IsNullOrEmpty(secondFiles)) {
-            ErrorText = _localizationService.GetLocalizedString("MainWindow.Validation.MissingFiles2", secondFiles)
+            ErrorText = _localizationService.GetLocalizedString(
+                    "ChecksWindow.Validation.MissingFiles2", secondFiles)
                 + Environment.NewLine;
         }
         string secondFilters = SecondSelection.GetMissedFilters();
         if(!string.IsNullOrEmpty(secondFilters)) {
-            ErrorText += _localizationService.GetLocalizedString("MainWindow.Validation.MissingFilters2", secondFilters)
+            ErrorText += _localizationService.GetLocalizedString(
+                    "ChecksWindow.Validation.MissingFilters2", secondFilters)
                 + Environment.NewLine;
         }
 

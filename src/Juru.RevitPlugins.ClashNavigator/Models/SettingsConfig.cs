@@ -40,6 +40,12 @@ internal class SettingsConfig : ProjectConfig {
     public bool AutoLoadFromServer { get; set; }
 
     /// <summary>
+    /// Язык интерфейса плагина: "ru-RU" или "en-US". Пустое значение означает, что язык ещё не
+    /// выбирали - при первом открытии окна плагин спросит и запишет ответ сюда.
+    /// </summary>
+    public string Language { get; set; } = string.Empty;
+
+    /// <summary>
     /// Ширина и видимость колонок таблицы навигатора коллизий, ключ - заголовок колонки.
     /// Колонки, которых здесь нет, показываются с настройками из разметки окна.
     /// </summary>

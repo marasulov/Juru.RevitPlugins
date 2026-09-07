@@ -11,6 +11,8 @@ using dosymep.SimpleServices;
 using dosymep.WpfCore.Ninject;
 using dosymep.WpfUI.Core.Ninject;
 
+using Juru.RevitPlugins.ClashNavigator.Services;
+
 using Ninject;
 
 using Juru.RevitPlugins.ClashNavigator.Models;
@@ -71,7 +73,7 @@ public class GetClashesCommand : BasePluginCommand {
 
         // WpfUIMessageBoxService requires these services during construction.
         kernel.UseWpfWindowsTheme();
-        kernel.UseWpfWindowsLanguage();
+        kernel.UsePluginLanguage();
         kernel.UseWpfUIThemeUpdater();
 
         kernel.UseWpfOpenFileDialog<NavigatorViewModel>(

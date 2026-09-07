@@ -52,6 +52,10 @@
     <ItemGroup>
         <Resource Include="Resources\Icons\NavigatorIcon16Small.png"/>
         <Resource Include="Resources\Icons\NavigatorIcon32.png"/>
+        <Resource Include="Resources\Icons\FindClashesIcon16.png"/>
+        <Resource Include="Resources\Icons\FindClashesIcon32.png"/>
+        <Resource Include="Resources\Icons\SearchSetsIcon16.png"/>
+        <Resource Include="Resources\Icons\SearchSetsIcon32.png"/>
         <Resource Include="Resources\Icons\SettingsIcon16.png"/>
         <Resource Include="Resources\Icons\SettingsIcon32.png"/>
         <Resource Include="Resources\Icons\PlaceOpeningsIcon16.png"/>

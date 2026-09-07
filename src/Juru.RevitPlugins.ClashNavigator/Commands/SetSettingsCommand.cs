@@ -4,6 +4,7 @@ using dosymep.Bim4Everyone;
 using dosymep.WpfCore.Ninject;
 using dosymep.WpfUI.Core.Ninject;
 using Juru.RevitPlugins.ClashNavigator.Models;
+using Juru.RevitPlugins.ClashNavigator.Services;
 using Juru.RevitPlugins.ClashNavigator.Models.GraphicView;
 using Juru.RevitPlugins.ClashNavigator.Models.Handlers;
 using Juru.RevitPlugins.ClashNavigator.ViewModels.Settings;
@@ -41,6 +42,7 @@ public class SetSettingsCommand : BasePluginCommand {
         kernel.Bind<SettingsConfig>()
             .ToMethod(c => SettingsConfig.GetSettingsConfig(new dosymep.Serializers.ConfigSerializer()));
 
+        kernel.UsePluginLanguage();
         kernel.UseWpfUIThemeUpdater();
 
         kernel.Bind<SettingsViewModel>()

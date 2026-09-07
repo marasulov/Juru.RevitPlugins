@@ -60,11 +60,15 @@ internal class ConfigLoaderService {
         }
     }
 
+    /// <summary>
+    /// <c>Views.MessageWindow</c>, а не <c>IMessageBoxService</c> из WPF-UI: в окнах проверок и
+    /// поисковых наборов тот рисует пустую плашку без текста и кнопок - см.
+    /// <c>MainViewModel.AskForSave</c>.
+    /// </summary>
     private void ShowError() {
-        MessageBoxService.Show(_localization.GetLocalizedString("ConfigLoader.InvalidFile"),
+        Views.MessageWindow.ShowError(
+            _localization.GetLocalizedString("ConfigLoader.InvalidFile"),
             _localization.GetLocalizedString("BIM"),
-            System.Windows.MessageBoxButton.OK,
-            System.Windows.MessageBoxImage.Error,
-            System.Windows.MessageBoxResult.OK);
+            _localization);
     }
 }

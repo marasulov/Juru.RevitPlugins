@@ -2,8 +2,10 @@
 
 ClashNavigator finds, loads, and reviews geometric clashes between elements of a Revit model and its links.
 
-The plugin ships two ribbon commands.
+The plugin ships four ribbon commands.
+`FindClashesCommand` opens the checks window, which runs clash detection.
 `GetClashesCommand` opens the navigator window over a clash report.
+`SetFiltersCommand` opens the search set editor.
 `SetSettingsCommand` opens the settings window.
 
 `Juru.RevitPlugins.ClashNavigator` holds 11 026 lines across 169 files.
@@ -18,6 +20,11 @@ A command builds a Ninject `StandardKernel`, registers `RevitRepository`, `Revit
 The kernel outlives the command.
 
 `SetSettingsCommand` shows `SettingsWindow` modally through `Notification(kernel.Get<SettingsWindow>())`.
+
+`FindClashesCommand` and `SetFiltersCommand` show `MainWindow` and `FiltersWindow` non-modally.
+Both bind `ChecksConfig` and `FiltersConfig` under `RevitRepository.GetConfigRelativePath()`, the path `ReportViewModel` also builds when it looks up the check behind a report.
+`SetFiltersCommand` builds nothing itself: `SearchSetsWindowFactory` holds the kernel for `FiltersWindow`, because the checks window opens that window too.
+The factory takes an existing `RevitRepository` when the caller has one - a second instance creates the clash 3D view in a transaction.
 
 ## RevitRepository
 
@@ -97,6 +104,39 @@ The visitor types under `Models/Visiter` walk the criterion tree.
 
 `FiltersConfig` and `ClashesConfig` derive from `ProjectConfig` and persist as JSON under `%MyDocuments%\dosymep\<RevitVersion>\ClashNavigator\`.
 
+`ViewModels/SearchSet` edits that model.
+`FiltersViewModel` holds the sets, `FilterViewModel` one set's categories and its root criterion, `SetViewModel` and `RuleViewModel` the tree below it.
+`FilterViewModel.RefreshProviders` recomputes the parameters common to the chosen categories and keeps in the list any parameter a rule already refers to, so narrowing the categories cannot silently strip a rule of its parameter.
+`RuleViewModel` fills its value list only when the list is dropped down: collecting values walks every document of the check.
+An incomplete set does not save - `FiltersViewModel.CanSave` reports the first gap instead.
+A set with categories and no rules is complete: `StraightRevitFilterGenerator` turns an empty criterion list into `ElementIsElementTypeFilter(true)`, which passes every instance of those categories.
+An empty nested set is a gap, because under `Or` it would widen the set to those same instances.
+
+## Localization
+
+`assets/Localization/Language.ru-RU.xaml` and `Language.en-US.xaml` hold the UI strings.
+`WpfLocalizationService` picks the file by appending the culture name as an extra extension to the
+`resourceName` passed to `UseWpfLocalization`, and merges the default culture's dictionary in as a
+fallback - so a key missing from the English file shows the Russian text rather than nothing.
+
+Which culture that is comes from `ILanguageService.HostLanguage`: `UseWpfLocalization` reads it when
+it builds the service, and `WpfLocalizationBehavior` reads it again when each window initializes to
+fill in the `{me:LocalizationSource}` bindings in markup. `PluginLanguageService` implements that
+interface over `SettingsConfig.Language`, so the plugin follows its own setting rather than Revit's
+language; `kernel.UsePluginLanguage()` binds it and, the first time the setting is empty, asks
+through `LanguagePromptWindow` - the one window that is deliberately bilingual, since it runs before
+a language is chosen. The setting is changed afterwards in the settings window and takes effect the
+next time a window opens.
+
+`{me:LocalizationSource Key}` works only in windows implementing `IHasLocalization`, which is what
+`WpfUIPlatformWindow` provides. The plain `Window`s - `SelectableNamesWindow`, `MessageWindow` - take
+an `ILocalizationService` and set their captions from code instead.
+
+Rule conditions live in the model (`RuleEvaluator.Message`), which is serialized into the filter
+file, so `EvaluatorNames` rewrites those captions on the already-constructed objects rather than
+storing keys: loading a set matches on the enum, never on the caption, so what a file holds there
+does not matter.
+
 ## Navigator window
 
 `NavigatorViewModel` holds the report list and exposes commands for loading a report file, loading from the server, deleting a report, saving all reports, selecting a clash, editing comments, and merging reports.
@@ -107,19 +147,16 @@ Selecting a clash calls `RevitRepository.SelectAndShowElement`.
 
 `RevitEventHandler` runs Revit API work raised from the modeless window.
 
+## Checks window
+
+`MainViewModel` holds the checks, `CheckViewModel` one check, and `SelectionViewModel` one of its two selections.
+A selection is a set of documents crossed with a set of search sets; `SelectionViewModel.GetProviders()` produces one `FilterProvider` per pair.
+Both pickers are `SelectableNamesWindow`, a plain modal window rather than a `ui:ContentDialog`: a window has a title bar and Esc, so it closes even where the WPF-UI theme did not reach it.
+The search set picker carries a create button; it closes the picker, opens the editor modally, re-reads `FiltersConfig`, and reopens the picker with the new set in the list, since with no sets saved there is nothing else to do there.
+`CheckViewModel.GetProviders()` puts the selection that contains the active document first: detection collects elements in that document and intersects them with solids from the other side.
+`SaveClashes` writes the result to `ClashesConfig` named `<document name>_<check name>`, carrying over statuses and comments from the previous run of the same check.
+
 ## Unreachable code
-
-The ribbon exposes `GetClashesCommand` and `SetSettingsCommand`.
-A reachability walk from those two roots over non-comment source reaches 123 of 183 files.
-Of the 60 remaining files, 53 hold no reachable type, and they total about 3 000 lines.
-
-`CreateFiltersCommand.cs` and `DetectiveClashesCommand.cs` are commented out in full.
-`NavigatorViewModel.OpenClashDetector()` has an empty body.
-Clash detection therefore has no entry point at runtime.
-`ClashDetector`, `ProvidersClashDetector`, and `FilterProvider` run only from `ViewModels/ClashDetective`, which only those two entry points reach.
-The plugin loads and reviews reports; it does not produce them.
-
-The filter editor is unreachable as a whole: `ViewModels/FilterCreatorViewModels` at 14 files, `Views/Views/Filters` at 10, and `ViewModels/SearchSet` at 4.
 
 `Models/RevitClashes/Models/RevitViewSettings` at 6 files, `View3DBuilder`, `IView3DBuilder`, and `IView3DProvider` form a second view-construction subsystem that nothing instantiates.
 `Services/RevitViewSettings/ClashViewSettings` is the live `IView3DSetting` implementation.

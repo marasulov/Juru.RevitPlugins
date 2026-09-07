@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Windows.Input;
 
 using Autodesk.Revit.DB;
 
@@ -13,18 +13,15 @@ using dosymep.WPF.ViewModels;
 using Juru.RevitPlugins.ClashNavigator.Models;
 using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
 using Juru.RevitPlugins.ClashNavigator.Models.Interfaces;
-using Juru.RevitPlugins.ClashNavigator.Views;
+using Juru.RevitPlugins.ClashNavigator.Services;
 using Juru.RevitPlugins.ClashNavigator.Views.Checks;
-
-using Wpf.Ui;
 
 namespace Juru.RevitPlugins.ClashNavigator.ViewModels.ClashDetective;
 internal class SelectionViewModel : BaseViewModel {
     private readonly RevitRepository _revitRepository;
-    private readonly FiltersConfig _filterConfig;
     private readonly ILocalizationService _localizationService;
-    private readonly IContentDialogService _contentDialogService;
     private readonly SelectionConfig _selectionConfig;
+    private FiltersConfig _filterConfig;
     private ObservableCollection<FileViewModel> _allFiles = [];
     private ObservableCollection<FileViewModel> _selectedFiles = [];
     private ObservableCollection<FilterProviderViewModel> _allProviders = [];
@@ -33,13 +30,11 @@ internal class SelectionViewModel : BaseViewModel {
     public SelectionViewModel(RevitRepository revitRepository,
         FiltersConfig filterConfig,
         ILocalizationService localizationService,
-        IContentDialogService contentDialogService,
         SelectionConfig selectionConfig = null) {
 
         _revitRepository = revitRepository ?? throw new ArgumentNullException(nameof(revitRepository));
         _filterConfig = filterConfig ?? throw new ArgumentNullException(nameof(filterConfig));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        _contentDialogService = contentDialogService ?? throw new ArgumentNullException(nameof(contentDialogService));
         _selectionConfig = selectionConfig;
         if(selectionConfig == null) {
             InitializeFiles();
@@ -49,16 +44,13 @@ internal class SelectionViewModel : BaseViewModel {
             InitializeProviders(selectionConfig);
         }
 
-        SelectFilesCommand = RelayCommand.CreateAsync(SelectFilesAsync, CanSelectFiles);
-        SelectProvidersCommand = RelayCommand.CreateAsync(SelectProvidersAsync, CanSelectProviders);
+        SelectFilesCommand = RelayCommand.Create(SelectFiles, CanSelectFiles);
+        SelectProvidersCommand = RelayCommand.Create(SelectProviders, CanSelectProviders);
     }
 
+    public ICommand SelectProvidersCommand { get; }
 
-    // IAsyncCommand is internal to Juru.RevitPlugins.Core.  The view only needs
-    // the public WPF command contract.
-    public System.Windows.Input.ICommand SelectProvidersCommand { get; }
-
-    public System.Windows.Input.ICommand SelectFilesCommand { get; }
+    public ICommand SelectFilesCommand { get; }
 
     public ObservableCollection<FileViewModel> AllFiles {
         get => _allFiles;
@@ -135,15 +127,13 @@ internal class SelectionViewModel : BaseViewModel {
                 f => f.Equals(item.Name, StringComparison.CurrentCultureIgnoreCase))));
     }
 
-    private async Task SelectFilesAsync() {
+    private void SelectFiles() {
         var vm = new SelectableNamesViewModel(AllFiles, SelectedFiles) {
-            Title = _localizationService.GetLocalizedString("SelectableNamesDialog.SelectFiles")
+            Title = _localizationService.GetLocalizedString("Selection.SelectFilesTitle")
         };
-        var dialog = new SelectableNamesDialog(vm, _contentDialogService);
-
-        var dialogResult = await dialog.ShowAsync();
-        if(dialogResult == Wpf.Ui.Controls.ContentDialogResult.Primary) {
-            SelectedFiles = new ObservableCollection<FileViewModel>(vm.GetSelectedEntities<FileViewModel>());
+        var window = new SelectableNamesWindow(vm, _localizationService);
+        if(window.ShowDialog() == true) {
+            SelectedFiles = [.. vm.GetSelectedEntities<FileViewModel>()];
         }
     }
 
@@ -151,21 +141,49 @@ internal class SelectionViewModel : BaseViewModel {
         return AllFiles is not null && SelectedFiles is not null;
     }
 
-    private async Task SelectProvidersAsync() {
-        var vm = new SelectableNamesViewModel(AllProviders, SelectedProviders) {
-            Title = _localizationService.GetLocalizedString("SelectableNamesDialog.SelectSearchSets")
-        };
-        var dialog = new SelectableNamesDialog(vm, _contentDialogService);
+    /// <summary>
+    /// Пока наборов нет, выбирать в диалоге нечего, и единственный осмысленный шаг отсюда -
+    /// создать набор. Поэтому диалог умеет открыть редактор наборов и вернуться к выбору
+    /// с уже пополненным списком.
+    /// </summary>
+    private void SelectProviders() {
+        while(true) {
+            var vm = new SelectableNamesViewModel(AllProviders, SelectedProviders) {
+                Title = _localizationService.GetLocalizedString("Selection.SelectSearchSetsTitle")
+            };
+            var window = new SelectableNamesWindow(vm, _localizationService,
+                _localizationService.GetLocalizedString("Selection.CreateSearchSet"));
 
-        var dialogResult = await dialog.ShowAsync();
-        if(dialogResult == Wpf.Ui.Controls.ContentDialogResult.Primary) {
-            SelectedProviders = new ObservableCollection<FilterProviderViewModel>(
-                vm.GetSelectedEntities<FilterProviderViewModel>());
+            if(window.ShowDialog() == true) {
+                SelectedProviders = [.. vm.GetSelectedEntities<FilterProviderViewModel>()];
+                return;
+            }
+            if(!window.AddRequested) {
+                return;
+            }
+
+            OpenSearchSets();
         }
     }
 
-
     private bool CanSelectProviders() {
         return AllProviders is not null && SelectedProviders is not null;
+    }
+
+    /// <summary>
+    /// Открывает редактор наборов модально и перечитывает наборы после его закрытия: редактор
+    /// пишет их в файл, и без перечитывания только что созданный набор в выборе не появится.
+    /// </summary>
+    private void OpenSearchSets() {
+        SearchSetsWindowFactory
+            .Create(_revitRepository.UiApplication, _revitRepository)
+            .ShowDialog();
+
+        string[] selectedNames = [.. SelectedProviders.Select(item => item.Name)];
+        _filterConfig = FiltersConfig.GetFiltersConfig(
+            _revitRepository.GetConfigRelativePath(), _revitRepository.Doc);
+        InitializeProviders();
+        SelectedProviders = [.. AllProviders.Where(item => selectedNames.Any(
+            name => name.Equals(item.Name, StringComparison.CurrentCultureIgnoreCase)))];
     }
 }

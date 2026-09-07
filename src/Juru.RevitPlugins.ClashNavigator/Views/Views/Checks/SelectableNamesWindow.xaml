@@ -1,0 +1,113 @@
+<Window
+    x:Class="Juru.RevitPlugins.ClashNavigator.Views.Checks.SelectableNamesWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vms="clr-namespace:Juru.RevitPlugins.ClashNavigator.ViewModels.ClashDetective"
+    mc:Ignorable="d"
+    x:ClassModifier="internal"
+    Title="{Binding Title}"
+    Height="560" Width="460" MinHeight="300" MinWidth="320"
+    WindowStartupLocation="CenterOwner"
+    d:DataContext="{d:DesignInstance vms:SelectableNamesViewModel, IsDesignTimeCreatable=False}">
+
+    <!-- Обычное WPF-окно, а не FluentWindow: у системной строки заголовка есть крестик и Esc,
+         поэтому окно закрывается всегда, даже если применение темы ниже почему-то не сработает.
+         ui:TitleBar здесь намеренно не ставится - он рисует свою строку с теми же кнопками
+         поверх системной, а не заменяет её, и получаются два заголовка подряд. -->
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/Juru.RevitPlugins.Core;component/Resources/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!-- CustomStyles.xaml приносит стиль WPF-UI для CheckBox только под ключом
+                 DefaultCheckBoxStyle - сам он его ни на что не назначает. Без этой неявной
+                 привязки по типу оба CheckBox в этом окне рисуются системным квадратом Windows,
+                 а не флажком в духе остального плагина. Только в этом окне, а не в общем
+                 CustomStyles.xaml: тот же файл подключают окна плагина "Отверстия" со своими
+                 явно назначенными стилями чекбоксов, которые лучше не трогать заодно. -->
+            <Style
+                TargetType="CheckBox"
+                BasedOn="{StaticResource DefaultCheckBoxStyle}" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel
+            Grid.Row="0"
+            Margin="10 8"
+            LastChildFill="True">
+            <CheckBox
+                x:Name="SelectAllCheckBox"
+                VerticalAlignment="Center"
+                IsChecked="{Binding AllSelected, UpdateSourceTrigger=PropertyChanged}" />
+        </DockPanel>
+
+        <Border
+            Grid.Row="1"
+            Margin="10 0"
+            Style="{StaticResource CustomBorder}">
+            <!-- Плавная прокрутка по пикселям, а не по элементам: список категорий модели легко
+                 переваливает за сотню строк, и стандартная поэлементная прокрутка ListBox на таком
+                 количестве ощущается зависшей - колесо мыши почти не двигает список, до нужной
+                 строки в конце не долистать.
+                 VirtualizationMode остаётся Standard, а не Recycling: тот отдаёт переиспользованный
+                 контейнер другому элементу списка, и чекбокс WPF-UI не перерисовывает галочку под
+                 новый IsChecked - чекбоксы становятся невидимыми при прокрутке. Тот же класс бага
+                 уже ловили в DataGrid, см. память проекта. -->
+            <ListBox
+                BorderThickness="0"
+                Background="Transparent"
+                ItemsSource="{Binding Entities}"
+                HorizontalContentAlignment="Stretch"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                VirtualizingPanel.IsVirtualizing="True"
+                VirtualizingPanel.VirtualizationMode="Standard"
+                VirtualizingPanel.ScrollUnit="Pixel">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox
+                            Margin="2"
+                            Content="{Binding Name}"
+                            IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <StackPanel
+            Grid.Row="2"
+            Orientation="Horizontal"
+            HorizontalAlignment="Right"
+            Margin="10">
+            <!-- Подпись задаёт вызывающая сторона; без неё кнопки нет. -->
+            <ui:Button
+                x:Name="AddButton"
+                MinWidth="140"
+                Margin="0 0 16 0"
+                Click="ButtonAdd_Click" />
+            <!-- Не Appearance="Primary": акцентные кисти этого вида не резолвятся при точечном
+                 ApplicationThemeManager.Apply(this) на обычном Window - подпись рисовалась тем же
+                 цветом, что и фон, и была не видна. Обычный вид те же кисти резолвит нормально. -->
+            <ui:Button
+                x:Name="OkButton"
+                MinWidth="80"
+                Margin="0 0 8 0"
+                IsDefault="True"
+                Click="ButtonOk_Click" />
+            <ui:Button
+                x:Name="CancelButton"
+                MinWidth="80"
+                IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</Window>

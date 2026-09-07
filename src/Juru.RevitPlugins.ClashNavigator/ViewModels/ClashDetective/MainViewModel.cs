@@ -163,13 +163,16 @@ internal class MainViewModel : BaseViewModel {
         SetChecks(AllChecks);
     }
 
+    /// <summary>
+    /// Порядок строк - порядок списка: добавленная проверка встаёт в конец, удаление остальных
+    /// не трогает. Живой сортировки по имени здесь нет намеренно: имя правится прямо в строке, и
+    /// строка уезжала на новое место посреди набора текста, а у проверок с именем по умолчанию
+    /// порядок между собой был и вовсе непредсказуем. Отсортировать по имени по-прежнему можно
+    /// щелчком по заголовку колонки.
+    /// </summary>
     private void SetChecks(ICollection<CheckViewModel> sourceChecks) {
         Checks = new CollectionViewSource() { Source = sourceChecks };
         Checks.Filter += ChecksFilterHandler;
-        Checks.SortDescriptions.Add(new System.ComponentModel.SortDescription(
-            nameof(CheckViewModel.Name),
-            System.ComponentModel.ListSortDirection.Ascending));
-        Checks.IsLiveSortingRequested = true;
     }
 
     private void ChecksFilterHandler(object sender, FilterEventArgs e) {
@@ -184,14 +187,16 @@ internal class MainViewModel : BaseViewModel {
     }
 
     private void AddCheck() {
-        AllChecks.Add(new CheckViewModel(_revitRepository,
+        var check = new CheckViewModel(_revitRepository,
             _localization,
             OpenFileDialogService,
             SaveFileDialogService,
             MessageBoxService,
             _settingsConfig,
             _filtersConfig,
-            _contentDialogService));
+            _contentDialogService);
+        AllChecks.Add(check);
+        SelectedCheck = check;
     }
 
     private void RemoveCheck(IList selectedItems) {
@@ -199,6 +204,8 @@ internal class MainViewModel : BaseViewModel {
         foreach(var check in checks) {
             AllChecks.Remove(check);
         }
+        // Выделение указывало на удалённые строки, а по нему считается доступность удаления.
+        SelectedCheck = AllChecks.FirstOrDefault();
     }
 
     private bool CanRemove(IList selectedItems) {
@@ -210,12 +217,14 @@ internal class MainViewModel : BaseViewModel {
         RenewConfig();
         _checksConfig.SaveProjectConfig();
 
-        foreach(var check in AllChecks.Where(item => item.IsSelected)) {
-            check.SaveClashes();
-        }
+        var results = AllChecks
+            .Where(item => item.IsSelected)
+            .Select(item => item.SaveClashes())
+            .ToArray();
 
         CanCancel = true;
-        MessageText = _localization.GetLocalizedString("MainWindow.SuccessClashDetection");
+        MessageText = _localization.GetLocalizedString("ChecksWindow.SearchCompleted");
+        ShowSummary(results);
         Wait(() => {
             foreach(var check in AllChecks) {
                 check.IsSelected = false;
@@ -223,6 +232,34 @@ internal class MainViewModel : BaseViewModel {
             MessageText = null;
             CanFindClashes();
         });
+    }
+
+    /// <summary>
+    /// Показывает, что нашёл каждый прогон. Отдельным окном, а не строкой состояния: проверок
+    /// может быть несколько, и по каждой нужна своя строка, а строка состояния к тому же гаснет
+    /// через несколько секунд.
+    /// </summary>
+    private void ShowSummary(IReadOnlyCollection<CheckSearchResult> results) {
+        if(results.Count == 0) {
+            return;
+        }
+
+        string summary = string.Join(Environment.NewLine, results.Select(GetSummaryLine));
+        Views.MessageWindow.ShowInfo(
+            summary,
+            _localization.GetLocalizedString("ChecksWindow.SummaryTitle"),
+            _localization);
+    }
+
+    private string GetSummaryLine(CheckSearchResult result) {
+        if(result.Total == 0) {
+            return _localization.GetLocalizedString("ChecksWindow.SummaryEmpty", result.CheckName);
+        }
+        return result.HadPreviousRun
+            ? _localization.GetLocalizedString(
+                "ChecksWindow.SummaryLine", result.CheckName, result.Total, result.Added, result.Gone)
+            : _localization.GetLocalizedString(
+                "ChecksWindow.SummaryFirstRun", result.CheckName, result.Total);
     }
 
     private void RenewConfig() {
@@ -240,7 +277,7 @@ internal class MainViewModel : BaseViewModel {
     private void SaveConfig() {
         RenewConfig();
         _checksConfig.SaveProjectConfig();
-        MessageText = _localization.GetLocalizedString("MainWindow.SuccessSave");
+        MessageText = _localization.GetLocalizedString("ChecksWindow.ChecksSaved");
         Wait(() => { MessageText = null; });
     }
 
@@ -248,7 +285,7 @@ internal class MainViewModel : BaseViewModel {
         RenewConfig();
         var s = new ConfigSaverService(_revitRepository, SaveFileDialogService);
         s.Save(_checksConfig);
-        MessageText = _localization.GetLocalizedString("MainWindow.SuccessSave");
+        MessageText = _localization.GetLocalizedString("ChecksWindow.ChecksSaved");
         Wait(() => { MessageText = null; });
 
     }
@@ -261,7 +298,7 @@ internal class MainViewModel : BaseViewModel {
         var newChecks = InitializeChecks(config).ToList();
         var nameResolver = new NameResolver<CheckViewModel>(AllChecks, newChecks);
         SetAllChecks(nameResolver.GetCollection().OrderBy(c => c.Name));
-        MessageText = _localization.GetLocalizedString("MainWindow.SuccessLoad");
+        MessageText = _localization.GetLocalizedString("ChecksWindow.ChecksLoaded");
         Wait(() => { MessageText = null; });
     }
 
@@ -273,39 +310,51 @@ internal class MainViewModel : BaseViewModel {
 
     private bool CanFindClashes() {
         if(HasSameNames()) {
-            ErrorText = _localization.GetLocalizedString("MainWindow.Validation.NamesDuplicated");
+            ErrorText = _localization.GetLocalizedString("ChecksWindow.Validation.NamesDuplicated");
             return false;
         }
 
         var selectedChecks = AllChecks.Where(item => item.IsSelected).ToArray();
         if(selectedChecks.Length == 0) {
-            ErrorText = _localization.GetLocalizedString("MainWindow.Validation.SelectAnyCheck");
+            ErrorText = _localization.GetLocalizedString("ChecksWindow.Validation.SelectAnyCheck");
             return false;
         }
 
         var emptyCheck = selectedChecks.FirstOrDefault(item => !item.IsFilterSelected);
         if(emptyCheck != null) {
-            ErrorText = _localization.GetLocalizedString("MainWindow.Validation.EmptyFilterInCheck", emptyCheck.Name);
+            ErrorText = _localization.GetLocalizedString(
+                "ChecksWindow.Validation.EmptyFilterInCheck", emptyCheck.Name);
             return false;
         }
 
         emptyCheck = selectedChecks.FirstOrDefault(item => !item.IsFilesSelected);
         if(emptyCheck != null) {
-            ErrorText = _localization.GetLocalizedString("MainWindow.Validation.EmptyFileInCheck", emptyCheck.Name);
+            ErrorText = _localization.GetLocalizedString(
+                "ChecksWindow.Validation.EmptyFileInCheck", emptyCheck.Name);
             return false;
         }
         ErrorText = null;
         return true;
     }
 
+    /// <summary>
+    /// Вопрос о сохранении при закрытии окна.
+    /// </summary>
+    /// <remarks>
+    /// <c>Views.MessageWindow</c>, а не <c>IMessageBoxService</c> из WPF-UI: та рисовала в этом
+    /// окне пустую плашку без текста и кнопок, то есть закрыть было нечем, а висит этот вопрос
+    /// на Closing и запирал само окно. Ошибка диалога гашится по той же причине: потерять вопрос
+    /// лучше, чем не дать закрыть окно.
+    /// </remarks>
     private void AskForSave() {
-        if(MessageBoxService.Show(
-               _localization.GetLocalizedString("MainWindow.SavePrompt"),
-               _localization.GetLocalizedString("BIM"),
-               MessageBoxButton.YesNo,
-               MessageBoxImage.Question)
-           == MessageBoxResult.Yes) {
-            SaveClashesCommand.Execute(default);
+        try {
+            if(Views.MessageWindow.AskYesNo(
+                   _localization.GetLocalizedString("ChecksWindow.SavePrompt"),
+                   _localization.GetLocalizedString("BIM"),
+                   _localization)) {
+                SaveClashesCommand.Execute(default);
+            }
+        } catch(Exception) {
         }
     }
 

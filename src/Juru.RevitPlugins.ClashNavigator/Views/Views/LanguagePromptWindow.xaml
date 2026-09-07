@@ -1,0 +1,61 @@
+<Window
+    x:Class="Juru.RevitPlugins.ClashNavigator.Views.LanguagePromptWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    mc:Ignorable="d"
+    x:ClassModifier="internal"
+    Title="Язык интерфейса / Interface language"
+    Width="420" SizeToContent="Height" ResizeMode="NoResize"
+    WindowStartupLocation="CenterScreen">
+
+    <!-- Единственное окно плагина, которое не локализуется: его показывают до того, как язык
+         выбран, поэтому текст в нём сразу на обоих языках. -->
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/Juru.RevitPlugins.Core;component/Resources/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel
+            Grid.Row="0"
+            Margin="20 20 20 10">
+            <TextBlock
+                TextWrapping="Wrap"
+                Text="Выберите язык интерфейса плагина. Позже его можно сменить в настройках." />
+            <TextBlock
+                Margin="0 8 0 0"
+                TextWrapping="Wrap"
+                Opacity="0.75"
+                Text="Choose the plugin's interface language. You can change it later in the settings." />
+        </StackPanel>
+
+        <StackPanel
+            Grid.Row="1"
+            Orientation="Horizontal"
+            HorizontalAlignment="Right"
+            Margin="10">
+            <ui:Button
+                MinWidth="110"
+                Margin="0 0 8 0"
+                Content="Русский"
+                IsDefault="True"
+                Click="ButtonRussian_Click" />
+            <ui:Button
+                MinWidth="110"
+                Content="English"
+                Click="ButtonEnglish_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

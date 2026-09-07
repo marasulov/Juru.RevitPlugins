@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Input;
 
 using dosymep.SimpleServices;
@@ -6,6 +8,7 @@ using dosymep.WPF.Commands;
 using dosymep.WPF.ViewModels;
 
 using Juru.RevitPlugins.ClashNavigator.Models;
+using Juru.RevitPlugins.ClashNavigator.Services;
 
 namespace Juru.RevitPlugins.ClashNavigator.ViewModels.Settings;
 internal class SettingsViewModel : BaseViewModel {
@@ -17,6 +20,7 @@ internal class SettingsViewModel : BaseViewModel {
     private const int _maxSectionBoxOffset = 10000;
     private bool _applySectionBoxSettings;
     private string _clashServerUrl;
+    private LanguageItem _selectedLanguage;
 
     public SettingsViewModel(RevitRepository revitRepository, SettingsConfig config, ILocalizationService localizationService) {
         _revitRepository = revitRepository ?? throw new ArgumentNullException(nameof(revitRepository));
@@ -27,6 +31,21 @@ internal class SettingsViewModel : BaseViewModel {
         AcceptViewCommand = RelayCommand.Create(AcceptView, CanAcceptView);
     }
 
+
+    /// <summary>
+    /// Языки интерфейса. Подписи взяты из словаря локализации и там же одинаковы для обеих
+    /// культур: "Русский" остаётся "Русский" и в английском интерфейсе - так принято у языковых
+    /// переключателей, чтобы свой язык был узнаваем при любом текущем.
+    /// </summary>
+    public IReadOnlyList<LanguageItem> Languages { get; } = [
+        new(PluginLanguageService.Russian, "Language.Russian"),
+        new(PluginLanguageService.English, "Language.English")
+    ];
+
+    public LanguageItem SelectedLanguage {
+        get => _selectedLanguage;
+        set => RaiseAndSetIfChanged(ref _selectedLanguage, value);
+    }
 
     public ICommand LoadViewCommand { get; }
 
@@ -81,15 +100,44 @@ internal class SettingsViewModel : BaseViewModel {
     }
 
     private void LoadConfig() {
+        foreach(var language in Languages) {
+            language.Title = _localizationService.GetLocalizedString(language.TitleKey);
+        }
+        SelectedLanguage = Languages.FirstOrDefault(item => item.Language == _config.Language)
+            ?? Languages[0];
         SectionBoxOffset = _config.SectionBoxOffset;
         ApplySectionBoxSettings = _config.ApplySectionBoxSettings;
         ClashServerUrl = _config.ClashServerUrl;
     }
 
     private void SaveConfig() {
+        // Язык применится при следующем открытии окон: у уже открытых разметка уже разобрана,
+        // а строки в моделях представления прочитаны один раз при их создании.
+        _config.Language = SelectedLanguage?.Language ?? _config.Language;
         _config.SectionBoxOffset = SectionBoxOffset;
         _config.ApplySectionBoxSettings = ApplySectionBoxSettings;
         _config.ClashServerUrl = ClashServerUrl?.Trim() ?? string.Empty;
         _config.SaveProjectConfig();
+    }
+}
+
+/// <summary>
+/// Язык интерфейса в выпадающем списке настроек.
+/// </summary>
+internal sealed class LanguageItem : BaseViewModel {
+    private string _title;
+
+    public LanguageItem(string language, string titleKey) {
+        Language = language;
+        TitleKey = titleKey;
+    }
+
+    public string Language { get; }
+
+    public string TitleKey { get; }
+
+    public string Title {
+        get => _title;
+        set => RaiseAndSetIfChanged(ref _title, value);
     }
 }

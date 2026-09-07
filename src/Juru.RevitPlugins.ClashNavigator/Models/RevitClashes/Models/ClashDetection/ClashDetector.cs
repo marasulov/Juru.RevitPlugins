@@ -36,6 +36,29 @@ internal class ClashDetector {
 }
 
 internal class ClashesMarker {
+    /// <summary>
+    /// Сколько коллизий этого прогона не встречалось в прошлом.
+    /// </summary>
+    /// <remarks>
+    /// Сравнение идёт тем же <c>ClashModel.Equals</c>, что и перенос статусов ниже: коллизия
+    /// считается той же самой, если совпала пара элементов - в любом порядке. Иначе "новых"
+    /// оказалось бы больше, чем на самом деле, каждый раз, когда стороны поменялись местами.
+    /// </remarks>
+    public static int CountAdded(
+        ICollection<ClashModel> newClashes,
+        ICollection<ClashModel> oldClashes) {
+        return newClashes.Count(item => !oldClashes.Any(old => old.Equals(item)));
+    }
+
+    /// <summary>
+    /// Сколько коллизий прошлого прогона в этом не встретилось.
+    /// </summary>
+    public static int CountGone(
+        ICollection<ClashModel> newClashes,
+        ICollection<ClashModel> oldClashes) {
+        return oldClashes.Count(old => !newClashes.Any(item => item.Equals(old)));
+    }
+
     public static IEnumerable<ClashModel> MarkSolvedClashes(
         ICollection<ClashModel> newClashes,
         ICollection<ClashModel> oldClashes) {

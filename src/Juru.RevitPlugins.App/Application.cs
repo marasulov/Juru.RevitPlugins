@@ -32,10 +32,20 @@ namespace Juru.RevitPlugins.App
         {
             var panel = Application.CreatePanel("ClashNavigator", TabName);
 
+            panel.AddPushButton<FindClashesCommand>("Поиск\nколлизий")
+                .SetImage(IconsPath + "FindClashesIcon16.png")
+                .SetLargeImage(IconsPath + "FindClashesIcon32.png")
+                .SetToolTip("Ищет коллизии в этом файле и связях по настроенным проверкам");
+
             panel.AddPushButton<GetClashesCommand>("Навигатор\nколлизий")
                 .SetImage(IconsPath + "NavigatorIcon16Small.png")
                 .SetLargeImage(IconsPath + "NavigatorIcon32.png")
                 .SetToolTip("Открывает навигатор коллизий");
+
+            panel.AddPushButton<SetFiltersCommand>("Поисковые\nнаборы")
+                .SetImage(IconsPath + "SearchSetsIcon16.png")
+                .SetLargeImage(IconsPath + "SearchSetsIcon32.png")
+                .SetToolTip("Настраивает наборы, которыми проверки набирают элементы для сравнения");
 
             panel.AddPushButton<SetSettingsCommand>("Настройки")
                 .SetImage(IconsPath + "SettingsIcon16.png")

@@ -11,13 +11,29 @@
     xmlns:platform="clr-namespace:dosymep.WpfUI.Core;assembly=Juru.RevitPlugins.Core"
     xmlns:clashDetective="clr-namespace:Juru.RevitPlugins.ClashNavigator.ViewModels.ClashDetective"
     xmlns:checks="clr-namespace:Juru.RevitPlugins.ClashNavigator.Views.Checks"
+    xmlns:me="clr-namespace:dosymep.WpfCore.MarkupExtensions;assembly=dosymep.WpfCore"
     mc:Ignorable="d"
-    Title="Поиск коллизий"
+    Title="{me:LocalizationSource ChecksWindow.Title}"
     Height="450" Width="800" MinHeight="400" MinWidth="700"
     WindowStartupLocation="CenterScreen"
     Background="{ui:ThemeResource ApplicationBackgroundBrush}"
     Foreground="{ui:ThemeResource TextFillColorPrimaryBrush}"
     d:DataContext="{d:DesignInstance clashDetective:MainViewModel, IsDesignTimeCreatable=False}">
+
+    <platform:WpfUIPlatformWindow.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/Juru.RevitPlugins.Core;component/Resources/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!-- Тот же неявный стиль, что и у SelectableNamesWindow.xaml: без него голый CheckBox
+                 (колонка выбора проверки) не подхватывает DefaultCheckBoxStyle из CustomStyles.xaml
+                 сам по себе. -->
+            <Style
+                TargetType="CheckBox"
+                BasedOn="{StaticResource DefaultCheckBoxStyle}" />
+        </ResourceDictionary>
+    </platform:WpfUIPlatformWindow.Resources>
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing">
@@ -40,24 +56,31 @@
 
         <!-- Верхняя панель инструментов -->
         <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="True">
-            <ui:Button ToolTip="Загрузить" Command="{Binding LoadClashCommand}" Icon="{ui:SymbolIcon Symbol=ArrowDownload20}" Margin="0,0,8,0" />
-            <ui:Button ToolTip="Сохранить" Command="{Binding SaveClashesCommand}" Icon="{ui:SymbolIcon Symbol=Save20}" Margin="0,0,8,0" />
-            <ui:Button ToolTip="Сохранить как..." Command="{Binding SaveAsClashesCommand}" Icon="{ui:SymbolIcon Symbol=SaveEdit20}" Margin="0,0,8,0" />
-            <ui:Button ToolTip="Добавить проверку" Command="{Binding AddCheckCommand}" Icon="{ui:SymbolIcon Symbol=Add20}" Margin="0,0,8,0" />
+            <ui:Button Content="{me:LocalizationSource Common.Load}" ToolTip="{me:LocalizationSource ChecksWindow.LoadTooltip}" Command="{Binding LoadClashCommand}" Margin="0,0,8,0" />
+            <ui:Button Content="{me:LocalizationSource Common.Save}" ToolTip="{me:LocalizationSource ChecksWindow.SaveTooltip}" Command="{Binding SaveClashesCommand}" Margin="0,0,8,0" />
+            <ui:Button Content="{me:LocalizationSource Common.SaveAs}" ToolTip="{me:LocalizationSource ChecksWindow.SaveAsTooltip}" Command="{Binding SaveAsClashesCommand}" Margin="0,0,8,0" />
+            <ui:Button Content="{me:LocalizationSource ChecksWindow.AddCheck}" Command="{Binding AddCheckCommand}" Margin="0,0,8,0" />
 
-            <ui:Button Appearance="Danger" ToolTip="Удалить проверку" 
-                       CommandParameter="{Binding SelectedItems, ElementName=ChecksGrid}" 
-                       Command="{Binding RemoveCheckCommand}" 
-                       Icon="{ui:SymbolIcon Symbol=Delete20}" />
+            <ui:Button Appearance="Danger" Content="{me:LocalizationSource ChecksWindow.RemoveCheck}"
+                       ToolTip="{me:LocalizationSource ChecksWindow.RemoveCheckTooltip}"
+                       CommandParameter="{Binding SelectedItems, ElementName=ChecksGrid}"
+                       Command="{Binding RemoveCheckCommand}" />
 
             <ui:TextBox DockPanel.Dock="Right" MinWidth="300" MaxWidth="300" HorizontalAlignment="Right" 
                         Text="{Binding ChecksFilter, UpdateSourceTrigger=PropertyChanged}" 
-                        PlaceholderText="Поиск проверок..." />
+                        PlaceholderText="{me:LocalizationSource ChecksWindow.SearchPlaceholder}" />
         </DockPanel>
 
-        <!-- Стандартная таблица -->
+        <!-- Строки таблицы высокие и разной высоты: в каждой стоят две выборки со своими
+             подписями. Виртуализация строк на таких строках держит устаревшие смещения - после
+             удаления строки её место оставалось пустым, а следующая добавленная уезжала вниз на
+             высоту удалённой. Проверок единицы, поэтому виртуализация тут не нужна вовсе.
+             CanUserAddRows: иначе таблица дорисовывает в конце пустую строку-заготовку во всю
+             высоту шаблона; проверки добавляются кнопкой. -->
         <DataGrid x:Name="ChecksGrid" Grid.Row="1" SelectionMode="Extended" 
                   AutoGenerateColumns="False" CanUserDeleteRows="False" CanUserReorderColumns="False" 
+                  CanUserAddRows="False"
+                  EnableRowVirtualization="False" EnableColumnVirtualization="False"
                   GridLinesVisibility="Horizontal" BorderThickness="1" 
                   BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}"
                   SelectedItem="{Binding SelectedCheck}" 
@@ -69,9 +92,10 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <DockPanel HorizontalAlignment="Center" Margin="5,0">
-                                <ui:SymbolIcon Symbol="Warning20" ToolTip="{Binding ErrorText}" Margin="0,0,4,0" Foreground="Red">
-                                    <ui:SymbolIcon.Style>
-                                        <Style TargetType="ui:SymbolIcon">
+                                <TextBlock Text="!" FontWeight="Bold" VerticalAlignment="Center"
+                                           ToolTip="{Binding ErrorText}" Margin="0,0,4,0" Foreground="Red">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
                                             <Setter Property="Visibility" Value="Visible"/>
                                             <Style.Triggers>
                                                 <!-- Скрываем иконку ошибки, если текст ошибки пустой -->
@@ -83,15 +107,15 @@
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </ui:SymbolIcon.Style>
-                                </ui:SymbolIcon>
+                                    </TextBlock.Style>
+                                </TextBlock>
                                 <CheckBox Padding="0" IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" />
                             </DockPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <DataGridTemplateColumn Width="150" CanUserSort="True" SortMemberPath="Name" Header="Имя">
+                <DataGridTemplateColumn Width="150" CanUserSort="True" SortMemberPath="Name" Header="{me:LocalizationSource Common.Name}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <ui:TextBox VerticalContentAlignment="Center" ToolTip="{Binding Name}" 
@@ -101,7 +125,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <DataGridTemplateColumn Width="*" CanUserSort="False" Header="Выборка 1">
+                <DataGridTemplateColumn Width="*" CanUserSort="False" Header="{me:LocalizationSource ChecksWindow.Selection1}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <checks:SelectionView DataContext="{Binding FirstSelection, UpdateSourceTrigger=PropertyChanged}" />
@@ -109,7 +133,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <DataGridTemplateColumn Width="*" CanUserSort="False" Header="Выборка 2">
+                <DataGridTemplateColumn Width="*" CanUserSort="False" Header="{me:LocalizationSource ChecksWindow.Selection2}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <checks:SelectionView DataContext="{Binding SecondSelection, UpdateSourceTrigger=PropertyChanged}" />
@@ -121,8 +145,9 @@
                 <DataGridTemplateColumn Width="Auto" CanUserResize="False" CanUserSort="False">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <ui:Button Click="ButtonOk_Click" Command="{Binding ShowClashesCommand}" 
-                                       ToolTip="Показать коллизии" Icon="{ui:SymbolIcon Symbol=Notebook20}" 
+                            <ui:Button Click="ButtonOk_Click" Command="{Binding ShowClashesCommand}"
+                                       Content="{me:LocalizationSource ChecksWindow.ShowClashes}"
+                                       ToolTip="{me:LocalizationSource ChecksWindow.ShowClashesTooltip}"
                                        Padding="6,4" Margin="4,2" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -135,8 +160,9 @@
             <TextBlock Margin="8" Text="{Binding ErrorText}" Foreground="Red" VerticalAlignment="Center" />
             <TextBlock Margin="8" Text="{Binding MessageText}" VerticalAlignment="Center" />
 
-            <ui:Button Width="80" Margin="8,0" IsDefault="True" Content="ОК" Appearance="Primary" Command="{Binding FindClashesCommand}" />
-            <ui:Button Width="80" IsCancel="true" Click="ButtonCancel_Click" Content="Отмена" />
+            <!-- Не Appearance="Primary" - см. комментарий у того же атрибута в FiltersWindow.xaml. -->
+            <ui:Button Width="80" Margin="8,0" IsDefault="True" Content="{me:LocalizationSource Common.Ok}" Command="{Binding FindClashesCommand}" />
+            <ui:Button Width="80" IsCancel="true" Click="ButtonCancel_Click" Content="{me:LocalizationSource Common.Cancel}" />
         </StackPanel>
     </Grid>
 </platform:WpfUIPlatformWindow>

@@ -167,6 +167,15 @@ internal class RevitRepository {
         return Doc.Title.Split('_').FirstOrDefault();
     }
 
+    /// <summary>
+    /// Путь конфигураций проверок и поисковых наборов внутри папки плагина: объект, затем файл,
+    /// из которого их настраивали. Один и тот же у окна проверок, редактора наборов и навигатора,
+    /// который по нему находит проверку за отчётом.
+    /// </summary>
+    public string GetConfigRelativePath() {
+        return Path.Combine(GetObjectName(), GetDocumentName());
+    }
+
     public Element GetElement(string fileName, ElementId id) {
         var doc = fileName == null
             ? Doc

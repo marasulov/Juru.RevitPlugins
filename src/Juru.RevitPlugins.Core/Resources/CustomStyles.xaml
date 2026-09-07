@@ -13,15 +13,23 @@
     <!-- Отмеченный флажок под курсором и в нажатии в WPF-UI 4.3 заливается прозрачной кистью
          (CheckBoxCheckBackgroundFillChecked*  = #00FFFFFF), а рамка у отмеченного состояния
          прозрачна по замыслу - в сумме квадрат флажка пропадал целиком, стоило навести мышь.
-         Проверено в пустом приложении с теми же словарями, к Revit отношения не имеет.
-         Задаём заливку акцентом, как это сделано у прочих состояний: Secondary под курсором,
-         Tertiary в нажатии - тогда флажок темнеет, а не исчезает. -->
+         Изначально здесь стояла заливка акцентом ({DynamicResource SystemAccentColorSecondary} /
+         Tertiary) - "проверено в пустом приложении с теми же словарями, к Revit отношения не
+         имеет". Оказалось, что как раз имеет: SystemAccentColor* прописывает
+         Wpf.Ui.Appearance.ApplicationAccentColorManager.UpdateColorResources, а тот целиком
+         обёрнут в "if (Application.Current != null)". Ревит не создаёт System.Windows.Application,
+         поэтому этот код не выполняется вообще ни разу ни для одного окна плагина, ключ нигде не
+         появляется, и DynamicResource на него молча резолвится в прозрачный цвет по умолчанию.
+         Тот же прозрачный итог, что и без этого исправления. Фиксированные цвета вместо
+         акцентных - тот же приём, что уже применён в проекте для DynamicResource-кистей WPF-UI,
+         не резолвящихся внутри Popup (см. память проекта): не гнаться за резолюцией ресурса темы
+         там, где сама тема Ревитом не поднимается, а просто взять видимый цвет. -->
     <SolidColorBrush
         x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver"
-        Color="{DynamicResource SystemAccentColorSecondary}" />
+        Color="#106EBE" />
     <SolidColorBrush
         x:Key="CheckBoxCheckBackgroundFillCheckedPressed"
-        Color="{DynamicResource SystemAccentColorTertiary}" />
+        Color="#005A9E" />
     <Style
         x:Key="CustomColumnCheckBoxStyle"
         TargetType="CheckBox"

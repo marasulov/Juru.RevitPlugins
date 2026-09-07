@@ -58,9 +58,9 @@
                 <ui:Button
                     DockPanel.Dock="Right"
                     Command="{Binding SelectFilesCommand}"
-                    Content="{ui:SymbolIcon Symbol=Edit20}" />
+                    Content="{me:LocalizationSource Common.Select}" />
                 <ui:TextBlock
-                    Text="{me:LocalizationSource MainWindow.SelectFilesLabel}">
+                    Text="{me:LocalizationSource Selection.SelectFilesLabel}">
                     <ui:TextBlock.Style>
                         <Style
                             BasedOn="{StaticResource TextBlockAsLabel}"
@@ -94,9 +94,9 @@
                 <ui:Button
                     DockPanel.Dock="Right"
                     Command="{Binding SelectProvidersCommand}"
-                    Content="{ui:SymbolIcon Symbol=Edit20}" />
+                    Content="{me:LocalizationSource Common.Select}" />
                 <ui:TextBlock
-                    Text="{me:LocalizationSource MainWindow.SelectSearchSetsLabel}">
+                    Text="{me:LocalizationSource Selection.SelectSearchSetsLabel}">
                     <ui:TextBlock.Style>
                         <Style
                             BasedOn="{StaticResource TextBlockAsLabel}"

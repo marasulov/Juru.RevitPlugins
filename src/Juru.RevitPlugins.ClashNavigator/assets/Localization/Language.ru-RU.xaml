@@ -1,0 +1,145 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Русские строки интерфейса. Файл культуры подбирает WpfLocalizationService:
+         Language.xaml + имя культуры как дополнительное расширение (Language.ru-RU.xaml).
+         Этот же словарь подмешивается как запасной к остальным культурам, поэтому ключ,
+         который забыли перевести, покажет русский текст, а не пустоту. -->
+
+    <system:String x:Key="BIM">BIM</system:String>
+
+    <!-- Общее -->
+    <system:String x:Key="Common.Ok">ОК</system:String>
+    <system:String x:Key="Common.Cancel">Отмена</system:String>
+    <system:String x:Key="Common.Close">Закрыть</system:String>
+    <system:String x:Key="Common.Yes">Да</system:String>
+    <system:String x:Key="Common.No">Нет</system:String>
+    <system:String x:Key="Common.Select">Выбрать</system:String>
+    <system:String x:Key="Common.SelectAll">Выбрать все</system:String>
+    <system:String x:Key="Common.Delete">Удалить</system:String>
+    <system:String x:Key="Common.Load">Загрузить</system:String>
+    <system:String x:Key="Common.Save">Сохранить</system:String>
+    <system:String x:Key="Common.SaveAs">Сохранить как...</system:String>
+    <system:String x:Key="Common.Name">Имя</system:String>
+
+    <!-- Окно проверок -->
+    <system:String x:Key="ChecksWindow.Title">Поиск коллизий</system:String>
+    <system:String x:Key="ChecksWindow.LoadTooltip">Загрузить проверки из файла</system:String>
+    <system:String x:Key="ChecksWindow.SaveTooltip">Сохранить проверки</system:String>
+    <system:String x:Key="ChecksWindow.SaveAsTooltip">Сохранить проверки в отдельный файл</system:String>
+    <system:String x:Key="ChecksWindow.AddCheck">Добавить проверку</system:String>
+    <system:String x:Key="ChecksWindow.RemoveCheck">Удалить проверку</system:String>
+    <system:String x:Key="ChecksWindow.RemoveCheckTooltip">Удалить выделенные в таблице проверки</system:String>
+    <system:String x:Key="ChecksWindow.SearchPlaceholder">Поиск проверок...</system:String>
+    <system:String x:Key="ChecksWindow.Selection1">Выборка 1</system:String>
+    <system:String x:Key="ChecksWindow.Selection2">Выборка 2</system:String>
+    <system:String x:Key="ChecksWindow.ShowClashes">Коллизии</system:String>
+    <system:String x:Key="ChecksWindow.ShowClashesTooltip">Открыть найденные коллизии в навигаторе</system:String>
+    <system:String x:Key="ChecksWindow.DefaultCheckName">Новая проверка</system:String>
+    <system:String x:Key="ChecksWindow.SearchCompleted">Поиск коллизий завершён</system:String>
+    <system:String x:Key="ChecksWindow.ChecksSaved">Проверки сохранены</system:String>
+    <system:String x:Key="ChecksWindow.ChecksLoaded">Проверки загружены</system:String>
+    <system:String x:Key="ChecksWindow.SavePrompt">Сохранить проверки?</system:String>
+
+    <system:String x:Key="ChecksWindow.SummaryTitle">Поиск коллизий</system:String>
+    <system:String x:Key="ChecksWindow.SummaryEmpty">{0}: коллизий не найдено</system:String>
+    <system:String x:Key="ChecksWindow.SummaryFirstRun">{0}: найдено {1}</system:String>
+    <system:String x:Key="ChecksWindow.SummaryLine">{0}: найдено {1} (новых {2}, ушло {3})</system:String>
+
+    <system:String x:Key="ChecksWindow.Validation.NamesDuplicated">Имена проверок повторяются.</system:String>
+    <system:String x:Key="ChecksWindow.Validation.SelectAnyCheck">Не отмечена ни одна проверка.</system:String>
+    <system:String x:Key="ChecksWindow.Validation.EmptyFilterInCheck">У проверки "{0}" не выбран поисковый набор.</system:String>
+    <system:String x:Key="ChecksWindow.Validation.EmptyFileInCheck">У проверки "{0}" не выбран файл.</system:String>
+    <system:String x:Key="ChecksWindow.Validation.MissingFiles1">В выборке 1 не найдены файлы: {0}.</system:String>
+    <system:String x:Key="ChecksWindow.Validation.MissingFilters1">В выборке 1 не найдены поисковые наборы: {0}.</system:String>
+    <system:String x:Key="ChecksWindow.Validation.MissingFiles2">В выборке 2 не найдены файлы: {0}.</system:String>
+    <system:String x:Key="ChecksWindow.Validation.MissingFilters2">В выборке 2 не найдены поисковые наборы: {0}.</system:String>
+
+    <!-- Выборка в строке проверки -->
+    <system:String x:Key="Selection.SelectFilesLabel">Выберите файлы</system:String>
+    <system:String x:Key="Selection.SelectSearchSetsLabel">Выберите поисковые наборы</system:String>
+    <system:String x:Key="Selection.SelectFilesTitle">Выберите файлы</system:String>
+    <system:String x:Key="Selection.SelectSearchSetsTitle">Выберите поисковые наборы</system:String>
+    <system:String x:Key="Selection.CreateSearchSet">Создать набор...</system:String>
+
+    <!-- Окно поисковых наборов -->
+    <system:String x:Key="SearchSets.Title">Поисковые наборы</system:String>
+    <system:String x:Key="SearchSets.LoadTooltip">Загрузить наборы из файла</system:String>
+    <system:String x:Key="SearchSets.SaveTooltip">Сохранить наборы</system:String>
+    <system:String x:Key="SearchSets.SaveAsTooltip">Сохранить наборы в отдельный файл</system:String>
+    <system:String x:Key="SearchSets.AddFilter">Добавить набор</system:String>
+    <system:String x:Key="SearchSets.RemoveFilter">Удалить набор</system:String>
+    <system:String x:Key="SearchSets.RemoveFilterTooltip">Удалить выделенные в списке наборы</system:String>
+    <system:String x:Key="SearchSets.SearchPlaceholder">Поиск наборов...</system:String>
+    <system:String x:Key="SearchSets.NameLabel">Имя набора</system:String>
+    <system:String x:Key="SearchSets.CategoriesLabel">Категории</system:String>
+    <system:String x:Key="SearchSets.SelectCategoriesTooltip">Выбрать категории набора</system:String>
+    <system:String x:Key="SearchSets.SelectCategoriesTitle">Выберите категории</system:String>
+    <system:String x:Key="SearchSets.AddRule">Добавить правило</system:String>
+    <system:String x:Key="SearchSets.AddNestedSet">Добавить вложенный набор</system:String>
+    <system:String x:Key="SearchSets.DeleteRuleTooltip">Удалить правило</system:String>
+    <system:String x:Key="SearchSets.DeleteSetTooltip">Удалить вложенный набор</system:String>
+    <system:String x:Key="SearchSets.DefaultFilterName">Новый набор</system:String>
+    <system:String x:Key="SearchSets.SetsSaved">Наборы сохранены</system:String>
+    <system:String x:Key="SearchSets.SetsLoaded">Наборы загружены</system:String>
+    <system:String x:Key="SearchSets.SelectCategoriesFirst">Сначала выберите категории.</system:String>
+    <system:String x:Key="SearchSets.ParametersError">Не удалось получить параметры категорий: {0}</system:String>
+    <system:String x:Key="SearchSets.NoParametersSingle">У категории нет ни одного параметра, доступного для фильтрации.</system:String>
+    <system:String x:Key="SearchSets.NoParametersMultiple">У выбранных категорий нет ни одного общего параметра - список параметров общий для всех сразу. Попробуйте меньше категорий за один набор.</system:String>
+
+    <system:String x:Key="SearchSets.Validation.NoFilters">Не создано ни одного поискового набора.</system:String>
+    <system:String x:Key="SearchSets.Validation.NamesDuplicated">Имена наборов повторяются.</system:String>
+    <system:String x:Key="SearchSets.Validation.NoName">У набора не задано имя.</system:String>
+    <system:String x:Key="SearchSets.Validation.NoCategories">У набора "{0}" не выбрана ни одна категория.</system:String>
+    <system:String x:Key="SearchSets.Validation.SetPrefix">Набор "{0}": {1}</system:String>
+    <system:String x:Key="SearchSets.Validation.RuleNoParameter">У правила не выбран параметр.</system:String>
+    <system:String x:Key="SearchSets.Validation.RuleNoEvaluator">У правила не выбрано условие.</system:String>
+    <system:String x:Key="SearchSets.Validation.RuleNoValue">У правила "{0}" не задано значение.</system:String>
+    <system:String x:Key="SearchSets.Validation.NestedSetEmpty">Вложенный набор пуст.</system:String>
+
+    <!-- Условия правил -->
+    <system:String x:Key="Evaluator.Equals">равно</system:String>
+    <system:String x:Key="Evaluator.NotEquals">не равно</system:String>
+    <system:String x:Key="Evaluator.Greater">больше</system:String>
+    <system:String x:Key="Evaluator.GreaterOrEqual">больше или равно</system:String>
+    <system:String x:Key="Evaluator.Less">меньше</system:String>
+    <system:String x:Key="Evaluator.LessOrEqual">меньше или равно</system:String>
+    <system:String x:Key="Evaluator.Contains">содержит</system:String>
+    <system:String x:Key="Evaluator.NotContains">не содержит</system:String>
+    <system:String x:Key="Evaluator.BeginsWith">начинается с</system:String>
+    <system:String x:Key="Evaluator.NotBeginsWith">не начинается с</system:String>
+    <system:String x:Key="Evaluator.EndsWith">заканчивается на</system:String>
+    <system:String x:Key="Evaluator.NotEndsWith">не заканчивается на</system:String>
+    <system:String x:Key="Evaluator.HasValue">имеет значение</system:String>
+    <system:String x:Key="Evaluator.HasNoValue">без значения</system:String>
+    <system:String x:Key="SetEvaluator.And">И</system:String>
+    <system:String x:Key="SetEvaluator.Or">ИЛИ</system:String>
+
+    <!-- Загрузка конфигураций -->
+    <system:String x:Key="ConfigLoader.InvalidFile">Не удалось прочитать файл конфигурации.</system:String>
+
+    <!-- Навигатор коллизий -->
+    <system:String x:Key="Navigator.DeletePrompt">Удалить выбранный отчёт?</system:String>
+    <system:String x:Key="Navigator.ClashComments">Комментарии: {0}</system:String>
+    <system:String x:Key="ReportsMerge.ConflictedClashes">Коллизии с расхождениями</system:String>
+    <system:String x:Key="ReportsMerge.AutoMergedClashes">Объединённые автоматически</system:String>
+    <system:String x:Key="ReportsResolver.Header">Загрузка отчётов</system:String>
+    <system:String x:Key="ReportsResolver.Body">В загружаемом файле есть отчёты с совпадающими именами: {0}.</system:String>
+    <system:String x:Key="ReportsResolver.Merge">Объединить</system:String>
+    <system:String x:Key="ReportsResolver.Replace">Заменить</system:String>
+    <system:String x:Key="ReportsResolver.CopyAndRename">Копировать с переименованием</system:String>
+
+    <!-- Настройки -->
+    <system:String x:Key="SettingsWindow.Validation.OffsetLessThanZero">Отступ не может быть отрицательным.</system:String>
+    <system:String x:Key="SettingsWindow.Validation.OffsetGreaterThan">Отступ не может быть больше {0}.</system:String>
+    <system:String x:Key="SettingsWindow.Language">Язык интерфейса</system:String>
+    <system:String x:Key="SettingsWindow.LanguageTooltip">Язык применится при следующем открытии окон плагина</system:String>
+
+    <!-- Выбор языка при первом запуске -->
+    <system:String x:Key="LanguagePrompt.Title">Язык интерфейса</system:String>
+    <system:String x:Key="LanguagePrompt.Body">Выберите язык интерфейса плагина. Позже его можно сменить в настройках.</system:String>
+    <system:String x:Key="Language.Russian">Русский</system:String>
+    <system:String x:Key="Language.English">English</system:String>
+</ResourceDictionary>

@@ -57,6 +57,23 @@
                 <Border
                     Margin="0 0 0 10"
                     Style="{StaticResource CustomBorder}">
+                    <DockPanel
+                        Margin="14 8"
+                        VerticalAlignment="Center">
+                        <Label
+                            Width="150"
+                            Style="{StaticResource CustomLabel}"
+                            Content="{me:LocalizationSource SettingsWindow.Language}" />
+                        <ComboBox
+                            DisplayMemberPath="Title"
+                            ToolTip="{me:LocalizationSource SettingsWindow.LanguageTooltip}"
+                            ItemsSource="{Binding Languages}"
+                            SelectedItem="{Binding SelectedLanguage}" />
+                    </DockPanel>
+                </Border>
+                <Border
+                    Margin="0 0 0 10"
+                    Style="{StaticResource CustomBorder}">
                     <StackPanel>
                         <Label
                             Content="Сервер коллизий" />
