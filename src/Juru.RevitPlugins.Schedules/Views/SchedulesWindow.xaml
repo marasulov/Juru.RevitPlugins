@@ -20,6 +20,18 @@
                 <ui:ThemesDictionary Theme="Dark" />
                 <ui:ControlsDictionary />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Категории, до которых дело не дошло. Вкладка открывается и объясняет, почему пусто,
+                 вместо пустой таблицы, выглядящей поломанной. -->
+            <DataTemplate x:Key="UnsupportedCategory">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="520">
+                    <TextBlock Text="{Binding}" FontSize="16" FontWeight="SemiBold"
+                               HorizontalAlignment="Center" Margin="0,0,0,8" />
+                    <TextBlock TextWrapping="Wrap" TextAlignment="Center"
+                               Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                               Text="Пока не поддерживается. Перевод этой категории пишется в параметры элементов модели, а не рисуется заново, поэтому требует отката, отметки исходного текста и проверок совместной работы." />
+                </StackPanel>
+            </DataTemplate>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -153,6 +165,42 @@
                                         Binding="{Binding Schedules}" SortMemberPath="Schedules" />
                 </DataGrid.Columns>
             </DataGrid>
+            </TabItem>
+            <TabItem Header="Помещения">
+                <ContentControl Content="Помещения" ContentTemplate="{StaticResource UnsupportedCategory}" />
+            </TabItem>
+            <TabItem Header="Зоны">
+                <ContentControl Content="Зоны" ContentTemplate="{StaticResource UnsupportedCategory}" />
+            </TabItem>
+            <TabItem Header="Листы">
+                <ContentControl Content="Листы" ContentTemplate="{StaticResource UnsupportedCategory}" />
+            </TabItem>
+            <TabItem Header="Виды">
+                <ContentControl Content="Виды" ContentTemplate="{StaticResource UnsupportedCategory}" />
+            </TabItem>
+            <TabItem Header="Текстовые примечания">
+                <ContentControl Content="Текстовые примечания" ContentTemplate="{StaticResource UnsupportedCategory}" />
+            </TabItem>
+            <TabItem Header="Ключевые примечания">
+                <ContentControl Content="Ключевые примечания" ContentTemplate="{StaticResource UnsupportedCategory}" />
+            </TabItem>
+            <TabItem Header="Семейства">
+                <ContentControl Content="Семейства" ContentTemplate="{StaticResource UnsupportedCategory}" />
+            </TabItem>
+            <TabItem Header="Уровни">
+                <ContentControl Content="Уровни" ContentTemplate="{StaticResource UnsupportedCategory}" />
+            </TabItem>
+            <TabItem Header="Материалы">
+                <ContentControl Content="Материалы" ContentTemplate="{StaticResource UnsupportedCategory}" />
+            </TabItem>
+            <TabItem Header="Ревизии">
+                <ContentControl Content="Ревизии" ContentTemplate="{StaticResource UnsupportedCategory}" />
+            </TabItem>
+            <TabItem Header="Размеры">
+                <ContentControl Content="Размеры" ContentTemplate="{StaticResource UnsupportedCategory}" />
+            </TabItem>
+            <TabItem Header="Параметры">
+                <ContentControl Content="Параметры" ContentTemplate="{StaticResource UnsupportedCategory}" />
             </TabItem>
         </TabControl>
 
