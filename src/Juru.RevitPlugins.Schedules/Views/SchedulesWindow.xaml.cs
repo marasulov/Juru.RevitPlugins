@@ -43,6 +43,24 @@ public partial class SchedulesWindow : Window
         ViewModel.ApplySelectionTo(selected.Contains(row) ? selected : [row], isChecked);
     }
 
+    /// <summary>
+    ///     То же правило для таблицы переводов: галочка внутри выделения применяется ко всему выделению.
+    /// </summary>
+    private void TranslationCheckBox_Click(object sender, RoutedEventArgs eventArgs)
+    {
+        if (sender is not CheckBox { IsChecked: { } isChecked, DataContext: TranslationRowViewModel row })
+        {
+            return;
+        }
+
+        var selected = TranslationsGrid.SelectedItems.OfType<TranslationRowViewModel>().ToList();
+
+        foreach (var target in selected.Contains(row) ? selected : [row])
+        {
+            target.IsSelected = isChecked;
+        }
+    }
+
     private void ButtonBuild_Click(object sender, RoutedEventArgs eventArgs)
     {
         Result = ViewModel.SelectedRows;

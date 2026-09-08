@@ -18,7 +18,8 @@ namespace Juru.RevitPlugins.Schedules.ViewModels;
 /// </summary>
 public sealed partial class SchedulesWindowViewModel : ObservableObject
 {
-    private readonly ICollectionView view;
+    private readonly ICollectionView scheduleView;
+    private readonly ICollectionView translationView;
 
     [ObservableProperty]
     private string searchText = string.Empty;
@@ -30,25 +31,54 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool redrawAsLines = true;
 
-    public SchedulesWindowViewModel(IReadOnlyList<ScheduleRowViewModel> rows, TranslationSettings settings)
+    public SchedulesWindowViewModel(
+        IReadOnlyList<ScheduleRowViewModel> rows,
+        IReadOnlyList<TranslationRowViewModel> translations,
+        TranslationSettings settings)
     {
         if (rows is null)
         {
             throw new ArgumentNullException(nameof(rows));
         }
 
+        if (translations is null)
+        {
+            throw new ArgumentNullException(nameof(translations));
+        }
+
         Rows = new ObservableCollection<ScheduleRowViewModel>(rows);
+        Translations = new ObservableCollection<TranslationRowViewModel>(translations);
         provider = settings.Provider;
 
-        view = CollectionViewSource.GetDefaultView(Rows);
-        view.Filter = Matches;
+        scheduleView = new CollectionViewSource { Source = Rows }.View;
+        scheduleView.Filter = MatchesSchedule;
+
+        translationView = new CollectionViewSource { Source = Translations }.View;
+        translationView.Filter = MatchesTranslation;
     }
 
     public ObservableCollection<ScheduleRowViewModel> Rows { get; }
 
+    public ObservableCollection<TranslationRowViewModel> Translations { get; }
+
     public ICollectionView View
     {
-        get { return view; }
+        get { return scheduleView; }
+    }
+
+    public ICollectionView TranslationsView
+    {
+        get { return translationView; }
+    }
+
+    public string TranslationsSummary
+    {
+        get
+        {
+            var untranslated = Translations.Count(row => !row.HasTranslation);
+
+            return $"Строк {Translations.Count}, без перевода {untranslated}";
+        }
     }
 
     public IReadOnlyList<string> Providers { get; } = ["DeepL", "Google"];
@@ -100,7 +130,7 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
 
     private void SetSelection(bool isSelected)
     {
-        foreach (var row in view.Cast<ScheduleRowViewModel>().ToList())
+        foreach (var row in scheduleView.Cast<ScheduleRowViewModel>().ToList())
         {
             row.IsSelected = isSelected;
         }
@@ -108,7 +138,7 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(Summary));
     }
 
-    private bool Matches(object item)
+    private bool MatchesSchedule(object item)
     {
         if (SearchText.Length is 0)
         {
@@ -120,12 +150,33 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
             return false;
         }
 
-        return row.ScheduleName.IndexOf(SearchText, StringComparison.CurrentCultureIgnoreCase) >= 0
-               || row.Sheets.IndexOf(SearchText, StringComparison.CurrentCultureIgnoreCase) >= 0;
+        return Contains(row.ScheduleName) || Contains(row.Sheets);
     }
 
+    private bool MatchesTranslation(object item)
+    {
+        if (SearchText.Length is 0)
+        {
+            return true;
+        }
+
+        if (item is not TranslationRowViewModel row)
+        {
+            return false;
+        }
+
+        return Contains(row.Readable) || Contains(row.Translation) || Contains(row.Schedules);
+    }
+
+    private bool Contains(string text)
+    {
+        return text.IndexOf(SearchText, StringComparison.CurrentCultureIgnoreCase) >= 0;
+    }
+
+    /// <summary>Поиск один на окно и фильтрует обе таблицы, чтобы не искать заново при смене вкладки.</summary>
     partial void OnSearchTextChanged(string value)
     {
-        view.Refresh();
+        scheduleView.Refresh();
+        translationView.Refresh();
     }
 }

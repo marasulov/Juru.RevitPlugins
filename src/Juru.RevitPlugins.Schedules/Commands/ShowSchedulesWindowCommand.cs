@@ -40,7 +40,10 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
         }
 
         var rows = BuildRows(schedules, glossary);
-        var window = new SchedulesWindow(new SchedulesWindowViewModel(rows, config.Translation));
+        var translations = TranslationRowViewModel.Build(schedules, glossary);
+
+        var window = new SchedulesWindow(
+            new SchedulesWindowViewModel(rows, translations, config.Translation));
 
         ShowModal(window);
     }

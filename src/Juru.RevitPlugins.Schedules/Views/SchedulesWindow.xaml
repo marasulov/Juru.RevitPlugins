@@ -47,66 +47,122 @@
                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
         </DockPanel>
 
-        <DataGrid
-            Grid.Row="2"
-            x:Name="SchedulesGrid"
-            AutoGenerateColumns="False"
-            CanUserAddRows="False"
-            CanUserDeleteRows="False"
-            CanUserReorderColumns="False"
-            GridLinesVisibility="Horizontal"
-            HeadersVisibility="Column"
-            IsReadOnly="True"
-            SelectionMode="Extended"
-            SelectionUnit="FullRow"
-            BorderThickness="1"
-            BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}"
-            ItemsSource="{Binding View}">
+        <TabControl Grid.Row="2" Padding="0" BorderThickness="1"
+                    BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}">
 
-            <!-- Галочка и выделение строки - одно и то же: отметить диапазон стрелками или
-                 протаскиванием мыши и есть основной способ выбора. -->
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow">
-                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
-                </Style>
-            </DataGrid.RowStyle>
+            <TabItem Header="Спецификации">
+            <DataGrid
+                x:Name="SchedulesGrid"
+                AutoGenerateColumns="False"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                CanUserReorderColumns="False"
+                GridLinesVisibility="Horizontal"
+                HeadersVisibility="Column"
+                IsReadOnly="True"
+                SelectionMode="Extended"
+                SelectionUnit="FullRow"
+                BorderThickness="1"
+                BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}"
+                ItemsSource="{Binding View}">
 
-            <DataGrid.Columns>
-                <DataGridTemplateColumn Width="Auto" CanUserResize="False" CanUserSort="False">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <!-- Focusable=False: иначе первый щелчок уходит на фокус ячейки,
-                                 а не на переключение галочки. -->
-                            <CheckBox
-                                Margin="6,0"
-                                Focusable="False"
-                                IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                Click="CheckBox_Click" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+                <!-- Галочка и выделение строки - одно и то же: отметить диапазон стрелками или
+                     протаскиванием мыши и есть основной способ выбора. -->
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                    </Style>
+                </DataGrid.RowStyle>
 
-                <DataGridTextColumn Header="Спецификация" Width="*"
-                                    Binding="{Binding ScheduleName}" SortMemberPath="ScheduleName" />
-                <DataGridTextColumn Header="Листы" Width="90"
-                                    Binding="{Binding Sheets}" SortMemberPath="Sheets" />
-                <DataGridTextColumn Header="Колонок" Width="70"
-                                    Binding="{Binding ColumnCount}" SortMemberPath="ColumnCount" />
-                <DataGridTextColumn Header="Строк" Width="70"
-                                    Binding="{Binding RowCount}" SortMemberPath="RowCount" />
-                <DataGridTextColumn Header="Строк на перевод" Width="120"
-                                    Binding="{Binding TranslatableCount}" SortMemberPath="TranslatableCount" />
-                <DataGridTextColumn Header="Без перевода" Width="110"
-                                    Binding="{Binding UntranslatedCount}" SortMemberPath="UntranslatedCount" />
-                <DataGridTextColumn Header="Состояние" Width="160"
-                                    Binding="{Binding Status}" SortMemberPath="Status" />
-            </DataGrid.Columns>
-        </DataGrid>
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="Auto" CanUserResize="False" CanUserSort="False">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Focusable=False: иначе первый щелчок уходит на фокус ячейки,
+                                     а не на переключение галочки. -->
+                                <CheckBox
+                                    Margin="6,0"
+                                    Focusable="False"
+                                    IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Click="CheckBox_Click" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Спецификация" Width="*"
+                                        Binding="{Binding ScheduleName}" SortMemberPath="ScheduleName" />
+                    <DataGridTextColumn Header="Листы" Width="90"
+                                        Binding="{Binding Sheets}" SortMemberPath="Sheets" />
+                    <DataGridTextColumn Header="Колонок" Width="70"
+                                        Binding="{Binding ColumnCount}" SortMemberPath="ColumnCount" />
+                    <DataGridTextColumn Header="Строк" Width="70"
+                                        Binding="{Binding RowCount}" SortMemberPath="RowCount" />
+                    <DataGridTextColumn Header="Строк на перевод" Width="120"
+                                        Binding="{Binding TranslatableCount}" SortMemberPath="TranslatableCount" />
+                    <DataGridTextColumn Header="Без перевода" Width="110"
+                                        Binding="{Binding UntranslatedCount}" SortMemberPath="UntranslatedCount" />
+                    <DataGridTextColumn Header="Состояние" Width="160"
+                                        Binding="{Binding Status}" SortMemberPath="Status" />
+                </DataGrid.Columns>
+            </DataGrid>
+            </TabItem>
+
+            <!-- Строка здесь - отдельный переводимый текст, а не спецификация: это поверхность вычитки
+                 перевода, та же, что сейчас правится в CSV. -->
+            <TabItem Header="Строки на перевод">
+            <DataGrid
+                x:Name="TranslationsGrid"
+                AutoGenerateColumns="False"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                CanUserReorderColumns="False"
+                GridLinesVisibility="Horizontal"
+                HeadersVisibility="Column"
+                SelectionMode="Extended"
+                SelectionUnit="FullRow"
+                BorderThickness="0"
+                ItemsSource="{Binding TranslationsView}">
+
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                    </Style>
+                </DataGrid.RowStyle>
+
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="Auto" CanUserResize="False" CanUserSort="False" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox
+                                    Margin="6,0"
+                                    Focusable="False"
+                                    IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Click="TranslationCheckBox_Click" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Что это" Width="130" IsReadOnly="True"
+                                        Binding="{Binding Kind}" SortMemberPath="Kind" />
+                    <DataGridTextColumn Header="Исходный текст" Width="*" IsReadOnly="True"
+                                        Binding="{Binding Readable}" SortMemberPath="Readable" />
+                    <DataGridTextColumn Header="Перевод" Width="*"
+                                        Binding="{Binding Translation, UpdateSourceTrigger=PropertyChanged}"
+                                        SortMemberPath="Translation" />
+                    <DataGridTextColumn Header="Спецификации" Width="200" IsReadOnly="True"
+                                        Binding="{Binding Schedules}" SortMemberPath="Schedules" />
+                </DataGrid.Columns>
+            </DataGrid>
+            </TabItem>
+        </TabControl>
 
         <DockPanel Grid.Row="3" Margin="0,12,0,0">
             <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
                        Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
                        Text="{Binding Summary}" />
+            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="16,0,0,0"
+                       Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                       Text="{Binding TranslationsSummary}" />
 
             <Button DockPanel.Dock="Right" Content="Отмена" Width="100" Margin="8,0,0,0"
                     Click="ButtonCancel_Click" />
