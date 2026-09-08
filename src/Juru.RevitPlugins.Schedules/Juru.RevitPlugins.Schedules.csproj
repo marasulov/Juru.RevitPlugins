@@ -20,6 +20,10 @@
         <!-- Revit выгружает спецификации в кодовой странице системы; на net48 поддержка 1251 идёт пакетом. -->
         <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" Condition="'$(RevitVersion)' &lt; '2027'" />
 
+        <!-- UI: та же версия, что в Core, иначе в процессе Ревита окажутся две разные -->
+        <PackageReference Include="WPF-UI" Version="4.3.0" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+
         <!-- Development Dependencies -->
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" PrivateAssets="all" />
         <PackageReference Include="Polyfill" Version="10.5.1" PrivateAssets="all" />
