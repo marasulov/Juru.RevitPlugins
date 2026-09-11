@@ -48,4 +48,11 @@ public class RealOpeningResult {
     /// а не экземпляр-задание, который на этом же прогоне уже удалён.
     /// </summary>
     public Dictionary<string, ElementId> RealElements { get; } = [];
+
+    /// <summary>
+    /// Чистовые отверстия заданий, которые инженер у себя удалил, по ключу задания. Они остаются
+    /// в модели: согласовывали то, чего больше не требуется, и убрать это должен человек, увидев,
+    /// что именно исчезает - см. <c>docs/OpeningsApi.md</c>, "Удалённые задания".
+    /// </summary>
+    public Dictionary<string, ElementId> DeletedRealElements { get; } = [];
 }

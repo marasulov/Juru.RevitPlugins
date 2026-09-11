@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -42,9 +43,36 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
         InitializeComponent();
         RestoreLayout();
         BuildColumnToggles();
+        DataContextChanged += (_, _) => WatchTasks();
 
         _initialized = true;
         UpdatePosition();
+        UpdateRemoveColumn();
+    }
+
+    /// <summary>
+    /// Следит за списком заданий, чтобы прятать и показывать колонку "Убрать" по его содержимому.
+    /// </summary>
+    private void WatchTasks() {
+        if(DataContext is IncomingOpeningsNavigatorViewModel vm) {
+            vm.Tasks.CollectionChanged += (_, _) => UpdateRemoveColumn();
+        }
+
+        UpdateRemoveColumn();
+    }
+
+    /// <summary>
+    /// Показывает колонку "Убрать", только когда есть что убирать: задания, которые инженер удалил,
+    /// а отверстия по ним уже прорезаны. В обычном файле таких нет, и пустая колонка с заголовком
+    /// выглядела бы сломанной кнопкой.
+    /// </summary>
+    private void UpdateRemoveColumn() {
+        bool anyRemovable = DataContext is IncomingOpeningsNavigatorViewModel vm
+            && vm.Tasks.Any(task => task.CanRemove);
+        bool hiddenByUser = _layout.HiddenColumns.Contains(RemoveColumn.Header?.ToString() ?? string.Empty);
+        RemoveColumn.Visibility = anyRemovable && !hiddenByUser
+            ? System.Windows.Visibility.Visible
+            : System.Windows.Visibility.Collapsed;
     }
 
     private void RestoreLayout() {
@@ -98,6 +126,10 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
         }
 
         _layout.Save();
+
+        if(column == RemoveColumn) {
+            UpdateRemoveColumn();
+        }
     }
 
     private void StatusFilter_Changed(object sender, RoutedEventArgs e) {
@@ -198,6 +230,12 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
     /// задания, который считает сервер из решений обеих дисциплин.
     /// </summary>
     private bool MatchesStatus(IncomingOpeningTaskViewModel row) {
+        // Удалённое задание фильтр решений не прячет: своё решение по нему больше ничего не значит,
+        // а вот прорезанное по нему отверстие ждёт уборки и должно быть видно при любых флажках.
+        if(row.IsTaskDeleted) {
+            return true;
+        }
+
         if(row.IsApproved) {
             return IsShown(ShowApprovedBox);
         }
@@ -232,6 +270,12 @@ public partial class IncomingOpeningsNavigatorWindow : Window {
     private void InsertButton_Click(object sender, RoutedEventArgs e) {
         if(GetRow(sender) is { } row && DataContext is IncomingOpeningsNavigatorViewModel vm) {
             vm.Insert(row);
+        }
+    }
+
+    private void RemoveButton_Click(object sender, RoutedEventArgs e) {
+        if(GetRow(sender) is { } row && DataContext is IncomingOpeningsNavigatorViewModel vm) {
+            vm.Remove(row);
         }
     }
 

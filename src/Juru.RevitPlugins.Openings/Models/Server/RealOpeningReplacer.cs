@@ -61,12 +61,19 @@ public class RealOpeningReplacer {
             // Удалённое задание (инженер убрал трубу) чистит IncomingOpeningPlacer, но только
             // экземпляр-задание - тот, что заменён на вырезающее семейство, IncomingOpeningPlacer
             // не находит (у него нет TaskKeyParam с этим ключом среди экземпляров-заданий,
-            // ключ только на вырезающем). Без этой строки удалённая-но-уже-прорезанная задача
-            // оставляла бы чистовое отверстие в модели навсегда.
+            // ключ только на вырезающем). Само отверстие здесь не удаляется: конструкцию уже
+            // прорезали по согласованному заданию, и молча зарастить её обновлением окна нельзя -
+            // навигатор показывает такое отдельной строкой, а убирает его человек
+            // (docs/OpeningsApi.md, "Удалённые задания").
+            if(task.Deleted) {
+                result.DeletedRealElements[task.TaskKey] = real.Id;
+                continue;
+            }
+
             // Прорезание требует общего статуса "approved" (обе дисциплины), а не решения только
             // своей - иначе отклонение другой стороны никак не убирало бы уже прорезанное
             // отверстие, вставленное до того, как отклонили (rejected побеждает по контракту).
-            if(!task.Deleted && OpeningApproval.IsApproved(task)) {
+            if(OpeningApproval.IsApproved(task)) {
                 result.RealElements[task.TaskKey] = real.Id;
             } else {
                 _doc.Delete(real.Id);
@@ -76,6 +83,25 @@ public class RealOpeningReplacer {
 
         transaction.Commit();
         return result;
+    }
+
+    /// <summary>
+    /// Возвращает ключи заданий, которые инженер удалил, а отверстия по ним в этом файле уже
+    /// прорезаны. Модель не меняет - это вопрос, а не уборка.
+    /// </summary>
+    /// <remarks>
+    /// Нужен загрузке заданий: она ставит только экземпляры-задания и про вырезающие семейства
+    /// не знает, поэтому сама по себе даже не замечает, что согласованное отверстие больше
+    /// не требуется. Убирают такие отверстия в окне согласования, где видно, какое именно.
+    /// </remarks>
+    public IReadOnlyCollection<string> FindCutDeleted(IReadOnlyCollection<OpeningTaskViewDto> tasks) {
+        if(tasks is null) { throw new ArgumentNullException(nameof(tasks)); }
+
+        var realByTaskKey = GetExistingRealInstances();
+        return tasks
+            .Where(task => task.Deleted && realByTaskKey.ContainsKey(task.TaskKey))
+            .Select(task => task.TaskKey)
+            .ToList();
     }
 
     /// <summary>

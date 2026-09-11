@@ -31,13 +31,15 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
         ElementId elementId,
         Element? host,
         OpeningTaskStatus? technicalStatus,
-        bool isCut) {
+        bool isCut,
+        bool isTaskDeleted = false) {
 
         Task = task ?? throw new ArgumentNullException(nameof(task));
         ElementId = elementId;
         HostElementId = host?.Id;
         HostName = host?.Name ?? string.Empty;
         IsCut = isCut;
+        IsTaskDeleted = isTaskDeleted;
         CanCut = true;
 
         var ownDecision = ownDiscipline == Discipline.ARC ? task.ArcDecision : task.StrDecision;
@@ -47,7 +49,7 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
         _comment = _originalComment;
 
         SizeText = GetSizeText(task);
-        OverallStatusText = GetOverallStatusText(task.Status);
+        OverallStatusText = isTaskDeleted ? "Задание удалено инженером" : GetOverallStatusText(task.Status);
         OtherDisciplineText = GetOtherDisciplineText(task, ownDiscipline);
         IsRejectedByOther = OpeningDecisionStatus.IsRejected(GetOtherDecision(task, ownDiscipline)?.Status);
         JustReset = ownDecision.ChangedAfterApproval;
@@ -102,7 +104,7 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
     /// согласования можно. Раньше строчная кнопка в этот момент оставалась выключенной, и
     /// прорезать одно задание получалось только через "Вставить все согласованные".
     /// </remarks>
-    public bool CanInsert => CanCut && !IsCut && !IsRejectedByOther
+    public bool CanInsert => CanCut && !IsCut && !IsRejectedByOther && !IsTaskDeleted
         && (OpeningApproval.IsApproved(Task) || IsApproved);
 
     /// <summary>
@@ -116,6 +118,10 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
     /// </remarks>
     public string InsertHint {
         get {
+            if(IsTaskDeleted) {
+                return "Инженер удалил это задание - прорезать нечего";
+            }
+
             if(IsCut) {
                 return "Уже прорезано";
             }
@@ -145,6 +151,21 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
     /// Прорезать может и АР, и КР (см. <see cref="IncomingOpeningsNavigatorViewModel.CanCut"/>).
     /// </summary>
     public bool CanCut { get; }
+
+    /// <summary>
+    /// Инженер удалил это задание у себя, а отверстие по нему уже прорезано.
+    /// </summary>
+    /// <remarks>
+    /// В списке остаются только такие удалённые задания: у остальных убирать нечего, их экземпляр
+    /// снимает загрузка. Строка нужна затем, чтобы согласующий увидел, какое из его отверстий
+    /// больше не требуется, - конструкция уже прорезана, и зарастить её молча нельзя.
+    /// </remarks>
+    public bool IsTaskDeleted { get; }
+
+    /// <summary>
+    /// Есть что убирать: задание удалено, а его чистовое отверстие в модели ещё стоит.
+    /// </summary>
+    public bool CanRemove => IsTaskDeleted && ElementId is not null;
 
     /// <summary>
     /// Строка для поиска по гриду - объединяет колонки, по которым имеет смысл искать.
@@ -242,13 +263,13 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
     /// <summary>
     /// Отклонить нельзя без комментария - сервер такую пачку всё равно отклонит.
     /// </summary>
-    public bool CanReject => !string.IsNullOrWhiteSpace(Comment);
+    public bool CanReject => !string.IsNullOrWhiteSpace(Comment) && !IsTaskDeleted;
 
     /// <summary>
     /// Пока в комментарии есть текст - это заготовка отклонения, и согласовать нельзя, не стерев её:
     /// иначе кнопки одновременно показывали бы оба решения как доступные "прямо сейчас".
     /// </summary>
-    public bool CanApprove => string.IsNullOrWhiteSpace(Comment);
+    public bool CanApprove => string.IsNullOrWhiteSpace(Comment) && !IsTaskDeleted;
 
     /// <summary>
     /// Решение действительно принято - кнопки подсвечиваются по этому признаку, а не по тому,
