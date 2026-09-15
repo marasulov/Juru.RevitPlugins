@@ -12,7 +12,7 @@
     xmlns:me="clr-namespace:dosymep.WpfCore.MarkupExtensions;assembly=dosymep.WpfCore"
     mc:Ignorable="d"
     WindowStartupLocation="CenterOwner"
-    Title="Настройки"
+    Title="{me:LocalizationSource SettingsWindow.Title}"
     Width="450"
     Height="320"
     MinWidth="420"
@@ -47,7 +47,7 @@
 
         <ui:TitleBar
             Grid.Row="0"
-            Title="Настройки" />
+            Title="{me:LocalizationSource SettingsWindow.Title}" />
 
         <Border
             Grid.Row="1"
@@ -76,14 +76,14 @@
                     Style="{StaticResource CustomBorder}">
                     <StackPanel>
                         <Label
-                            Content="Сервер коллизий" />
+                            Content="{me:LocalizationSource SettingsWindow.ClashServer}" />
                         <DockPanel
                             Margin="14 8"
                             VerticalAlignment="Center">
                             <Label
                                 Width="150"
                                 Style="{StaticResource CustomLabel}"
-                                Content="Адрес сервера" />
+                                Content="{me:LocalizationSource SettingsWindow.ServerUrl}" />
                             <ui:TextBox
                                 Text="{Binding ClashServerUrl, UpdateSourceTrigger=PropertyChanged}"
                                 PlaceholderText="http://localhost:5000" />
@@ -91,7 +91,7 @@
                     </StackPanel>
                 </Border>
                 <Label
-                    Content="Отображение коллизий" />
+                    Content="{me:LocalizationSource SettingsWindow.ClashDisplay}" />
                 <Border
                     Style="{StaticResource CustomBorder}">
                     <StackPanel>
@@ -104,7 +104,7 @@
                                 <Label
                                     Width="150"
                                     Style="{StaticResource CustomLabel}"
-                                    Content="Размер Section Box, мм" />
+                                    Content="{me:LocalizationSource SettingsWindow.SectionBoxOffset}" />
                                 <ui:TextBox
                                     Text="{Binding SectionBoxOffset, UpdateSourceTrigger=PropertyChanged}" />
                             </DockPanel>
@@ -129,14 +129,14 @@
                 Margin="10"
                 Width="80"
                 Appearance="Info"
-                Content="ОК"
+                Content="{me:LocalizationSource Common.Ok}"
                 Click="ButtonOk_Click"
                 Command="{Binding AcceptViewCommand}" />
 
             <ui:Button
                 Margin="10"
                 Width="80"
-                Content="Отмена"
+                Content="{me:LocalizationSource Common.Cancel}"
                 IsCancel="True"
                 Click="ButtonCancel_Click" />
         </StackPanel>

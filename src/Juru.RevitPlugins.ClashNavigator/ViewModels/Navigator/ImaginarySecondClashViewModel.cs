@@ -23,18 +23,18 @@ internal class ImaginarySecondClashViewModel
     : BaseViewModel, IClashViewModel, IEquatable<ImaginarySecondClashViewModel> {
     private readonly RevitRepository _revitRepository;
     private readonly ElementViewModel _secondElement;
+    private readonly ILocalizationService _localizationService;
 
     public ImaginarySecondClashViewModel(
         RevitRepository revitRepository,
         ElementViewModel secondElement,
         ILocalizationService localizationService) {
-        if(localizationService == null) {
-            throw new ArgumentNullException(nameof(localizationService));
-        }
+        _localizationService = localizationService
+            ?? throw new ArgumentNullException(nameof(localizationService));
 
         _revitRepository = revitRepository ?? throw new ArgumentNullException(nameof(revitRepository));
         _secondElement = secondElement ?? throw new ArgumentNullException(nameof(secondElement));
-        ClashStatusName = ClashStatus.GetDisplayName();
+        ClashStatusName = ClashStatus.GetDisplayName(localizationService);
         SecondElementVolume = secondElement.ElementVolume;
 
         SecondId = _secondElement.Element.Id;
@@ -82,7 +82,7 @@ internal class ImaginarySecondClashViewModel
 
     public string StatusAuthorInfo => string.Empty;
 
-    public string RevitHint => "Мнимая коллизия: второго элемента нет, показывать нечего";
+    public string RevitHint => _localizationService.GetLocalizedString("Clash.ImaginaryHint");
 
     public string StatusChangedAt => string.Empty;
 

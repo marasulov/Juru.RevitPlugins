@@ -74,6 +74,17 @@ public class GetClashesCommand : BasePluginCommand {
         // WpfUIMessageBoxService requires these services during construction.
         kernel.UseWpfWindowsTheme();
         kernel.UsePluginLanguage();
+
+        // Локализация привязывается здесь, до привязки окна и служб диалогов. Окно имеет
+        // и полный конструктор, и пустой; Ninject берёт полный только когда все его службы
+        // уже привязаны, иначе молча берёт пустой - а тот не подключает
+        // WpfLocalizationBehavior, и культура окну не задаётся: надписи из словаря
+        // пропадают целиком. Привязка окна ещё и InSingletonScope, поэтому такой
+        // экземпляр запоминается навсегда.
+        string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
+        kernel.UseWpfLocalization(
+            $"/{assemblyName};component/assets/Localization/Language.xaml",
+            CultureInfo.GetCultureInfo("ru-RU"));
         kernel.UseWpfUIThemeUpdater();
 
         kernel.UseWpfOpenFileDialog<NavigatorViewModel>(
@@ -90,14 +101,11 @@ public class GetClashesCommand : BasePluginCommand {
         kernel.Bind<IHasLocalization>()
             .ToMethod(c => c.Kernel.Get<NavigatorWindow>());
 
-        string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
-        kernel.UseWpfLocalization(
-            $"/{assemblyName};component/assets/Localization/Language.xaml",
-            CultureInfo.GetCultureInfo("ru-RU"));
 
         var window = (Window)kernel.Get<NavigatorWindow>();
 
        
         window.Show(uiApplication.MainWindowHandle);
     }
+
 }

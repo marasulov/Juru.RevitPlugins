@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
 
+using dosymep.SimpleServices;
 using dosymep.WPF.Commands;
 using dosymep.WPF.ViewModels;
 
@@ -17,9 +18,16 @@ internal class ColumnFilterViewModel : BaseViewModel {
     private bool _isOpen;
     private string _searchText = string.Empty;
 
-    public ColumnFilterViewModel(string propertyName, Action onApply) {
+    public ColumnFilterViewModel(
+        string propertyName, Action onApply, ILocalizationService localization) {
         PropertyName = propertyName ?? throw new ArgumentNullException(nameof(propertyName));
         _onApply = onApply ?? throw new ArgumentNullException(nameof(onApply));
+        if(localization is null) { throw new ArgumentNullException(nameof(localization)); }
+        SearchPlaceholder = localization.GetLocalizedString("Navigator.FilterSearchPlaceholder");
+        FilterTooltip = localization.GetLocalizedString("Navigator.ColumnFilterTooltip");
+        SelectAllTitle = localization.GetLocalizedString("Navigator.FilterSelectAll");
+        ClearTitle = localization.GetLocalizedString("Navigator.FilterClear");
+        ApplyTitle = localization.GetLocalizedString("Navigator.FilterApply");
 
         OpenCommand = RelayCommand.Create(() => IsOpen = !IsOpen);
         ApplyCommand = RelayCommand.Create(Apply);
@@ -31,6 +39,30 @@ internal class ColumnFilterViewModel : BaseViewModel {
     /// Название свойства <see cref="IClashViewModel"/>, по которому фильтруется колонка.
     /// </summary>
     public string PropertyName { get; }
+
+    /// <summary>
+    /// Подсказка в поле поиска по значениям колонки.
+    /// </summary>
+    /// <remarks>
+    /// Строка берётся здесь, а не разметкой из словаря: фильтр живёт внутри
+    /// <c>HeaderTemplate</c>, а там присваивание идёт через
+    /// <c>FrameworkTemplate.ReceivePropertySet</c>, который отвергает выражение ресурса
+    /// для <c>PlaceholderText</c> - окно падало с <c>XamlParseException</c>. Привязка
+    /// к свойству модели такого ограничения не имеет.
+    /// </remarks>
+    public string SearchPlaceholder { get; }
+
+    /// <inheritdoc cref="SearchPlaceholder" />
+    public string FilterTooltip { get; }
+
+    /// <inheritdoc cref="SearchPlaceholder" />
+    public string SelectAllTitle { get; }
+
+    /// <inheritdoc cref="SearchPlaceholder" />
+    public string ClearTitle { get; }
+
+    /// <inheritdoc cref="SearchPlaceholder" />
+    public string ApplyTitle { get; }
 
     public ObservableCollection<ColumnFilterOptionViewModel> Options { get; } = [];
 

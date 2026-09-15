@@ -4,7 +4,9 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:res="clr-namespace:Juru.RevitPlugins.ClashNavigator.Resources"
         xmlns:platform="clr-namespace:dosymep.WpfUI.Core;assembly=Juru.RevitPlugins.Core"
-        Title="Навигатор коллизий" Height="650" Width="1200"
+        xmlns:me="clr-namespace:dosymep.WpfCore.MarkupExtensions;assembly=dosymep.WpfCore"
+        xmlns:loc="clr-namespace:Juru.RevitPlugins.ClashNavigator.Views"
+        Title="{me:LocalizationSource Navigator.Title}" Height="650" Width="1200"
         WindowStartupLocation="CenterScreen"
         ExtendsContentIntoTitleBar="True"
         Background="{ui:ThemeResource ApplicationBackgroundBrush}"
@@ -125,7 +127,7 @@
                          сортировки. Глиф из Segoe MDL2 Assets - шрифт есть в самой Windows,
                          иконки WPF-UI сюда тянуть незачем. -->
                     <Button x:Name="FilterButton" Padding="5,0" Margin="4,0,0,0"
-                            ToolTip="Отобрать значения в этой колонке"
+                            ToolTip="{Binding FilterTooltip}"
                             Tag="{Binding RelativeSource={RelativeSource AncestorType=DataGridColumnHeader}, Path=Column.SortMemberPath}"
                             Command="{Binding OpenCommand}">
                         <TextBlock Text="&#xE71C;" FontFamily="Segoe MDL2 Assets" FontSize="11"
@@ -140,13 +142,13 @@
                         <Border Style="{StaticResource PopupPanelStyle}" MinWidth="200">
                             <DockPanel>
                                 <ui:TextBox DockPanel.Dock="Top" Margin="0,0,0,6"
-                                            PlaceholderText="Поиск..."
+                                            PlaceholderText="{Binding SearchPlaceholder}"
                                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
                                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
-                                    <Button Content="Все" Command="{Binding SelectAllCommand}" Margin="0,0,6,0" />
-                                    <Button Content="Очистить" Command="{Binding ClearCommand}" />
+                                    <Button Content="{Binding SelectAllTitle}" Command="{Binding SelectAllCommand}" Margin="0,0,6,0" />
+                                    <Button Content="{Binding ClearTitle}" Command="{Binding ClearCommand}" />
                                 </StackPanel>
-                                <Button DockPanel.Dock="Bottom" Content="Применить"
+                                <Button DockPanel.Dock="Bottom" Content="{Binding ApplyTitle}"
                                         Command="{Binding ApplyCommand}" Margin="0,6,0,0" />
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="220">
                                     <ItemsControl ItemsSource="{Binding FilteredOptions}">
@@ -174,7 +176,7 @@
         <!-- FluentWindow берёт область перетаскивания и кнопки окна из TitleBar. -->
         <!-- Заголовок берём из модели представления: он содержит время сборки плагина,
              по которому видно, не держит ли Ревит прежнюю загруженную сборку. -->
-        <ui:TitleBar Grid.Row="0" Title="{Binding Title, FallbackValue=Навигатор коллизий}"
+        <ui:TitleBar Grid.Row="0" Title="{Binding Title}"
                      ShowMinimize="True" ShowMaximize="True" ShowClose="True"/>
 
     <Grid Grid.Row="1" Margin="15">
@@ -187,13 +189,13 @@
         </Grid.RowDefinitions>
 
         <DockPanel Margin="0,0,0,10">
-            <TextBlock Text="Навигатор коллизий" FontSize="20" FontWeight="SemiBold" DockPanel.Dock="Left"/>
+            <TextBlock Text="{me:LocalizationSource Navigator.Title}" FontSize="20" FontWeight="SemiBold" DockPanel.Dock="Left"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <ui:Button Content="Загрузить XML" Command="{Binding LoadCommand}"  Margin="0,0,8,0"/>
-                <ui:Button Content="Загрузить с сервера" Command="{Binding LoadFromServerCommand}" Margin="0,0,8,0"/>
-                <CheckBox Content="При открытии" IsChecked="{Binding AutoLoadFromServer}"
+                <ui:Button Content="{me:LocalizationSource Navigator.LoadXml}" Command="{Binding LoadCommand}"  Margin="0,0,8,0"/>
+                <ui:Button Content="{me:LocalizationSource Navigator.LoadFromServer}" Command="{Binding LoadFromServerCommand}" Margin="0,0,8,0"/>
+                <CheckBox Content="{me:LocalizationSource Navigator.AutoLoad}" IsChecked="{Binding AutoLoadFromServer}"
                           VerticalAlignment="Center" Margin="0,0,8,0"
-                          ToolTip="Загружать отчёт с сервера сразу при открытии навигатора"/>
+                          ToolTip="{me:LocalizationSource Navigator.AutoLoadTooltip}"/>
                 <!-- Отдельная кнопка отправки: количество в надписи отвечает на вопрос,
                      сколько изменений ждёт сервера, а результат всегда показывается диалогом. -->
                 <!-- Без Appearance=Primary: акцентная кисть WPF-UI в этом окне не подхватывается,
@@ -201,15 +203,15 @@
                 <ui:Button Content="{Binding SendStatusesTitle}" Command="{Binding SendStatusesCommand}"
                            FontWeight="SemiBold" Margin="0,0,8,0"
                            Foreground="{ui:ThemeResource TextFillColorPrimaryBrush}"
-                           ToolTip="Отправить изменённые статусы коллизий на сервер"/>
-                <ui:Button Content="Сохранить все" Command="{Binding SaveAllReportsCommand}" Margin="0,0,8,0"/>
+                           ToolTip="{me:LocalizationSource Navigator.SendStatusesTooltip}"/>
+                <ui:Button Content="{me:LocalizationSource Navigator.SaveAll}" Command="{Binding SaveAllReportsCommand}" Margin="0,0,8,0"/>
                 <!-- ClickMode=Press: иначе клик по кнопке при открытом Popup перехватывается им,
                      и кнопка остаётся нажатой при закрытом списке. -->
-                <ui:Button Content="Сбросить фильтры" Command="{Binding SelectedReport.ResetFiltersCommand}"
+                <ui:Button Content="{me:LocalizationSource Navigator.ResetFilters}" Command="{Binding SelectedReport.ResetFiltersCommand}"
                            Margin="0,0,8,0"
-                           ToolTip="Снять фильтры со всех колонок таблицы"/>
-                <ToggleButton x:Name="ColumnsToggle" Content="Колонки" ClickMode="Press"
-                              ToolTip="Показать или скрыть колонки таблицы"/>
+                           ToolTip="{me:LocalizationSource Navigator.ResetFiltersTooltip}"/>
+                <ToggleButton x:Name="ColumnsToggle" Content="{me:LocalizationSource Navigator.Columns}" ClickMode="Press"
+                              ToolTip="{me:LocalizationSource Navigator.ColumnsTooltip}"/>
                 <Popup IsOpen="{Binding IsChecked, ElementName=ColumnsToggle}"
                        PlacementTarget="{Binding ElementName=ColumnsToggle}"
                        Placement="Bottom" StaysOpen="False" AllowsTransparency="False">
@@ -232,11 +234,11 @@
         <DockPanel Grid.Row="1" Margin="0,0,0,10">
             <ComboBox ItemsSource="{Binding Reports}" SelectedItem="{Binding SelectedReport}"
                       DisplayMemberPath="Name" MinWidth="300"
-                      ToolTip="Выберите отчёт из загруженного XML" />
+                      ToolTip="{me:LocalizationSource Navigator.ReportsTooltip}" />
             <TextBlock Margin="12,4,0,0" Foreground="MediumVioletRed"
-                       Text="{Binding SelectedReport.ImportedClashesCount, StringFormat=Импортировано коллизий: {0}}" />
+                       Text="{Binding SelectedReport.ImportedClashesInfo}" />
             <TextBlock Margin="12,4,0,0" Foreground="MediumVioletRed"
-                       Text="{Binding SelectedReport.ResolvedClashesCount, StringFormat=Найдено пар в Revit: {0}}" />
+                       Text="{Binding SelectedReport.ResolvedClashesInfo}" />
             <!-- Сколько строк осталось после фильтра. Пусто, когда фильтров нет. -->
             <TextBlock Margin="12,4,0,0" FontWeight="SemiBold"
                        Foreground="{ui:ThemeResource TextFillColorPrimaryBrush}"
@@ -255,17 +257,17 @@
                   GridLinesVisibility="Horizontal" BorderThickness="1"
                   BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Коллизия" Binding="{Binding ClashName}" SortMemberPath="ClashName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="120" />
-                <DataGridTextColumn Header="Файл 1" Binding="{Binding FirstDocumentName}" SortMemberPath="FirstDocumentName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
-                <DataGridTextColumn Header="ID 1" Binding="{Binding FirstId}" SortMemberPath="FirstId" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="100" />
-                <DataGridTextColumn Header="Элемент А" Binding="{Binding FirstObjectName}" SortMemberPath="FirstObjectName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
-                <DataGridTextColumn Header="Файл 2" Binding="{Binding SecondDocumentName}" SortMemberPath="SecondDocumentName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
-                <DataGridTextColumn Header="ID 2" Binding="{Binding SecondId}" SortMemberPath="SecondId" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="100" />
-                <DataGridTextColumn Header="Элемент B" Binding="{Binding SecondObjectName}" SortMemberPath="SecondObjectName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.ClashName" Binding="{Binding ClashName}" SortMemberPath="ClashName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="120" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.FirstFile" Binding="{Binding FirstDocumentName}" SortMemberPath="FirstDocumentName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.FirstId" Binding="{Binding FirstId}" SortMemberPath="FirstId" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="100" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.FirstElement" Binding="{Binding FirstObjectName}" SortMemberPath="FirstObjectName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.SecondFile" Binding="{Binding SecondDocumentName}" SortMemberPath="SecondDocumentName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.SecondId" Binding="{Binding SecondId}" SortMemberPath="SecondId" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="100" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.SecondElement" Binding="{Binding SecondObjectName}" SortMemberPath="SecondObjectName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
                 <!-- Статус меняется прямо в таблице: выбор в списке уходит на сервер коллизий
                      вместе с учётной записью Windows. Если выделено несколько строк,
                      статус применяется ко всем выделенным. -->
-                <DataGridTemplateColumn Header="Статус" SortMemberPath="ClashStatusName"
+                <DataGridTemplateColumn loc:ColumnLocalization.Key="Navigator.Column.Status" SortMemberPath="ClashStatusName"
                                         HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="150">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -283,7 +285,7 @@
                                     SelectedValue="{Binding ClashStatus, Mode=OneWay}"
                                     SelectionChanged="StatusBox_SelectionChanged"
                                     Margin="0,2"
-                                    ToolTip="Новый статус уйдёт в базу по кнопке «Отправить статусы»" />
+                                    ToolTip="{Binding DataContext.StatusTooltip, RelativeSource={RelativeSource AncestorType=Window}}" />
                                 <!-- У коллизии "Нет пересечения" статус не выбирают: показываем его текстом. -->
                                 <TextBlock x:Name="StatusText" Text="{Binding ClashStatusName}"
                                            VerticalAlignment="Center" Visibility="Collapsed" />
@@ -297,9 +299,10 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Кем изменён" Binding="{Binding StatusAuthorInfo}" SortMemberPath="StatusAuthorInfo" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="180" />
-                <DataGridTextColumn Header="Когда изменён" Binding="{Binding StatusChangedAt}" SortMemberPath="StatusChangedAt" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="130" />
-                <DataGridTemplateColumn Header="Снимок" Width="145">
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.ChangedBy" Binding="{Binding StatusAuthorInfo}" SortMemberPath="StatusAuthorInfo" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="180" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.ChangedAt" Binding="{Binding StatusChangedAt}" SortMemberPath="StatusChangedAt" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="130" />
+                <DataGridTemplateColumn loc:ColumnLocalization.Key="Navigator.Column.Snapshot"
+                                        SortMemberPath="ImagePath" CanUserSort="False" Width="145">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Image Source="{Binding ImagePath}" Height="70" Stretch="Uniform" ToolTip="{Binding ImagePath}"
@@ -307,12 +310,13 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="Revit" Width="110">
+                <DataGridTemplateColumn Header="Revit"
+                                        SortMemberPath="RevitHint" CanUserSort="False" Width="110">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <!-- ShowOnDisabled: подсказка нужна именно у выключенной кнопки -
                                  иначе причина, по которой коллизию не показать, остаётся неизвестной. -->
-                            <ui:Button Content="Показать" IsEnabled="{Binding IsResolved}"
+                            <ui:Button Content="{Binding DataContext.ShowTitle, RelativeSource={RelativeSource AncestorType=Window}}" IsEnabled="{Binding IsResolved}"
                                 ToolTip="{Binding RevitHint}" ToolTipService.ShowOnDisabled="True"
                                 Command="{Binding DataContext.SelectClashCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}" />
@@ -323,7 +327,7 @@
         </DataGrid>
 
         <DockPanel Grid.Row="4" Margin="0,15,0,0">
-            <ui:Button DockPanel.Dock="Right" Content="Закрыть" Click="ButtonCancel_Click"/>
+            <ui:Button DockPanel.Dock="Right" Content="{me:LocalizationSource Common.Close}" Click="ButtonCancel_Click"/>
             <!-- Строка состояния: результат отправки статуса на сервер и сообщения загрузки отчёта. -->
             <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                        Text="{Binding SelectedReport.Message}" />

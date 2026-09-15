@@ -133,12 +133,102 @@
     <!-- Settings -->
     <system:String x:Key="SettingsWindow.Validation.OffsetLessThanZero">The offset cannot be negative.</system:String>
     <system:String x:Key="SettingsWindow.Validation.OffsetGreaterThan">The offset cannot be greater than {0}.</system:String>
+    <system:String x:Key="SettingsWindow.Title">Settings</system:String>
+    <system:String x:Key="SettingsWindow.ClashServer">Clash server</system:String>
+    <system:String x:Key="SettingsWindow.ServerUrl">Server address</system:String>
+    <system:String x:Key="SettingsWindow.ClashDisplay">Clash display</system:String>
+    <system:String x:Key="SettingsWindow.SectionBoxOffset">Section box size, mm</system:String>
     <system:String x:Key="SettingsWindow.Language">Interface language</system:String>
     <system:String x:Key="SettingsWindow.LanguageTooltip">The language applies the next time the plugin's windows are opened</system:String>
 
-    <!-- Language choice on first run -->
-    <system:String x:Key="LanguagePrompt.Title">Interface language</system:String>
-    <system:String x:Key="LanguagePrompt.Body">Choose the plugin's interface language. You can change it later in the settings.</system:String>
+    <!-- Language choice in the settings -->
+    <system:String x:Key="Language.Auto">Same as Revit</system:String>
     <system:String x:Key="Language.Russian">Русский</system:String>
     <system:String x:Key="Language.English">English</system:String>
+    <!-- Clash navigator -->
+    <system:String x:Key="Navigator.Title">Clash navigator</system:String>
+    <system:String x:Key="Navigator.TitleWithBuild">Clash navigator (build {0})</system:String>
+    <system:String x:Key="Navigator.LoadXml">Load XML</system:String>
+    <system:String x:Key="Navigator.LoadFromServer">Load from server</system:String>
+    <system:String x:Key="Navigator.AutoLoad">On opening</system:String>
+    <system:String x:Key="Navigator.AutoLoadTooltip">Load the report from the server as soon as the navigator opens</system:String>
+    <system:String x:Key="Navigator.SendStatuses">Send statuses</system:String>
+    <system:String x:Key="Navigator.SendStatusesCount">Send statuses ({0})</system:String>
+    <system:String x:Key="Navigator.SendStatusesTitle">Sending statuses</system:String>
+    <system:String x:Key="Navigator.SendStatusesTooltip">Send the changed clash statuses to the server</system:String>
+    <system:String x:Key="Navigator.SaveAll">Save all</system:String>
+    <system:String x:Key="Navigator.ResetFilters">Reset filters</system:String>
+    <system:String x:Key="Navigator.ResetFiltersTooltip">Clear the filters on every column of the table</system:String>
+    <system:String x:Key="Navigator.Columns">Columns</system:String>
+    <system:String x:Key="Navigator.ColumnsTooltip">Show or hide the table columns</system:String>
+    <system:String x:Key="Navigator.ReportsTooltip">Choose a report from the loaded XML</system:String>
+    <system:String x:Key="Navigator.Show">Show</system:String>
+    <system:String x:Key="Navigator.ColumnFilterTooltip">Pick the values to keep in this column</system:String>
+    <system:String x:Key="Navigator.FilterSearchPlaceholder">Search...</system:String>
+    <system:String x:Key="Navigator.FilterSelectAll">All</system:String>
+    <system:String x:Key="Navigator.FilterClear">Clear</system:String>
+    <system:String x:Key="Navigator.FilterApply">Apply</system:String>
+    <system:String x:Key="Navigator.StatusTooltip">The new status reaches the database through the "Send statuses" button</system:String>
+
+    <!-- Clash table columns -->
+    <system:String x:Key="Navigator.Column.ClashName">Clash</system:String>
+    <system:String x:Key="Navigator.Column.FirstFile">File 1</system:String>
+    <system:String x:Key="Navigator.Column.FirstId">ID 1</system:String>
+    <system:String x:Key="Navigator.Column.FirstElement">Element A</system:String>
+    <system:String x:Key="Navigator.Column.SecondFile">File 2</system:String>
+    <system:String x:Key="Navigator.Column.SecondId">ID 2</system:String>
+    <system:String x:Key="Navigator.Column.SecondElement">Element B</system:String>
+    <system:String x:Key="Navigator.Column.Status">Status</system:String>
+    <system:String x:Key="Navigator.Column.ChangedBy">Changed by</system:String>
+    <system:String x:Key="Navigator.Column.ChangedAt">Changed at</system:String>
+    <system:String x:Key="Navigator.Column.Snapshot">Snapshot</system:String>
+
+    <!-- Navigator status line and messages -->
+    <system:String x:Key="Navigator.ImportedClashes">Clashes imported: {0}</system:String>
+    <system:String x:Key="Navigator.ResolvedClashes">Pairs found in Revit: {0}</system:String>
+    <system:String x:Key="Navigator.FilterInfo">Filter: showing {0} of {1}</system:String>
+    <system:String x:Key="Navigator.UnresolvedInfo">No element of this report was found in the open document ({0}). Open the right file or load the link - otherwise the clash cannot be shown in Revit.</system:String>
+    <system:String x:Key="Navigator.NoDocumentName">no file given</system:String>
+    <system:String x:Key="Navigator.NoServerLink">This report does not come from the server: its clashes have no database id, so statuses are not sent. Press "Load from server".</system:String>
+    <system:String x:Key="Navigator.UnsentStatuses">Statuses changed: {0}. Press "Send statuses" to write them to the database.</system:String>
+    <system:String x:Key="Navigator.StatusesNotSent">Statuses were not sent to the server: {0}</system:String>
+    <system:String x:Key="Navigator.StatusesSentPartly">Statuses sent: {0}, but {1}</system:String>
+    <system:String x:Key="Navigator.StatusesSent">Statuses sent to the server: {0}, author: {1}.</system:String>
+    <system:String x:Key="Navigator.ReportSaved">Report saved.</system:String>
+    <system:String x:Key="Navigator.ReportSavedUnsent">Report saved. Statuses waiting to be sent: {0} - press "Send statuses".</system:String>
+    <system:String x:Key="Navigator.ReportsSaved">Reports written to files: {0}.</system:String>
+    <system:String x:Key="Navigator.ReportsSavedUnsent">Reports written to files: {0}. Statuses waiting to reach the database: {1}.</system:String>
+    <system:String x:Key="Navigator.SaveError">Saving failed: {0}</system:String>
+    <system:String x:Key="Navigator.LoadCancelled">Loading cancelled.</system:String>
+    <system:String x:Key="Navigator.ImportError">Import failed: {0}</system:String>
+    <system:String x:Key="Navigator.LoadSummary">Reports loaded: {0}; clashes: {1}; pairs found in Revit: {2}.</system:String>
+    <system:String x:Key="Navigator.LoadedFromServer">Loaded from the clash server: {0} ({1}).</system:String>
+    <system:String x:Key="Navigator.ServerLoadError">Loading from the server failed ({0}): {1}</system:String>
+    <system:String x:Key="Navigator.NoServerUrl">No clash server address is set, neither in the plugin settings nor in ClashServer.json.</system:String>
+    <system:String x:Key="Navigator.FileNameNotStandard">The file name "{0}" does not follow the naming standard (Project-Object-Discipline-vXX). The discipline is one of: ARC, STR, WSS, ELE, HVC, FAD.</system:String>
+    <system:String x:Key="Navigator.UnsentStatusesKept">Unsent status changes kept: {0}.</system:String>
+    <system:String x:Key="Navigator.NoStatusChanges">No status changes: the table matches the database.</system:String>
+    <system:String x:Key="Navigator.NothingToSend">Nothing to send.&#x0a;&#x0a;These reports have no link to the database (no clash ids), so their statuses are not sent:&#x0a;{0}&#x0a;&#x0a;To change statuses in the database, press "Load from server" and work with the report that loads.</system:String>
+    <system:String x:Key="Navigator.AskForSave">Statuses changed but not sent to the database: {0}.&#x0a;&#x0a;Send them and save the reports before closing?</system:String>
+    <system:String x:Key="Navigator.UnloadedLinks">Links not loaded:&#x0a;{0}&#x0a;&#x0a;Clashes with elements of those links cannot be opened. Load the links through Manage Links and turn their visibility on in the view.</system:String>
+
+    <!-- Clash table row -->
+    <system:String x:Key="Clash.StatusUnsent">{0} — not sent</system:String>
+    <system:String x:Key="Clash.NoDatabaseLink">no link to the database</system:String>
+    <system:String x:Key="Clash.StatusInDatabase">in the database: {0}</system:String>
+    <system:String x:Key="Clash.StatusUnknown">unknown</system:String>
+    <system:String x:Key="Clash.ShowHint">Show the clash in Revit</system:String>
+    <system:String x:Key="Clash.CannotShowHint">The clash cannot be shown in Revit</system:String>
+    <system:String x:Key="Clash.FirstElementLabel">A</system:String>
+    <system:String x:Key="Clash.SecondElementLabel">B</system:String>
+    <system:String x:Key="Clash.ElementMissing">Element {0} is missing from the report</system:String>
+    <system:String x:Key="Clash.ElementWithoutId">Element {0} has no element id in the report — there is nothing to show</system:String>
+    <system:String x:Key="Clash.ElementNotFound">Element {0} (Id {1}): {2}</system:String>
+    <system:String x:Key="Clash.ImaginaryHint">Imaginary clash: there is no second element, nothing to show</system:String>
+
+    <!-- Clash statuses -->
+    <system:String x:Key="ClashStatus.Active">Active</system:String>
+    <system:String x:Key="ClashStatus.Analized">Approved</system:String>
+    <system:String x:Key="ClashStatus.Solved">Resolved</system:String>
+    <system:String x:Key="ClashStatus.Imaginary">No intersection</system:String>
 </ResourceDictionary>

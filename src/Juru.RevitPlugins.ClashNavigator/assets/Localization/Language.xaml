@@ -1,0 +1,18 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Базовый словарь, тот самый путь, что передаётся в UseWpfLocalization. Имя культуры
+         служба локализации подставляет к нему дополнительным расширением (Language.ru-RU.xaml),
+         но сам этот файл до сих пор не существовал, и словарь не подмешивался к окнам вовсе:
+         каждый ключ разрешался в пустоту, а надписи в разметке пропадали.
+
+         Своих строк здесь нет - только русский словарь, который служит запасным для остальных
+         культур: ключ, забытый в переводе, показывает русский текст, а не пустоту. -->
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary
+            Source="/Juru.RevitPlugins.ClashNavigator;component/assets/Localization/Language.ru-RU.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

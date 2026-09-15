@@ -33,11 +33,16 @@ internal class SettingsViewModel : BaseViewModel {
 
 
     /// <summary>
-    /// Языки интерфейса. Подписи взяты из словаря локализации и там же одинаковы для обеих
-    /// культур: "Русский" остаётся "Русский" и в английском интерфейсе - так принято у языковых
-    /// переключателей, чтобы свой язык был узнаваем при любом текущем.
+    /// Языки интерфейса. Подписи взяты из словаря локализации, и названия самих языков там
+    /// одинаковы для обеих культур: "Русский" остаётся "Русский" и в английском интерфейсе -
+    /// так принято у языковых переключателей, чтобы свой язык был узнаваем при любом текущем.
     /// </summary>
+    /// <remarks>
+    /// Первый пункт - пустая строка, то есть "язык не выбран": с ней плагин следует за языком
+    /// Ревита. Без такого пункта вернуться к нему после первого же переключения было бы нечем.
+    /// </remarks>
     public IReadOnlyList<LanguageItem> Languages { get; } = [
+        new(string.Empty, "Language.Auto"),
         new(PluginLanguageService.Russian, "Language.Russian"),
         new(PluginLanguageService.English, "Language.English")
     ];
@@ -113,7 +118,9 @@ internal class SettingsViewModel : BaseViewModel {
     private void SaveConfig() {
         // Язык применится при следующем открытии окон: у уже открытых разметка уже разобрана,
         // а строки в моделях представления прочитаны один раз при их создании.
-        _config.Language = SelectedLanguage?.Language ?? _config.Language;
+        // ?. с ?? тут нельзя: у пункта "как в Ревите" язык - пустая строка, и ?? пропустил бы
+        // её мимо, оставив в настройках прежний язык.
+        _config.Language = SelectedLanguage is null ? _config.Language : SelectedLanguage.Language;
         _config.SectionBoxOffset = SectionBoxOffset;
         _config.ApplySectionBoxSettings = ApplySectionBoxSettings;
         _config.ClashServerUrl = ClashServerUrl?.Trim() ?? string.Empty;

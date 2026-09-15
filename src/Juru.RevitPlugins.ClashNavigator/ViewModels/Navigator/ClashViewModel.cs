@@ -119,7 +119,8 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
     public string StatusAuthorInfo {
         get {
             if(HasUnsentStatus) {
-                return $"{WindowsUser.DisplayName} — не отправлено";
+                return _localizationService.GetLocalizedString(
+                    "Clash.StatusUnsent", WindowsUser.DisplayName);
             }
             // Имя сотрудника нужнее логина, но если сервер имени не вернул - показываем учётную запись.
             if(!string.IsNullOrWhiteSpace(Clash?.StatusChangedByName)) {
@@ -129,12 +130,13 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
                 return StatusChangedBy;
             }
             return Clash?.ServerId is null
-                ? "нет связи с базой"
-                : $"в базе: {Clash.ServerStatus ?? "неизвестно"}";
+                ? _localizationService.GetLocalizedString("Clash.NoDatabaseLink")
+                : _localizationService.GetLocalizedString("Clash.StatusInDatabase",
+                    Clash.ServerStatus ?? _localizationService.GetLocalizedString("Clash.StatusUnknown"));
         }
     }
 
-    public string ClashStatusName => ClashStatus.GetDisplayName();
+    public string ClashStatusName => ClashStatus.GetDisplayName(_localizationService);
 
     public IReadOnlyCollection<ClashStatusViewModel> Statuses { get; }
 
@@ -177,32 +179,38 @@ internal class ClashViewModel : BaseViewModel, IClashViewModel, IEquatable<Clash
     public string RevitHint {
         get {
             if(IsResolved) {
-                return "Показать коллизию в Ревите";
+                return _localizationService.GetLocalizedString("Clash.ShowHint");
             }
 
+            // Метки элементов - те же, что в заголовках колонок таблицы.
             string[] reasons = [
-                GetUnresolvedReason("А", GetFirstElement()),
-                GetUnresolvedReason("B", GetSecondElement())
+                GetUnresolvedReason(
+                    _localizationService.GetLocalizedString("Clash.FirstElementLabel"), GetFirstElement()),
+                GetUnresolvedReason(
+                    _localizationService.GetLocalizedString("Clash.SecondElementLabel"), GetSecondElement())
             ];
             string reason = string.Join(Environment.NewLine, reasons.Where(r => r is not null));
-            return string.IsNullOrEmpty(reason) ? "Показать коллизию в Ревите нельзя" : reason;
+            return string.IsNullOrEmpty(reason)
+                ? _localizationService.GetLocalizedString("Clash.CannotShowHint")
+                : reason;
         }
     }
 
     /// <returns>Причина, по которой элемент не найден, или null, если он найден.</returns>
     private string GetUnresolvedReason(string label, ElementModel element) {
         if(element is null) {
-            return $"Элемент {label} в отчёте отсутствует";
+            return _localizationService.GetLocalizedString("Clash.ElementMissing", label);
         }
         if(element.Id == ElementId.InvalidElementId) {
             // Navisworks не всегда сопоставляет объект со элементом Ревита: у нативной геометрии
             // Id элемента нет, и отчёт приходит с пустым значением.
-            return $"У элемента {label} нет Id элемента в отчёте — показать его нечем";
+            return _localizationService.GetLocalizedString("Clash.ElementWithoutId", label);
         }
         if(element.GetElement(_revitRepository.DocInfos) is null) {
             // В DocumentName у несопоставленного элемента лежит причина: файл дисциплины не загружен
             // либо элемента с таким Id в нём уже нет.
-            return $"Элемент {label} (Id {element.Id}): {element.DocumentName}";
+            return _localizationService.GetLocalizedString(
+                "Clash.ElementNotFound", label, element.Id, element.DocumentName);
         }
         return null;
     }

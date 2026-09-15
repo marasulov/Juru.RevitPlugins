@@ -14,7 +14,7 @@ internal class ClashStatusViewModel : IEquatable<ClashStatusViewModel> {
         }
 
         Status = status;
-        Name = status.GetDisplayName();
+        Name = status.GetDisplayName(localizationService);
     }
 
     public ClashStatus Status { get; }

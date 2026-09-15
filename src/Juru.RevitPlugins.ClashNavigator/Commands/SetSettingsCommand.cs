@@ -43,6 +43,17 @@ public class SetSettingsCommand : BasePluginCommand {
             .ToMethod(c => SettingsConfig.GetSettingsConfig(new dosymep.Serializers.ConfigSerializer()));
 
         kernel.UsePluginLanguage();
+
+        // Локализация привязывается здесь, до привязки окна и служб диалогов. Окно имеет
+        // и полный конструктор, и пустой; Ninject берёт полный только когда все его службы
+        // уже привязаны, иначе молча берёт пустой - а тот не подключает
+        // WpfLocalizationBehavior, и культура окну не задаётся: надписи из словаря
+        // пропадают целиком.
+        string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
+
+        kernel.UseWpfLocalization(
+            $"/{assemblyName};component/assets/Localization/Language.xaml",
+            CultureInfo.GetCultureInfo("ru-RU"));
         kernel.UseWpfUIThemeUpdater();
 
         kernel.Bind<SettingsViewModel>()
@@ -53,11 +64,6 @@ public class SetSettingsCommand : BasePluginCommand {
             .InSingletonScope()
             .WithPropertyValue(nameof(System.Windows.Window.DataContext), c => c.Kernel.Get<SettingsViewModel>());
 
-        string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
-
-        kernel.UseWpfLocalization(
-            $"/{assemblyName};component/assets/Localization/Language.xaml",
-            CultureInfo.GetCultureInfo("ru-RU"));
 
         Notification(kernel.Get<SettingsWindow>());
     }

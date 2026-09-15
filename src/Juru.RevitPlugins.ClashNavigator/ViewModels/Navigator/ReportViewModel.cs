@@ -27,7 +27,6 @@ using Wpf.Ui;
 
 namespace Juru.RevitPlugins.ClashNavigator.ViewModels.Navigator;
 internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportViewModel> {
-    private const string _savedMessage = "Отчёт сохранён.";
 
     private RevitRepository _revitRepository;
 
@@ -102,7 +101,7 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
 
         ColumnFilters = _filterableColumns.ToDictionary(
             p => p,
-            p => new ColumnFilterViewModel(p, ApplyColumnFilters));
+            p => new ColumnFilterViewModel(p, ApplyColumnFilters, _localization));
 
         Initialize(revitRepository, name);
         if(clashes is null) {
@@ -153,6 +152,20 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     public int ImportedClashesCount => _allClashes?.Count ?? 0;
 
     /// <summary>
+    /// Счётчик импортированных коллизий строкой для окна.
+    /// </summary>
+    /// <remarks>
+    /// Собирается здесь, а не в разметке: там подстановка идёт через <c>StringFormat</c>,
+    /// куда ключ словаря не подставить.
+    /// </remarks>
+    public string ImportedClashesInfo =>
+        _localization.GetLocalizedString("Navigator.ImportedClashes", ImportedClashesCount);
+
+    /// <inheritdoc cref="ImportedClashesInfo" />
+    public string ResolvedClashesInfo =>
+        _localization.GetLocalizedString("Navigator.ResolvedClashes", ResolvedClashesCount);
+
+    /// <summary>
     /// Сколько коллизий проходит текущий фильтр колонок, то есть видно в таблице.
     /// </summary>
     public int VisibleClashesCount { get; private set; }
@@ -167,7 +180,8 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     /// совпадает с количеством импортированных коллизий и только мешал бы.
     /// </summary>
     public string FilterInfo => HasActiveFilters
-        ? $"Фильтр: показано {VisibleClashesCount} из {GuiClashes?.Count ?? 0}"
+        ? _localization.GetLocalizedString(
+            "Navigator.FilterInfo", VisibleClashesCount, GuiClashes?.Count ?? 0)
         : string.Empty;
 
     /// <summary>
@@ -190,21 +204,19 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     /// тогда кнопки «Показать» неактивны, и без объяснения это выглядит поломкой.
     /// </summary>
     public string UnresolvedInfo => ImportedClashesCount > 0 && ResolvedClashesCount == 0
-        ? $"Элементы этого отчёта не найдены в открытом документе ({GetReportDocumentNames()}). "
-            + "Откройте нужный файл или загрузите связь - иначе показать коллизию в Ревите нельзя."
+        ? _localization.GetLocalizedString("Navigator.UnresolvedInfo", GetReportDocumentNames())
         : string.Empty;
 
     public string ServerLinkInfo => IsFromServer
         ? string.Empty
-        : "Отчёт не с сервера: у коллизий нет Id в базе, статусы не отправляются. "
-            + "Нажмите «Загрузить с сервера».";
+        : _localization.GetLocalizedString("Navigator.NoServerLink");
 
     /// <summary>
     /// Подсказка о неотправленных изменениях статуса. Пустая строка, если всё отправлено.
     /// </summary>
     public string UnsentStatusesMessage => UnsentStatusesCount == 0
         ? string.Empty
-        : $"Изменено статусов: {UnsentStatusesCount}. Нажмите «Отправить статусы», чтобы записать их в базу.";
+        : _localization.GetLocalizedString("Navigator.UnsentStatuses", UnsentStatusesCount);
 
     public int ResolvedClashesCount => _allClashes?.Count(c => c.IsResolved) ?? 0;
 
@@ -293,7 +305,9 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         GuiClashes = new ObservableCollection<IClashViewModel>(Clashes.OrderBy(c => c.ClashName));
         SetIntersectionPercentage(GuiClashes);
         RaisePropertyChanged(nameof(ImportedClashesCount));
+        RaisePropertyChanged(nameof(ImportedClashesInfo));
         RaisePropertyChanged(nameof(ResolvedClashesCount));
+        RaisePropertyChanged(nameof(ResolvedClashesInfo));
         RaisePropertyChanged(nameof(UnsentStatusesCount));
         RaisePropertyChanged(nameof(UnsentStatusesMessage));
         RaisePropertyChanged(nameof(IsFromServer));
@@ -342,12 +356,9 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     private void Save() {
         GetUpdatedConfig().SaveProjectConfig();
 
-        // Текст задан здесь, а не через ILocalizationService: файла локализации в плагине нет,
-        // GetLocalizedString возвращает пустую строку - строка состояния оставалась пустой.
         Message = UnsentStatusesCount == 0
-            ? _savedMessage
-            : $"{_savedMessage} Статусов ждёт отправки: {UnsentStatusesCount} "
-                + "- нажмите «Отправить статусы».";
+            ? _localization.GetLocalizedString("Navigator.ReportSaved")
+            : _localization.GetLocalizedString("Navigator.ReportSavedUnsent", UnsentStatusesCount);
         RefreshMessage();
     }
 
@@ -355,7 +366,7 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         var config = GetUpdatedConfig();
         var saver = new ConfigSaverService(_revitRepository, SaveFileDialogService);
         saver.Save(config);
-        Message = _savedMessage;
+        Message = _localization.GetLocalizedString("Navigator.ReportSaved");
         RefreshMessage();
     }
 
@@ -572,7 +583,8 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         var result = _clashStatusService.UpdateStatuses(
             sendable.Select(c => c.GetClashModel()).ToArray());
         if(!result.RequestDelivered) {
-            return ($"Статусы не отправлены на сервер: {result.ErrorMessage}", true);
+            return (_localization.GetLocalizedString(
+                "Navigator.StatusesNotSent", result.ErrorMessage), true);
         }
 
         var accepted = sendable.Where(c => !result.FailedClashIds.Contains(c.Clash.ServerId!.Value));
@@ -583,10 +595,12 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
 
         if(result.HasError) {
             // Часть статусов записана: повторная отправка уйдёт только по непринятым коллизиям.
-            return ($"Отправлено статусов: {result.Updated}, но {result.ErrorMessage}", true);
+            return (_localization.GetLocalizedString(
+                "Navigator.StatusesSentPartly", result.Updated, result.ErrorMessage), true);
         }
 
-        return ($"Статусов отправлено на сервер: {result.Updated}, автор: {result.ChangedBy}.", false);
+        return (_localization.GetLocalizedString(
+            "Navigator.StatusesSent", result.Updated, result.ChangedBy), false);
     }
 
     private ClashViewModel[] GetUnsentClashes() {
@@ -625,7 +639,9 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
             .Distinct()
             .Take(3)
             .ToArray();
-        return names.Length == 0 ? "файл не указан" : string.Join(", ", names);
+        return names.Length == 0
+            ? _localization.GetLocalizedString("Navigator.NoDocumentName")
+            : string.Join(", ", names);
     }
 
     private void RaiseUnsentStatusesChanged() {

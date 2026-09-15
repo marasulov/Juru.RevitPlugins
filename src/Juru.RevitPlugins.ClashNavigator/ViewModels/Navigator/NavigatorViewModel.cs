@@ -64,6 +64,7 @@ internal class NavigatorViewModel : BaseViewModel {
         _contentDialogService = contentDialogService ?? throw new ArgumentNullException(nameof(contentDialogService));
         _settingsConfig = settingsConfig ?? throw new ArgumentNullException(nameof(settingsConfig));
         _clashStatusService = new ServerClashStatusService(_settingsConfig);
+        Title = BuildTitle();
         Reports = [];
 
         if(reportName == null) {
@@ -131,7 +132,20 @@ internal class NavigatorViewModel : BaseViewModel {
     /// Ревит не умеет подменять уже загруженную сборку, поэтому по этой дате видно,
     /// работает ли пересобранный код или процесс держит прежний.
     /// </summary>
-    public string Title { get; } = BuildTitle();
+    public string Title { get; }
+
+    /// <summary>
+    /// Надпись кнопки показа коллизии и подсказка списка статусов.
+    /// </summary>
+    /// <remarks>
+    /// Строки берутся здесь, а не разметкой из словаря: обе живут в шаблоне ячейки таблицы,
+    /// а туда расширение <c>me:LocalizationSource</c> попадает невычисленным объектом
+    /// и показывает вместо текста своё имя типа.
+    /// </remarks>
+    public string ShowTitle => _localizationService.GetLocalizedString("Navigator.Show");
+
+    /// <inheritdoc cref="ShowTitle" />
+    public string StatusTooltip => _localizationService.GetLocalizedString("Navigator.StatusTooltip");
 
     /// <summary>
     /// Сколько изменений статусов ждёт отправки в базу по всем отчётам.
@@ -143,8 +157,8 @@ internal class NavigatorViewModel : BaseViewModel {
     /// "когда это уйдёт на сервер" без чтения строки состояния.
     /// </summary>
     public string SendStatusesTitle => UnsentStatusesCount == 0
-        ? "Отправить статусы"
-        : $"Отправить статусы ({UnsentStatusesCount})";
+        ? _localizationService.GetLocalizedString("Navigator.SendStatuses")
+        : _localizationService.GetLocalizedString("Navigator.SendStatusesCount", UnsentStatusesCount);
 
     public string Diagnostic {
         get => _diagnostic;
@@ -193,12 +207,13 @@ internal class NavigatorViewModel : BaseViewModel {
         _settingsConfig.SaveProjectConfig();
     }
 
-    private static string BuildTitle() {
+    private string BuildTitle() {
         try {
             string location = Assembly.GetExecutingAssembly().Location;
-            return $"Навигатор коллизий (сборка {File.GetLastWriteTime(location):dd.MM.yyyy HH:mm})";
+            return _localizationService.GetLocalizedString(
+                "Navigator.TitleWithBuild", File.GetLastWriteTime(location).ToString("dd.MM.yyyy HH:mm"));
         } catch(Exception) {
-            return "Навигатор коллизий";
+            return _localizationService.GetLocalizedString("Navigator.Title");
         }
     }
 
@@ -256,21 +271,17 @@ internal class NavigatorViewModel : BaseViewModel {
             // и отчёт из файла, и "изменений нет" про весь список вводило в заблуждение.
             var localReports = Reports.Where(report => !report.IsFromServer).Select(report => report.Name).ToArray();
             messages.Add(localReports.Length == 0
-                ? "Изменений статусов нет: статусы в таблице совпадают с базой."
-                : "Изменений для отправки нет." + Environment.NewLine + Environment.NewLine
-                    + "У этих отчётов нет связи с базой (нет Id коллизий), статусы из них не отправляются:"
-                    + Environment.NewLine
-                    + string.Join(Environment.NewLine, localReports.Select(name => $"— {name}"))
-                    + Environment.NewLine + Environment.NewLine
-                    + "Чтобы менять статусы в базе, нажмите «Загрузить с сервера» и работайте "
-                    + "с отчётом, который загрузится.");
+                ? _localizationService.GetLocalizedString("Navigator.NoStatusChanges")
+                : _localizationService.GetLocalizedString("Navigator.NothingToSend",
+                    string.Join(Environment.NewLine, localReports.Select(name => $"— {name}"))));
         }
 
         string text = string.Join(Environment.NewLine, messages);
         Diagnostic = text.Replace(Environment.NewLine, " ");
         RaiseUnsentStatusesChanged();
 
-        MessageBox.Show(text, "Отправка статусов", MessageBoxButton.OK,
+        MessageBox.Show(text, _localizationService.GetLocalizedString("Navigator.SendStatusesTitle"),
+            MessageBoxButton.OK,
             hasError ? MessageBoxImage.Error : MessageBoxImage.Information);
     }
 
@@ -288,10 +299,8 @@ internal class NavigatorViewModel : BaseViewModel {
         // Текст задан здесь: файла локализации в плагине нет, и GetLocalizedString возвращала
         // пустую строку - при закрытии окна выходил диалог без вопроса.
         var answer = MessageBoxService.Show(
-            $"Статусов изменено, но не отправлено в базу: {UnsentStatusesCount}."
-            + $"{Environment.NewLine}{Environment.NewLine}"
-            + "Отправить их в базу и сохранить отчёты перед закрытием?",
-            "Навигатор коллизий",
+            _localizationService.GetLocalizedString("Navigator.AskForSave", UnsentStatusesCount),
+            _localizationService.GetLocalizedString("Navigator.Title"),
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
         if(answer == MessageBoxResult.Yes) {
@@ -325,10 +334,11 @@ internal class NavigatorViewModel : BaseViewModel {
         try {
             LoadReportFile();
         } catch(OperationCanceledException) {
-            Diagnostic = "Загрузка отменена.";
+            Diagnostic = _localizationService.GetLocalizedString("Navigator.LoadCancelled");
         } catch(Exception exception) {
-            Diagnostic = $"Ошибка импорта: {exception.GetBaseException().Message}";
-            MessageBox.Show(Diagnostic, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
+            Diagnostic = _localizationService.GetLocalizedString(
+                "Navigator.ImportError", exception.GetBaseException().Message);
+            ShowErrorDialog(Diagnostic);
         }
     }
 
@@ -369,7 +379,8 @@ internal class NavigatorViewModel : BaseViewModel {
 
         int imported = Reports.Sum(report => report.ImportedClashesCount);
         int resolved = Reports.Sum(report => report.ResolvedClashesCount);
-        Diagnostic = $"Загружено отчётов: {Reports.Count}; коллизий: {imported}; найдено пар в Revit: {resolved}.";
+        Diagnostic = _localizationService.GetLocalizedString(
+            "Navigator.LoadSummary", Reports.Count, imported, resolved);
         WarnAboutUnloadedLinks();
     }
 
@@ -400,9 +411,8 @@ internal class NavigatorViewModel : BaseViewModel {
         try {
             string fileName = _revitRepository.GetDocumentName();
             if(!RevitFileNameInfo.TryParse(fileName, out var fileInfo)) {
-                Diagnostic = $"Имя файла \"{fileName}\" не соответствует стандарту наименования "
-                    + "(Проект-Объект-Дисциплина-vXX). "
-                    + "Дисциплина - одно из: ARC, STR, WSS, ELE, HVC, FAD.";
+                Diagnostic = _localizationService.GetLocalizedString(
+                    "Navigator.FileNameNotStandard", fileName);
                 ShowError(Diagnostic, silent);
                 return false;
             }
@@ -410,7 +420,7 @@ internal class NavigatorViewModel : BaseViewModel {
             // Настройка пользователя переопределяет адрес из ClashServer.json рядом со сборкой.
             string serverUrl = ClashServerOptions.ResolveUrl(_settingsConfig);
             if(string.IsNullOrWhiteSpace(serverUrl)) {
-                Diagnostic = "Не задан адрес сервера коллизий: ни в настройках плагина, ни в файле ClashServer.json.";
+                Diagnostic = _localizationService.GetLocalizedString("Navigator.NoServerUrl");
                 ShowError(Diagnostic, silent);
                 return false;
             }
@@ -439,8 +449,8 @@ internal class NavigatorViewModel : BaseViewModel {
             // Адрес обязательно называем: настройка пользователя перекрывает адрес из ClashServer.json,
             // и разбор "почему статусы не те" однажды свёлся к тому, что плагин молча читал
             // другой сервер. Из строки состояния это видно сразу.
-            Diagnostic = $"Загружено с сервера коллизий: {reportViewModel.ImportedClashesCount} "
-                + $"({client.BaseUrl}).";
+            Diagnostic = _localizationService.GetLocalizedString(
+                "Navigator.LoadedFromServer", reportViewModel.ImportedClashesCount, client.BaseUrl);
             if(!silent) {
                 WarnAboutUnloadedLinks();
             }
@@ -448,8 +458,10 @@ internal class NavigatorViewModel : BaseViewModel {
         } catch(Exception exception) {
             // Адрес берём заново: переменная из try в catch не видна, а знать, к какому серверу
             // не удалось обратиться, важнее всего именно в сообщении об ошибке.
-            Diagnostic = $"Ошибка загрузки с сервера ({ClashServerOptions.ResolveUrl(_settingsConfig)}): "
-                + $"{exception.GetBaseException().Message}";
+            Diagnostic = _localizationService.GetLocalizedString(
+                "Navigator.ServerLoadError",
+                ClashServerOptions.ResolveUrl(_settingsConfig),
+                exception.GetBaseException().Message);
             ShowError(Diagnostic, silent);
             return false;
         }
@@ -489,7 +501,7 @@ internal class NavigatorViewModel : BaseViewModel {
         }
 
         if(restored > 0) {
-            Diagnostic = $"Сохранены неотправленные изменения статусов: {restored}.";
+            Diagnostic = _localizationService.GetLocalizedString("Navigator.UnsentStatusesKept", restored);
         }
         return clashes;
     }
@@ -499,7 +511,15 @@ internal class NavigatorViewModel : BaseViewModel {
             return;
         }
 
-        MessageBox.Show(message, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
+        ShowErrorDialog(message);
+    }
+
+    /// <summary>
+    /// Показывает ошибку диалогом под общим для плагина заголовком.
+    /// </summary>
+    private void ShowErrorDialog(string message) {
+        MessageBox.Show(message, _localizationService.GetLocalizedString("Navigator.Title"),
+            MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
     /// <summary>
@@ -514,10 +534,8 @@ internal class NavigatorViewModel : BaseViewModel {
 
         string names = string.Join(Environment.NewLine, unloadedLinks.Select(name => $"— {name}"));
         MessageBoxService.Show(
-            $"Не загружены связи:{Environment.NewLine}{names}{Environment.NewLine}{Environment.NewLine}"
-            + "Коллизии с элементами этих связей открыть не получится. "
-            + "Загрузите связи через «Диспетчер связей» и включите их видимость на виде.",
-            "Навигатор коллизий",
+            _localizationService.GetLocalizedString("Navigator.UnloadedLinks", names),
+            _localizationService.GetLocalizedString("Navigator.Title"),
             MessageBoxButton.OK,
             MessageBoxImage.Warning);
     }
@@ -601,12 +619,13 @@ internal class NavigatorViewModel : BaseViewModel {
 
             // Сохранение только пишет файлы: в базу статусы уходят кнопкой "Отправить статусы".
             Diagnostic = unsent == 0
-                ? $"Отчётов записано в файлы: {Reports.Count}."
-                : $"Отчётов записано в файлы: {Reports.Count}. "
-                    + $"Статусов ждёт отправки в базу: {unsent}.";
+                ? _localizationService.GetLocalizedString("Navigator.ReportsSaved", Reports.Count)
+                : _localizationService.GetLocalizedString(
+                    "Navigator.ReportsSavedUnsent", Reports.Count, unsent);
         } catch(Exception exception) {
-            Diagnostic = $"Ошибка сохранения: {exception.GetBaseException().Message}";
-            MessageBox.Show(Diagnostic, "Навигатор коллизий", MessageBoxButton.OK, MessageBoxImage.Error);
+            Diagnostic = _localizationService.GetLocalizedString(
+                "Navigator.SaveError", exception.GetBaseException().Message);
+            ShowErrorDialog(Diagnostic);
         }
     }
 

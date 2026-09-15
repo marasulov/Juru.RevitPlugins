@@ -58,6 +58,10 @@ namespace Juru.RevitPlugins.ClashNavigator.Views.Navigator
         // (CheckViewModel.ShowClashes) назначается уже после конструктора окна.
         private void ClashesGrid_Loaded(object sender, RoutedEventArgs e)
         {
+            // Заголовки переводятся кодом: DataGridColumn не входит в дерево элементов,
+            // и поиск ресурса по ключу из разметки для него не разрешается.
+            ColumnLocalization.Apply(ClashesGrid, LocalizationService);
+
             if (_columnSettingsApplied || DataContext is not NavigatorViewModel viewModel)
             {
                 return;
@@ -204,10 +208,12 @@ namespace Juru.RevitPlugins.ClashNavigator.Views.Navigator
             }
         }
 
+        // Ключ - SortMemberPath, а не заголовок: заголовки переводятся, и настройки колонок,
+        // записанные на одном языке, к тем же колонкам на другом уже не подошли бы.
         private static string GetColumnKey(DataGridColumn column)
         {
-            string header = column.Header?.ToString();
-            return string.IsNullOrWhiteSpace(header) ? null : header;
+            string key = column.SortMemberPath;
+            return string.IsNullOrWhiteSpace(key) ? null : key;
         }
 
         private void ClashImage_Click(object sender, MouseButtonEventArgs e)

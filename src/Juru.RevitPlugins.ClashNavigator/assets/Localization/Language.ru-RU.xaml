@@ -134,12 +134,102 @@
     <!-- Настройки -->
     <system:String x:Key="SettingsWindow.Validation.OffsetLessThanZero">Отступ не может быть отрицательным.</system:String>
     <system:String x:Key="SettingsWindow.Validation.OffsetGreaterThan">Отступ не может быть больше {0}.</system:String>
+    <system:String x:Key="SettingsWindow.Title">Настройки</system:String>
+    <system:String x:Key="SettingsWindow.ClashServer">Сервер коллизий</system:String>
+    <system:String x:Key="SettingsWindow.ServerUrl">Адрес сервера</system:String>
+    <system:String x:Key="SettingsWindow.ClashDisplay">Отображение коллизий</system:String>
+    <system:String x:Key="SettingsWindow.SectionBoxOffset">Размер Section Box, мм</system:String>
     <system:String x:Key="SettingsWindow.Language">Язык интерфейса</system:String>
     <system:String x:Key="SettingsWindow.LanguageTooltip">Язык применится при следующем открытии окон плагина</system:String>
 
-    <!-- Выбор языка при первом запуске -->
-    <system:String x:Key="LanguagePrompt.Title">Язык интерфейса</system:String>
-    <system:String x:Key="LanguagePrompt.Body">Выберите язык интерфейса плагина. Позже его можно сменить в настройках.</system:String>
+    <!-- Выбор языка в настройках -->
+    <system:String x:Key="Language.Auto">Как в Ревите</system:String>
     <system:String x:Key="Language.Russian">Русский</system:String>
     <system:String x:Key="Language.English">English</system:String>
+    <!-- Навигатор коллизий -->
+    <system:String x:Key="Navigator.Title">Навигатор коллизий</system:String>
+    <system:String x:Key="Navigator.TitleWithBuild">Навигатор коллизий (сборка {0})</system:String>
+    <system:String x:Key="Navigator.LoadXml">Загрузить XML</system:String>
+    <system:String x:Key="Navigator.LoadFromServer">Загрузить с сервера</system:String>
+    <system:String x:Key="Navigator.AutoLoad">При открытии</system:String>
+    <system:String x:Key="Navigator.AutoLoadTooltip">Загружать отчёт с сервера сразу при открытии навигатора</system:String>
+    <system:String x:Key="Navigator.SendStatuses">Отправить статусы</system:String>
+    <system:String x:Key="Navigator.SendStatusesCount">Отправить статусы ({0})</system:String>
+    <system:String x:Key="Navigator.SendStatusesTitle">Отправка статусов</system:String>
+    <system:String x:Key="Navigator.SendStatusesTooltip">Отправить изменённые статусы коллизий на сервер</system:String>
+    <system:String x:Key="Navigator.SaveAll">Сохранить все</system:String>
+    <system:String x:Key="Navigator.ResetFilters">Сбросить фильтры</system:String>
+    <system:String x:Key="Navigator.ResetFiltersTooltip">Снять фильтры со всех колонок таблицы</system:String>
+    <system:String x:Key="Navigator.Columns">Колонки</system:String>
+    <system:String x:Key="Navigator.ColumnsTooltip">Показать или скрыть колонки таблицы</system:String>
+    <system:String x:Key="Navigator.ReportsTooltip">Выберите отчёт из загруженного XML</system:String>
+    <system:String x:Key="Navigator.Show">Показать</system:String>
+    <system:String x:Key="Navigator.ColumnFilterTooltip">Отобрать значения в этой колонке</system:String>
+    <system:String x:Key="Navigator.FilterSearchPlaceholder">Поиск...</system:String>
+    <system:String x:Key="Navigator.FilterSelectAll">Все</system:String>
+    <system:String x:Key="Navigator.FilterClear">Очистить</system:String>
+    <system:String x:Key="Navigator.FilterApply">Применить</system:String>
+    <system:String x:Key="Navigator.StatusTooltip">Новый статус уйдёт в базу по кнопке «Отправить статусы»</system:String>
+
+    <!-- Колонки таблицы коллизий -->
+    <system:String x:Key="Navigator.Column.ClashName">Коллизия</system:String>
+    <system:String x:Key="Navigator.Column.FirstFile">Файл 1</system:String>
+    <system:String x:Key="Navigator.Column.FirstId">ID 1</system:String>
+    <system:String x:Key="Navigator.Column.FirstElement">Элемент А</system:String>
+    <system:String x:Key="Navigator.Column.SecondFile">Файл 2</system:String>
+    <system:String x:Key="Navigator.Column.SecondId">ID 2</system:String>
+    <system:String x:Key="Navigator.Column.SecondElement">Элемент B</system:String>
+    <system:String x:Key="Navigator.Column.Status">Статус</system:String>
+    <system:String x:Key="Navigator.Column.ChangedBy">Кем изменён</system:String>
+    <system:String x:Key="Navigator.Column.ChangedAt">Когда изменён</system:String>
+    <system:String x:Key="Navigator.Column.Snapshot">Снимок</system:String>
+
+    <!-- Строка состояния и сообщения навигатора -->
+    <system:String x:Key="Navigator.ImportedClashes">Импортировано коллизий: {0}</system:String>
+    <system:String x:Key="Navigator.ResolvedClashes">Найдено пар в Revit: {0}</system:String>
+    <system:String x:Key="Navigator.FilterInfo">Фильтр: показано {0} из {1}</system:String>
+    <system:String x:Key="Navigator.UnresolvedInfo">Элементы этого отчёта не найдены в открытом документе ({0}). Откройте нужный файл или загрузите связь - иначе показать коллизию в Ревите нельзя.</system:String>
+    <system:String x:Key="Navigator.NoDocumentName">файл не указан</system:String>
+    <system:String x:Key="Navigator.NoServerLink">Отчёт не с сервера: у коллизий нет Id в базе, статусы не отправляются. Нажмите «Загрузить с сервера».</system:String>
+    <system:String x:Key="Navigator.UnsentStatuses">Изменено статусов: {0}. Нажмите «Отправить статусы», чтобы записать их в базу.</system:String>
+    <system:String x:Key="Navigator.StatusesNotSent">Статусы не отправлены на сервер: {0}</system:String>
+    <system:String x:Key="Navigator.StatusesSentPartly">Отправлено статусов: {0}, но {1}</system:String>
+    <system:String x:Key="Navigator.StatusesSent">Статусов отправлено на сервер: {0}, автор: {1}.</system:String>
+    <system:String x:Key="Navigator.ReportSaved">Отчёт сохранён.</system:String>
+    <system:String x:Key="Navigator.ReportSavedUnsent">Отчёт сохранён. Статусов ждёт отправки: {0} - нажмите «Отправить статусы».</system:String>
+    <system:String x:Key="Navigator.ReportsSaved">Отчётов записано в файлы: {0}.</system:String>
+    <system:String x:Key="Navigator.ReportsSavedUnsent">Отчётов записано в файлы: {0}. Статусов ждёт отправки в базу: {1}.</system:String>
+    <system:String x:Key="Navigator.SaveError">Ошибка сохранения: {0}</system:String>
+    <system:String x:Key="Navigator.LoadCancelled">Загрузка отменена.</system:String>
+    <system:String x:Key="Navigator.ImportError">Ошибка импорта: {0}</system:String>
+    <system:String x:Key="Navigator.LoadSummary">Загружено отчётов: {0}; коллизий: {1}; найдено пар в Revit: {2}.</system:String>
+    <system:String x:Key="Navigator.LoadedFromServer">Загружено с сервера коллизий: {0} ({1}).</system:String>
+    <system:String x:Key="Navigator.ServerLoadError">Ошибка загрузки с сервера ({0}): {1}</system:String>
+    <system:String x:Key="Navigator.NoServerUrl">Не задан адрес сервера коллизий: ни в настройках плагина, ни в файле ClashServer.json.</system:String>
+    <system:String x:Key="Navigator.FileNameNotStandard">Имя файла "{0}" не соответствует стандарту наименования (Проект-Объект-Дисциплина-vXX). Дисциплина - одно из: ARC, STR, WSS, ELE, HVC, FAD.</system:String>
+    <system:String x:Key="Navigator.UnsentStatusesKept">Сохранены неотправленные изменения статусов: {0}.</system:String>
+    <system:String x:Key="Navigator.NoStatusChanges">Изменений статусов нет: статусы в таблице совпадают с базой.</system:String>
+    <system:String x:Key="Navigator.NothingToSend">Изменений для отправки нет.&#x0a;&#x0a;У этих отчётов нет связи с базой (нет Id коллизий), статусы из них не отправляются:&#x0a;{0}&#x0a;&#x0a;Чтобы менять статусы в базе, нажмите «Загрузить с сервера» и работайте с отчётом, который загрузится.</system:String>
+    <system:String x:Key="Navigator.AskForSave">Статусов изменено, но не отправлено в базу: {0}.&#x0a;&#x0a;Отправить их в базу и сохранить отчёты перед закрытием?</system:String>
+    <system:String x:Key="Navigator.UnloadedLinks">Не загружены связи:&#x0a;{0}&#x0a;&#x0a;Коллизии с элементами этих связей открыть не получится. Загрузите связи через «Диспетчер связей» и включите их видимость на виде.</system:String>
+
+    <!-- Строка таблицы коллизий -->
+    <system:String x:Key="Clash.StatusUnsent">{0} — не отправлено</system:String>
+    <system:String x:Key="Clash.NoDatabaseLink">нет связи с базой</system:String>
+    <system:String x:Key="Clash.StatusInDatabase">в базе: {0}</system:String>
+    <system:String x:Key="Clash.StatusUnknown">неизвестно</system:String>
+    <system:String x:Key="Clash.ShowHint">Показать коллизию в Ревите</system:String>
+    <system:String x:Key="Clash.CannotShowHint">Показать коллизию в Ревите нельзя</system:String>
+    <system:String x:Key="Clash.FirstElementLabel">А</system:String>
+    <system:String x:Key="Clash.SecondElementLabel">B</system:String>
+    <system:String x:Key="Clash.ElementMissing">Элемент {0} в отчёте отсутствует</system:String>
+    <system:String x:Key="Clash.ElementWithoutId">У элемента {0} нет Id элемента в отчёте — показать его нечем</system:String>
+    <system:String x:Key="Clash.ElementNotFound">Элемент {0} (Id {1}): {2}</system:String>
+    <system:String x:Key="Clash.ImaginaryHint">Мнимая коллизия: второго элемента нет, показывать нечего</system:String>
+
+    <!-- Статусы коллизий. Подписи совпадают с веб-интерфейсом сервера коллизий. -->
+    <system:String x:Key="ClashStatus.Active">Активно</system:String>
+    <system:String x:Key="ClashStatus.Analized">Согласовано</system:String>
+    <system:String x:Key="ClashStatus.Solved">Устранено</system:String>
+    <system:String x:Key="ClashStatus.Imaginary">Нет пересечения</system:String>
 </ResourceDictionary>
