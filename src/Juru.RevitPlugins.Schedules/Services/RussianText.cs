@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Text;
 
@@ -9,6 +9,30 @@ namespace Juru.RevitPlugins.Schedules.Services;
 /// </summary>
 public static class RussianText
 {
+    /// <summary>
+    ///     Есть ли в строке буквы. Отбор переводимого идёт по этому, а не по кириллице: у эталона
+    ///     условие — просто непустая строка, и требование кириллицы молча опустошало вкладки там,
+    ///     где текст набран латиницей или смешанно. Строка без букв («1», «-», «100х200») перевода
+    ///     не требует.
+    /// </summary>
+    public static bool ContainsLetters(string? text)
+    {
+        if (text is null)
+        {
+            return false;
+        }
+
+        foreach (var symbol in text)
+        {
+            if (char.IsLetter(symbol))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static bool ContainsCyrillic(string? text)
     {
         if (text is null)

@@ -1,6 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+
+using Juru.RevitPlugins.Schedules.Models;
 
 namespace Juru.RevitPlugins.Schedules.Services;
 
@@ -13,10 +15,12 @@ public sealed class Glossary
 {
     private readonly Dictionary<string, string> translations;
     private readonly Dictionary<string, int> misses = new(StringComparer.CurrentCulture);
+    private readonly TranslationLayout layout;
 
-    private Glossary(Dictionary<string, string> translations, string? sourcePath)
+    private Glossary(Dictionary<string, string> translations, string? sourcePath, TranslationLayout layout)
     {
         this.translations = translations;
+        this.layout = layout;
         SourcePath = sourcePath;
     }
 
@@ -46,14 +50,21 @@ public sealed class Glossary
         }
     }
 
-    public static Glossary Load(string path)
+    /// <param name="layout">
+    ///     Как складывать значение для копии. В двуязычном режиме подстановка отдаёт «исходник —
+    ///     перевод»: собирается это здесь, а не в файле глоссария, потому что в файле должен лежать
+    ///     чистый перевод — его правят руками и переносят между моделями.
+    /// </param>
+    public static Glossary Load(string path, TranslationLayout? layout = null)
     {
+        var resolved = layout ?? new TranslationLayout();
+
         if (!File.Exists(path))
         {
-            return new Glossary([], null);
+            return new Glossary([], null, resolved);
         }
 
-        return new Glossary(GlossaryFile.Read(path), path);
+        return new Glossary(GlossaryFile.Read(path), path, resolved);
     }
 
     /// <summary>
@@ -66,7 +77,7 @@ public sealed class Glossary
 
         if (translations.TryGetValue(key, out var translation))
         {
-            return translation;
+            return layout.Compose(key, translation);
         }
 
         if (RussianText.ContainsCyrillic(key))

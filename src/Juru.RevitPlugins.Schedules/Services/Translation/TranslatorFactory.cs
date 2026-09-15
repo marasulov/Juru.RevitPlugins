@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net.Http;
 
 namespace Juru.RevitPlugins.Schedules.Services.Translation;
@@ -16,11 +16,14 @@ public static class TranslatorFactory
     /// </summary>
     public static ITextTranslator? TryCreate(TranslationSettings settings, out string? reason)
     {
-        var apiKey = Environment.GetEnvironmentVariable(settings.ApiKeyEnvironmentVariable);
+        var variable = settings.ResolveKeyVariable();
+        var apiKey = Environment.GetEnvironmentVariable(variable);
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            reason = $"Не задан ключ: переменная окружения {settings.ApiKeyEnvironmentVariable} пуста.";
+            reason = $"Не задан ключ {settings.Provider}: переменная окружения {variable} пуста. "
+                + "Ключ задаётся в настройках плагина.";
+
             return null;
         }
 

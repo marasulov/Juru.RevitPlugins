@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -35,23 +35,105 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
     /// <param name="cellDumpDirectory">
     ///     Папка, куда складывается прочитанный текст ячеек по каждой спецификации. Пусто — выгрузка не нужна.
     /// </param>
-    public IReadOnlyList<ReadSchedule> ReadAll(string? cellDumpDirectory)
+    /// <param name="progress">
+    ///     Куда сообщать о прочитанной спецификации. Чтение одной означает выгрузку на диск и активацию
+    ///     вида, поэтому на большой модели без этих сообщений Ревит выглядит зависшим.
+    /// </param>
+    public IReadOnlyList<ReadSchedule> ReadAll(string? cellDumpDirectory, IProgress<string>? progress = null)
+    {
+        return ReadAll(cellDumpDirectory, progress, useExport: true, activateView: true);
+    }
+
+    /// <summary>
+    ///     Читает то, что нужно окну выбора: имена, листы, заголовки колонок и снимок таблицы.
+    /// </summary>
+    /// <remarks>
+    ///     Выгрузка на диск нужна и здесь: <c>GetCellText</c> отдаёт текст не всех ячеек — текстовые
+    ///     параметры вроде состава пола возвращаются пустыми, и такая строка не попала бы ни в список
+    ///     на перевод, ни в глоссарий. А вот активация видов пропускается: она нужна только отрисовке
+    ///     копии, а окну выбора стоит перелистывания всех спецификаций модели на глазах
+    ///     у пользователя.
+    /// </remarks>
+    public IReadOnlyList<ReadSchedule> ReadForSelection(IProgress<string>? progress = null, ElementId? sheetId = null)
+    {
+        return ReadAll(null, progress, useExport: true, activateView: false, sheetId);
+    }
+
+    /// <summary>
+    ///     Перечитывает целиком, с напечатанным текстом, только переданные спецификации.
+    /// </summary>
+    /// <remarks>
+    ///     Окно выбора читает модель облегчённо, а отрисовке копии напечатанный текст нужен. Поэтому
+    ///     перед отрисовкой отмеченное читается заново — отмеченное, а не всё: активация вида и
+    ///     выгрузка на диск стоят секунд на каждой спецификации.
+    /// </remarks>
+    public IReadOnlyList<ReadSchedule> ReadPrinted(
+        IReadOnlyList<SheetSchedule> entries,
+        string? cellDumpDirectory,
+        IProgress<string>? progress = null)
+    {
+        if (entries is null)
+        {
+            throw new ArgumentNullException(nameof(entries));
+        }
+
+        LeaveCopyView();
+        OriginalViewId = uiDocument.ActiveView.Id;
+
+        var read = new List<ReadSchedule>(entries.Count);
+
+        foreach (var entry in entries)
+        {
+            read.Add(Read(entry, cellDumpDirectory, useExport: true, activateView: true));
+
+            progress?.Report(entry.Schedule.Name);
+        }
+
+        return read;
+    }
+
+    private IReadOnlyList<ReadSchedule> ReadAll(
+        string? cellDumpDirectory,
+        IProgress<string>? progress,
+        bool useExport,
+        bool activateView,
+        ElementId? sheetId = null)
     {
         // Активной может быть копия прошлого прогона: её удаление Revit запретит, а ссылка на неё после
         // удаления станет недействительной. Поэтому уходим с копии заранее и запоминаем вид по номеру.
         LeaveCopyView();
         OriginalViewId = uiDocument.ActiveView.Id;
 
-        return new SheetScheduleFinder(document)
-            .Find()
-            .Select(entry => Read(entry, cellDumpDirectory))
-            .ToList();
+        var found = new SheetScheduleFinder(document).Find(sheetId);
+        var read = new List<ReadSchedule>(found.Count);
+
+        foreach (var entry in found)
+        {
+            read.Add(Read(entry, cellDumpDirectory, useExport, activateView));
+
+            progress?.Report(entry.Schedule.Name);
+        }
+
+        return read;
+    }
+
+    /// <summary>
+    ///     Сколько спецификаций стоит на листах. Известно до чтения, поэтому годится под шкалу:
+    ///     полоса показывает настоящую долю прочитанного, а не бежит вслепую.
+    /// </summary>
+    public int CountOnSheets(ElementId? sheetId = null)
+    {
+        return new SheetScheduleFinder(document).Find(sheetId).Count;
     }
 
     /// <summary>Вид, который был открыт до прогона: к нему возвращаются после отрисовки.</summary>
     public ElementId? OriginalViewId { get; private set; }
 
-    private ReadSchedule Read(SheetSchedule entry, string? cellDumpDirectory)
+    private ReadSchedule Read(
+        SheetSchedule entry,
+        string? cellDumpDirectory,
+        bool useExport,
+        bool activateView)
     {
         var schedule = entry.Schedule;
         var definition = schedule.Definition;
@@ -61,8 +143,12 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
             .ToList();
 
         // Экспорт пишет файл на диск и обязан идти до открытия транзакции.
-        var exportedText = new ScheduleTextExporter()
-            .TryExport(schedule, Path.Combine(cellDumpDirectory ?? Path.GetTempPath(), "export"), out var exportWarning);
+        var exportWarning = (string?)null;
+
+        var exportedText = useExport
+            ? new ScheduleTextExporter()
+                .TryExport(schedule, Path.Combine(cellDumpDirectory ?? Path.GetTempPath(), "export"), out exportWarning)
+            : null;
 
         var described = new SheetScheduleCopy
         {
@@ -72,7 +158,7 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
             HiddenFieldNames = fields.Where(field => field.IsHidden).Select(field => field.GetName()).ToList(),
             IsSplit = schedule.IsSplit(),
             RowCountBeforeActivation = ReadBodyRowCount(schedule),
-            WasActivated = TryActivate(schedule),
+            WasActivated = activateView && TryActivate(schedule),
             ExportedRowCount = exportedText?.Count ?? 0,
             ExportWarning = exportWarning
         };

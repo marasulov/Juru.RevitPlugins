@@ -11,9 +11,15 @@ namespace Juru.RevitPlugins.Schedules.Services;
 /// </summary>
 public sealed class SheetScheduleFinder(Document document)
 {
-    public IReadOnlyList<SheetSchedule> Find()
+    /// <param name="sheetId">
+    ///     Лист, к которому сузить поиск, или <c>null</c> для всех листов. Спецификация попадает в
+    ///     результат, только если у неё есть размещение на этом листе - остальные её размещения тоже
+    ///     показаны, чтобы отчёт был честным о том, где ещё она встречается.
+    /// </param>
+    public IReadOnlyList<SheetSchedule> Find(ElementId? sheetId = null)
     {
         var placementsBySchedule = new Dictionary<ElementId, List<SheetPlacement>>();
+        var scheduleIdsOnSheet = new HashSet<ElementId>();
 
         var instances = new FilteredElementCollector(document)
             .OfClass(typeof(ScheduleSheetInstance))
@@ -25,6 +31,11 @@ public sealed class SheetScheduleFinder(Document document)
             if (document.GetElement(instance.OwnerViewId) is not ViewSheet sheet)
             {
                 continue;
+            }
+
+            if (sheetId is not null && sheet.Id == sheetId)
+            {
+                scheduleIdsOnSheet.Add(instance.ScheduleId);
             }
 
             if (!placementsBySchedule.TryGetValue(instance.ScheduleId, out var placements))
@@ -40,6 +51,11 @@ public sealed class SheetScheduleFinder(Document document)
 
         foreach (var pair in placementsBySchedule)
         {
+            if (sheetId is not null && !scheduleIdsOnSheet.Contains(pair.Key))
+            {
+                continue;
+            }
+
             if (document.GetElement(pair.Key) is not ViewSchedule schedule)
             {
                 continue;

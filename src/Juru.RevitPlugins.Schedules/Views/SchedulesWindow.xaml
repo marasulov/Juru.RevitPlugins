@@ -1,0 +1,333 @@
+﻿<Window
+    x:Class="Juru.RevitPlugins.Schedules.Views.SchedulesWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:viewModels="clr-namespace:Juru.RevitPlugins.Schedules.ViewModels"
+    xmlns:loc="clr-namespace:Juru.RevitPlugins.Schedules.Localization"
+    xmlns:converters="clr-namespace:Juru.RevitPlugins.Schedules.Views.Converters"
+    xmlns:views="clr-namespace:Juru.RevitPlugins.Schedules.Views"
+    mc:Ignorable="d"
+    Title="{x:Static loc:Text.WindowTitle}"
+    Height="640" Width="1240" MinHeight="480" MinWidth="1000"
+    WindowStartupLocation="CenterScreen"
+    FontSize="12"
+    d:DataContext="{d:DesignInstance viewModels:SchedulesWindowViewModel, IsDesignTimeCreatable=False}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Общий вид окон решения. Тему и ControlsDictionary сюда не мёрджим: их
+                     дописывает ApplicationThemeManager.Apply в конструкторе - так же, как в
+                     обычных окнах ClashNavigator. -->
+                <ResourceDictionary Source="/Juru.RevitPlugins.Schedules;component/Resources/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- CustomStyles.xaml приносит стиль WPF-UI для CheckBox только под ключом
+                 DefaultCheckBoxStyle и сам его ни на что не назначает: без привязки по типу
+                 галочки в таблицах рисуются системным квадратом Windows. -->
+            <Style TargetType="CheckBox" BasedOn="{StaticResource DefaultCheckBoxStyle}" />
+
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+            <converters:NotBoolConverter x:Key="NotBool" />
+
+      </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="{x:Static loc:Text.SheetSchedulesHeader}" FontWeight="SemiBold" />
+            <TextBlock Text="{x:Static loc:Text.RedrawHint}"
+                       TextWrapping="Wrap"
+                       Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}" />
+
+            <!-- Окно открывается пустым, пока читается модель: без этой строки и полосы оно
+                 выглядело бы просто пустым и сломанным. -->
+            <DockPanel Margin="0,8,0,0">
+                <!-- Полоса определённая, а не бегущая: чтение занимает поток Ревита, и анимации
+                     не достаётся кадров - «бегущая» полоса просто стояла бы. Эту двигаем сами. -->
+                <ProgressBar DockPanel.Dock="Left" Width="160" Height="6"
+                             VerticalAlignment="Center" Margin="0,0,8,0"
+                             Minimum="0" Maximum="{Binding ReadTotal}" Value="{Binding ReadDone}"
+                             Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                           Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                           Text="{Binding StatusNote}" />
+            </DockPanel>
+        </StackPanel>
+
+        <DockPanel Grid.Row="1" Margin="0,0,0,8">
+            <!-- Кнопки одни на окно и работают по открытой вкладке: на каждой из четырнадцати
+                 вкладок те же четыре кнопки были бы дублированием. -->
+            <ui:Button DockPanel.Dock="Left" Content="{x:Static loc:Text.SelectAll}" Margin="0,0,8,0"
+                       Command="{Binding SelectAllCommand}" />
+            <ui:Button DockPanel.Dock="Left" Content="{x:Static loc:Text.SelectNone}" Margin="0,0,8,0"
+                       Command="{Binding SelectNoneCommand}" />
+            <ui:Button DockPanel.Dock="Left" Content="{x:Static loc:Text.TranslateMissing}" Margin="0,0,8,0"
+                       Command="{Binding TranslateMissingCommand}" />
+            <ui:Button DockPanel.Dock="Left" Content="{x:Static loc:Text.Show}" Margin="0,0,8,0"
+                       ToolTip="{x:Static loc:Text.ShowElementTooltip}"
+                       Command="{Binding ShowCommand}" />
+            <ui:Button DockPanel.Dock="Left" Content="{x:Static loc:Text.Settings}" Margin="0,0,16,0"
+                       ToolTip="{x:Static loc:Text.SettingsTooltip}"
+                       Click="ButtonSettings_Click" />
+
+            <!-- Область сканирования: у эталона это две кнопки, здесь - переключатели, чтобы было
+                 видно, какая область действует сейчас. -->
+            <RadioButton DockPanel.Dock="Left" GroupName="Scope" Margin="0,0,8,0"
+                         VerticalAlignment="Center"
+                         Content="{x:Static loc:Text.ScanModel}"
+                         ToolTip="{x:Static loc:Text.ScanModelTooltip}"
+                         IsChecked="{Binding ScanActiveViewOnly, Converter={StaticResource NotBool}}" />
+            <RadioButton DockPanel.Dock="Left" GroupName="Scope" Margin="0,0,16,0"
+                         VerticalAlignment="Center"
+                         Content="{x:Static loc:Text.ScanActiveView}"
+                         ToolTip="{x:Static loc:Text.ScanActiveViewTooltip}"
+                         IsChecked="{Binding ScanActiveViewOnly}" />
+
+            <ui:TextBox DockPanel.Dock="Left" Width="220"
+                        PlaceholderText="{x:Static loc:Text.SearchPlaceholder}"
+                        Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+            <!-- Распорка: последний ребёнок DockPanel забирает остаток места. -->
+            <Border />
+        </DockPanel>
+
+        <TabControl Grid.Row="2" Padding="0" BorderThickness="1"
+                    SelectionChanged="Tabs_SelectionChanged"
+                    BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}">
+
+            <TabItem Header="{x:Static loc:Text.SchedulesTab}" Tag="Schedules">
+            <DockPanel>
+                <!-- Галочка выбирает способ, а не украшение: снятая означает перевод в самой
+                     спецификации. Только эта вкладка перерисовывает копии - остальные пишут
+                     перевод прямо в параметры, поэтому галочка стоит здесь, а не в общей панели. -->
+                <CheckBox DockPanel.Dock="Top" Content="{x:Static loc:Text.RedrawAsLines}"
+                          Margin="8,8,8,4"
+                          IsChecked="{Binding RedrawAsLines}" />
+
+            <DataGrid
+                x:Name="SchedulesGrid"
+                AutoGenerateColumns="False"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                CanUserReorderColumns="False"
+                GridLinesVisibility="Horizontal"
+                HeadersVisibility="Column"
+                IsReadOnly="True"
+                SelectionMode="Extended"
+                SelectionUnit="FullRow"
+                BorderThickness="1"
+                BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}"
+                ItemsSource="{Binding View}"
+                        EnableColumnVirtualization="False"
+                        VirtualizingPanel.IsVirtualizing="True"
+                        VirtualizingPanel.VirtualizationMode="Standard"
+                        VirtualizingPanel.ScrollUnit="Pixel">
+
+                <!-- Галочка ставится только щелчком по ней самой. Выделение строк с галочками
+                     не связано: их связка мешала - протащил мышью по таблице, и отметилось всё,
+                     что задел. Свой RowStyle при этом не заводится: он заменяет строкам стиль
+                     WPF-UI, и они становятся белыми. -->
+
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="56" CanUserResize="False" CanUserSort="False" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Padding=0 и размер колонки по содержимому: у стиля WPF-UI свои
+                                     отступы, и в колонке фиксированной ширины квадрат флажка
+                                     обрезается. -->
+                                <!-- Растянут на всю ячейку и Focusable=False: иначе первый щелчок
+                                     попадает в ячейку и уходит на выделение строки и фокус, а
+                                     галочка переключается только со второго. -->
+                                <CheckBox
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center"
+                                    Background="Transparent"
+                                    Margin="0"
+                                    Padding="0"
+                                    Focusable="False"
+                                    IsHitTestVisible="True"
+                                    IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                    PreviewMouseLeftButtonDown="CheckBoxCell_PreviewMouseLeftButtonDown" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnSchedule}" Width="*"
+                                        Binding="{Binding ScheduleName}" SortMemberPath="ScheduleName" />
+
+                    <!-- Кнопка в строке, а не в панели: по списку из сотни имён иначе не понять,
+                         какую именно спецификацию откроют. -->
+                    <DataGridTemplateColumn Width="Auto" CanUserResize="False" CanUserSort="False"
+                                            IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ui:Button
+                                    Margin="4,2"
+                                    Padding="8,2"
+                                    Content="{x:Static loc:Text.Show}"
+                                    ToolTip="{x:Static loc:Text.ShowScheduleTooltip}"
+                                    Command="{Binding DataContext.ShowScheduleCommand,
+                                                      RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnSheets}" Width="90"
+                                        Binding="{Binding Sheets}" SortMemberPath="Sheets" />
+                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnColumns}" Width="70"
+                                        Binding="{Binding ColumnCount}" SortMemberPath="ColumnCount" />
+                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnRows}" Width="70"
+                                        Binding="{Binding RowCount}" SortMemberPath="RowCount" />
+                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnTranslatable}" Width="120"
+                                        Binding="{Binding TranslatableCount}" SortMemberPath="TranslatableCount" />
+                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnUntranslated}" Width="110"
+                                        Binding="{Binding UntranslatedCount}" SortMemberPath="UntranslatedCount" />
+                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnStatus}" Width="160"
+                                        Binding="{Binding Status}" SortMemberPath="Status" />
+                </DataGrid.Columns>
+            </DataGrid>
+            </DockPanel>
+            </TabItem>
+
+            <!-- Строка здесь - отдельный переводимый текст, а не спецификация: это поверхность вычитки
+                 перевода, та же, что сейчас правится в CSV. -->
+            <TabItem Header="{x:Static loc:Text.TranslationsTab}" Tag="Translations">
+            <DataGrid
+                x:Name="TranslationsGrid"
+                AutoGenerateColumns="False"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                CanUserReorderColumns="False"
+                GridLinesVisibility="Horizontal"
+                HeadersVisibility="Column"
+                SelectionMode="Extended"
+                SelectionUnit="FullRow"
+                BorderThickness="0"
+                ItemsSource="{Binding TranslationsView}"
+                        EnableColumnVirtualization="False"
+                        VirtualizingPanel.IsVirtualizing="True"
+                        VirtualizingPanel.VirtualizationMode="Standard"
+                        VirtualizingPanel.ScrollUnit="Pixel">
+
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="56" CanUserResize="False" CanUserSort="False" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Растянут на всю ячейку и Focusable=False: иначе первый щелчок
+                                     попадает в ячейку и уходит на выделение строки и фокус, а
+                                     галочка переключается только со второго. -->
+                                <CheckBox
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center"
+                                    Background="Transparent"
+                                    Margin="0"
+                                    Padding="0"
+                                    Focusable="False"
+                                    IsHitTestVisible="True"
+                                    IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                    PreviewMouseLeftButtonDown="CheckBoxCell_PreviewMouseLeftButtonDown" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnKind}" Width="130" IsReadOnly="True"
+                                        Binding="{Binding Kind}" SortMemberPath="Kind" />
+                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnSourceText}" Width="*" IsReadOnly="True"
+                                        Binding="{Binding Readable}" SortMemberPath="Readable" />
+                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnTranslation}" Width="*"
+                                        Binding="{Binding Translation, UpdateSourceTrigger=PropertyChanged}"
+                                        SortMemberPath="Translation" />
+                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnResult}" Width="*" IsReadOnly="True"
+                                        Binding="{Binding Result}" SortMemberPath="Result" />
+                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnSchedules}" Width="160" IsReadOnly="True"
+                                        Binding="{Binding Schedules}" SortMemberPath="Schedules" />
+                </DataGrid.Columns>
+            </DataGrid>
+            </TabItem>
+            <TabItem Header="{x:Static loc:Text.CategoryRooms}" Tag="Rooms">
+                <views:CategoryView DataContext="{Binding Rooms}" />
+            </TabItem>
+            <TabItem Header="{x:Static loc:Text.CategoryAreas}" Tag="Areas">
+                <views:CategoryView DataContext="{Binding Areas}" />
+            </TabItem>
+            <TabItem Header="{x:Static loc:Text.CategorySheets}" Tag="Sheets">
+                <views:CategoryView DataContext="{Binding Sheets}" />
+            </TabItem>
+            <TabItem Header="{x:Static loc:Text.CategoryViews}" Tag="Views">
+                <views:CategoryView DataContext="{Binding Views}" />
+            </TabItem>
+            <TabItem Header="{x:Static loc:Text.CategoryTextNotes}" Tag="TextNotes">
+                <views:CategoryView DataContext="{Binding Notes}" />
+            </TabItem>
+            <TabItem Header="{x:Static loc:Text.CategoryKeynotes}" Tag="Keynotes">
+                <views:CategoryView DataContext="{Binding Keynotes}" />
+            </TabItem>
+            <TabItem Header="{x:Static loc:Text.CategoryFamilyTypes}" Tag="FamilyTypes">
+                <views:CategoryView DataContext="{Binding FamilyTypes}" />
+            </TabItem>
+            <TabItem Header="{x:Static loc:Text.CategoryLevels}" Tag="Levels">
+                <views:CategoryView DataContext="{Binding Levels}" />
+            </TabItem>
+            <TabItem Header="{x:Static loc:Text.CategoryMaterials}" Tag="Materials">
+                <views:CategoryView DataContext="{Binding Materials}" />
+            </TabItem>
+            <TabItem Header="{x:Static loc:Text.CategoryRevisions}" Tag="Revisions">
+                <views:CategoryView DataContext="{Binding Revisions}" />
+            </TabItem>
+            <TabItem Header="{x:Static loc:Text.CategoryDimensions}" Tag="Dimensions">
+                <views:CategoryView DataContext="{Binding Dimensions}" />
+            </TabItem>
+            <TabItem Header="{x:Static loc:Text.CategoryGlobalParameters}" Tag="GlobalParameters">
+                <views:CategoryView DataContext="{Binding GlobalParameters}" />
+            </TabItem>
+        </TabControl>
+
+        <DockPanel Grid.Row="3" Margin="0,12,0,0">
+            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
+                       Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                       Text="{Binding Summary}" />
+            <ui:Button DockPanel.Dock="Right" Content="{x:Static loc:Text.Close}" Width="100" Margin="8,0,0,0"
+                       Click="ButtonClose_Click" />
+            <ui:Button DockPanel.Dock="Right" Content="{x:Static loc:Text.Build}" Width="120"
+                       Appearance="Primary"
+                       Command="{Binding BuildCommand}" />
+
+            <ComboBox DockPanel.Dock="Right" Width="120" Margin="0,0,16,0" VerticalAlignment="Center"
+                      ToolTip="{x:Static loc:Text.TranslationService}"
+                      ItemsSource="{Binding Providers}"
+                      SelectedItem="{Binding Provider}" />
+            <TextBlock DockPanel.Dock="Right" Text="{x:Static loc:Text.TranslationService}" VerticalAlignment="Center" Margin="16,0,8,0" />
+
+            <!-- Языки перевода: раньше были в настройках, но их меняют не реже службы перевода,
+                 поэтому перенесены сюда же, перед её выбором. -->
+            <ComboBox DockPanel.Dock="Right" Width="130" VerticalAlignment="Center"
+                      ToolTip="{x:Static loc:Text.SettingsLanguageHint}"
+                      ItemsSource="{Binding Languages}"
+                      DisplayMemberPath="Name" SelectedValuePath="Code"
+                      SelectedValue="{Binding TargetLanguage}" />
+            <TextBlock DockPanel.Dock="Right" Text="{x:Static loc:Text.SettingsToLanguage}" VerticalAlignment="Center" Margin="16,0,8,0" />
+            <ComboBox DockPanel.Dock="Right" Width="130" VerticalAlignment="Center"
+                      ItemsSource="{Binding Languages}"
+                      DisplayMemberPath="Name" SelectedValuePath="Code"
+                      SelectedValue="{Binding SourceLanguage}" />
+            <TextBlock DockPanel.Dock="Right" Text="{x:Static loc:Text.SettingsFromLanguage}" VerticalAlignment="Center" Margin="16,0,8,0" />
+
+            <!-- Распорка: последний ребёнок DockPanel забирает остаток места, и если это будет
+                 что-то содержательное, при узком окне оно окажется обрезанным. -->
+            <Border />
+        </DockPanel>
+    </Grid>
+</Window>
