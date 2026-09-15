@@ -54,7 +54,11 @@ public class LoadOpeningTasksCommand : IExternalCommand {
             var result = new IncomingOpeningPlacer(doc, config).Place(tasks);
             transactionGroup.Assimilate();
 
-            TaskDialog.Show("Загрузка заданий", BuildReport(tasks.Length, result));
+            // Прорезанные отверстия загрузка не трогает - у неё в руках только семейства заданий, -
+            // поэтому про удалённые задания, по которым отверстие уже есть, она может лишь сказать.
+            var cutDeleted = new RealOpeningReplacer(doc, config).FindCutDeleted(tasks);
+
+            TaskDialog.Show("Загрузка заданий", BuildReport(tasks.Length, result, cutDeleted.Count));
         } catch(Exception exception) when(exception is InvalidOperationException or TimeoutException) {
             TaskDialog.Show("Загрузка заданий", exception.Message);
             return Result.Failed;
@@ -63,13 +67,20 @@ public class LoadOpeningTasksCommand : IExternalCommand {
         return Result.Succeeded;
     }
 
-    private string BuildReport(int total, IncomingPlacementResult result) {
+    private string BuildReport(int total, IncomingPlacementResult result, int cutDeleted) {
         var report = new StringBuilder();
         report.AppendLine($"Заданий на сервере: {total}");
         report.AppendLine($"Поставлено новых: {result.Added}");
         report.AppendLine($"Обновлено: {result.Updated}");
         if(result.Removed > 0) {
             report.AppendLine($"Убрано (отмечены удалёнными): {result.Removed}");
+        }
+
+        if(cutDeleted > 0) {
+            report.AppendLine();
+            report.AppendLine($"По {cutDeleted} удалённым заданиям отверстия уже прорезаны - "
+                + "конструкции остаются вскрытыми. Откройте \"Согласование заданий\": там видно, "
+                + "какие это отверстия, и их можно убрать.");
         }
 
         if(result.MissingFamilies.Count > 0) {

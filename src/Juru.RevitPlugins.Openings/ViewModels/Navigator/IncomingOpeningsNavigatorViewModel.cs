@@ -51,6 +51,16 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
     private IReadOnlyDictionary<string, ElementId> _lastPlacedElements = new Dictionary<string, ElementId>();
     private readonly Dictionary<string, ElementId> _realElements = [];
 
+    /// <summary>
+    /// Отверстия, прорезанные по заданиям, которые инженер потом удалил, по ключу задания.
+    /// </summary>
+    /// <remarks>
+    /// Отдельно от <see cref="_realElements"/>: те действуют, эти - остатки от заданий, которых
+    /// больше нет. Обновление их не трогает, убрать отверстие может только согласующий, увидев
+    /// в списке, какое именно (docs/OpeningsApi.md, "Удалённые задания").
+    /// </remarks>
+    private readonly Dictionary<string, ElementId> _deletedRealElements = [];
+
     [ObservableProperty]
     private string _summary = string.Empty;
 
@@ -175,6 +185,11 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         _realElements.Clear();
         foreach(var pair in revertResult.RealElements) {
             _realElements[pair.Key] = pair.Value;
+        }
+
+        _deletedRealElements.Clear();
+        foreach(var pair in revertResult.DeletedRealElements) {
+            _deletedRealElements[pair.Key] = pair.Value;
         }
 
         BuildRows(doc, result.MissingFamilies, revertResult.Reverted, placed: 0, missingRealFamilies: []);
@@ -342,17 +357,21 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
             .ToDictionary(task => task.TaskKey, task => (task.Status, task.Comment));
 
         Tasks.Clear();
-        foreach(var task in _lastServerTasks.Where(task => !task.Deleted)) {
+        // Удалённое задание попадает в список, только пока по нему стоит прорезанное отверстие:
+        // у остальных убирать нечего, их экземпляр снимает загрузка.
+        foreach(var task in _lastServerTasks.Where(task => !task.Deleted || _deletedRealElements.ContainsKey(task.TaskKey))) {
             // Прорезанное отверстие показываем и выделяем вместо задания - того к этому моменту
             // уже нет, PlaceApproved удалил его при прорезании.
-            bool isCut = _realElements.TryGetValue(task.TaskKey, out var realId);
+            var cutElements = task.Deleted ? _deletedRealElements : _realElements;
+            bool isCut = cutElements.TryGetValue(task.TaskKey, out var realId);
             ElementId elementId = isCut
                 ? realId
                 : _lastPlacedElements.TryGetValue(task.TaskKey, out var previewId) ? previewId : null;
             var instance = elementId is null ? null : doc.GetElement(elementId) as FamilyInstance;
             var host = GetHost(doc, instance, task.OpeningType);
             var technicalStatus = IncomingTaskTechnicalCheck.Evaluate(doc, instance);
-            var row = new IncomingOpeningTaskViewModel(task, _discipline, elementId, host, technicalStatus, isCut);
+            var row = new IncomingOpeningTaskViewModel(
+                task, _discipline, elementId, host, technicalStatus, isCut, task.Deleted);
             if(unsaved.TryGetValue(task.TaskKey, out var pending)) {
                 row.Status = pending.Status;
                 row.Comment = pending.Comment;
@@ -388,6 +407,11 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
             summary.Append($" Прорезано: {placed}, возвращено в задание: {reverted}.");
             summary.Append(_saveNote);
         }
+        int deleted = Tasks.Count(task => task.CanRemove);
+        if(deleted > 0) {
+            summary.Append($" Инженер удалил заданий, по которым отверстия уже прорезаны: {deleted}"
+                + " - проверьте их и уберите кнопкой \"Убрать\" в строке.");
+        }
         if(missingFamilies.Count > 0) {
             summary.Append($" Семейства не загружены: {string.Join(", ", missingFamilies)}.");
         }
@@ -396,6 +420,53 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         }
 
         return summary.ToString();
+    }
+
+    /// <summary>
+    /// Убирает из модели чистовое отверстие задания, которое инженер у себя удалил. Вызывается
+    /// из code-behind окна по клику на "Убрать".
+    /// </summary>
+    /// <remarks>
+    /// Сервер об этом не спрашивают и ему ничего не отправляют: задание уже помечено удалённым
+    /// на его стороне, а прорезано отверстие или нет - факт про эту модель. Решения по заданию
+    /// в записи остаются, они и есть история того, что отверстие когда-то согласовали.
+    /// </remarks>
+    public void Remove(IncomingOpeningTaskViewModel task) {
+        if(task is null || !task.CanRemove) {
+            return;
+        }
+
+        string taskKey = task.TaskKey;
+        _runner.Run(uiApplication => {
+            var doc = uiApplication.ActiveUIDocument.Document;
+            if(!_deletedRealElements.TryGetValue(taskKey, out var realId)) {
+                return;
+            }
+
+            if(!ConfirmRemove(task)) {
+                return;
+            }
+
+            if(doc.GetElement(realId) is not null) {
+                using var transaction = new Transaction(doc, "Удаление отверстия по удалённому заданию");
+                transaction.Start();
+                doc.Delete(realId);
+                transaction.Commit();
+            }
+
+            _deletedRealElements.Remove(taskKey);
+            BuildRows(doc, missingFamilies: [], reverted: 0, placed: 0, missingRealFamilies: []);
+        });
+    }
+
+    private static bool ConfirmRemove(IncomingOpeningTaskViewModel task) {
+        var confirm = TaskDialog.Show("Удалённое задание",
+            $"Убрать из модели отверстие {task.SizeText} мм ({task.OpeningTypeText}) на уровне "
+            + $"{task.LevelName}?\n\n"
+            + $"Инженер ({task.SenderDiscipline}, {task.SentByDisplayName}) удалил задание, "
+            + "по которому оно прорезано. Конструкция закроется обратно.",
+            TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No, TaskDialogResult.No);
+        return confirm == TaskDialogResult.Yes;
     }
 
     /// <summary>
