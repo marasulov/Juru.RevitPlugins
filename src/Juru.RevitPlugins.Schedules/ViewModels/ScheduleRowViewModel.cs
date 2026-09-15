@@ -1,9 +1,11 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Juru.RevitPlugins.Schedules.Services;
+
+using Juru.RevitPlugins.Schedules.Localization;
 
 namespace Juru.RevitPlugins.Schedules.ViewModels;
 
@@ -11,7 +13,7 @@ namespace Juru.RevitPlugins.Schedules.ViewModels;
 ///     Строка таблицы выбора: одна спецификация с листов. Снимок держится при себе — по нему потом рисуется
 ///     копия, и читать спецификацию второй раз не нужно.
 /// </summary>
-public sealed partial class ScheduleRowViewModel : ObservableObject
+public sealed partial class ScheduleRowViewModel : ObservableObject, ISelectableRow
 {
     [ObservableProperty]
     private bool isSelected;
@@ -55,15 +57,17 @@ public sealed partial class ScheduleRowViewModel : ObservableObject
         {
             if (Error is not null)
             {
-                return "ошибка чтения";
+                return Text.StatusReadError;
             }
 
             if (TranslatableCount is 0)
             {
-                return "переводить нечего";
+                return Text.StatusNothingToTranslate;
             }
 
-            return UntranslatedCount is 0 ? "переведена" : $"нужен перевод: {UntranslatedCount}";
+            return UntranslatedCount is 0
+                ? Text.StatusTranslated
+                : $"{Text.StatusNeedsTranslation}: {UntranslatedCount}";
         }
     }
 

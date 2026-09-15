@@ -1,5 +1,6 @@
 ﻿using Juru.RevitPlugins.ClashNavigator.Commands;
 using Juru.RevitPlugins.Openings.Commands;
+using Juru.RevitPlugins.Schedules.Commands;
 
 using Nice3point.Revit.Toolkit.External;
 
@@ -26,6 +27,7 @@ namespace Juru.RevitPlugins.App
         {
             CreateClashNavigatorPanel();
             CreateOpeningsPanel();
+            CreateSchedulesPanel();
         }
 
         private void CreateClashNavigatorPanel()
@@ -117,6 +119,17 @@ namespace Juru.RevitPlugins.App
                 .SetImage(IconsPath + "SettingsIcon16.png")
                 .SetLargeImage(IconsPath + "SettingsIcon32.png")
                 .SetToolTip("Настройки выдачи заданий на отверстия");
+        }
+
+        /// <summary>
+        ///     Английский комплект: перевод спецификаций, помещений, листов и прочих категорий модели.
+        /// </summary>
+        private void CreateSchedulesPanel()
+        {
+            var panel = Application.CreatePanel("Спецификации", TabName);
+
+            panel.AddPushButton<ShowSchedulesWindowCommand>("Английский\nкомплект")
+                .SetToolTip("Переводит спецификации, помещения, листы и другие категории модели на английский");
         }
     }
 }

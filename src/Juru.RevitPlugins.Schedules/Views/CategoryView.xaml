@@ -1,0 +1,86 @@
+﻿<UserControl x:Class="Juru.RevitPlugins.Schedules.Views.CategoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:viewModels="clr-namespace:Juru.RevitPlugins.Schedules.ViewModels"
+             xmlns:loc="clr-namespace:Juru.RevitPlugins.Schedules.Localization"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance viewModels:CategoryViewModel, IsDesignTimeCreatable=False}">
+
+    <!-- Отдельный UserControl, а не DataTemplate в окне: внутри DataTemplate WPF применяет свойства
+         в порядке зависимых свойств, а не разметки, и ItemsSource у DataGrid успевает попасть раньше
+         AutoGenerateColumns="False". Тогда таблица начинает генерировать колонки сама, лезет
+         рефлексией в тип строки, доходит до объектов Revit и бросает исключение прямо в проходе
+         отрисовки: вкладка не открывается, а окно остаётся частично незакрашенным. -->
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- Пустая таблица выглядит сломанной: непонятно, в модели нет помещений или плагин их
+             не нашёл. Поэтому вместо неё - объяснение. -->
+        <TextBlock Margin="24" MaxWidth="520" TextWrapping="Wrap"
+                   TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"
+                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                   Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}"
+                   Text="{Binding EmptyNote}" />
+
+        <DataGrid
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            CanUserDeleteRows="False"
+            CanUserReorderColumns="False"
+            GridLinesVisibility="Horizontal"
+            HeadersVisibility="Column"
+            SelectionMode="Extended"
+            SelectionUnit="FullRow"
+            IsSynchronizedWithCurrentItem="True"
+            BorderThickness="0"
+            EnableColumnVirtualization="False"
+            VirtualizingPanel.IsVirtualizing="True"
+            VirtualizingPanel.VirtualizationMode="Standard"
+            VirtualizingPanel.ScrollUnit="Pixel"
+            Visibility="{Binding HasRows, Converter={StaticResource BoolToVisibility}}"
+            ItemsSource="{Binding View}"
+            Tag="{Binding}">
+
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Width="56" CanUserResize="False" CanUserSort="False"
+                                        IsReadOnly="True">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <!-- Растянут на всю ячейку и Focusable=False: иначе первый щелчок
+                                 попадает в ячейку и уходит на выделение строки и фокус, а галочка
+                                 переключается только со второго. Кликабельна вся колонка. -->
+                            <CheckBox
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Background="Transparent"
+                                Margin="0"
+                                Padding="0"
+                                Focusable="False"
+                                IsHitTestVisible="True"
+                                IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                PreviewMouseLeftButtonDown="CheckBoxCell_PreviewMouseLeftButtonDown" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="{x:Static loc:Text.ColumnWhere}" Width="180" IsReadOnly="True"
+                                    Binding="{Binding Context}" SortMemberPath="Context" />
+                <DataGridTextColumn Header="{x:Static loc:Text.ColumnSourceText}" Width="*" IsReadOnly="True"
+                                    Binding="{Binding SourceText}" SortMemberPath="SourceText" />
+                <DataGridTextColumn Header="{x:Static loc:Text.ColumnTranslation}" Width="*"
+                                    Binding="{Binding Translation, UpdateSourceTrigger=PropertyChanged}"
+                                    SortMemberPath="Translation" />
+                <DataGridTextColumn Header="{x:Static loc:Text.ColumnResult}" Width="*" IsReadOnly="True"
+                                    Binding="{Binding Result}" SortMemberPath="Result" />
+                <DataGridTextColumn Header="{x:Static loc:Text.ColumnStatus}" Width="170" IsReadOnly="True"
+                                    Binding="{Binding Status}" SortMemberPath="Status" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

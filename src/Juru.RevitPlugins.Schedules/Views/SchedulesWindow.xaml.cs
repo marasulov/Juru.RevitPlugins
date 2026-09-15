@@ -1,9 +1,18 @@
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Threading;
+
+using Juru.RevitPlugins.Core.Resources;
 
 using Juru.RevitPlugins.Schedules.ViewModels;
+
+using Wpf.Ui.Appearance;
+
+using Juru.RevitPlugins.Schedules.Localization;
 
 namespace Juru.RevitPlugins.Schedules.Views;
 
@@ -18,70 +27,81 @@ public partial class SchedulesWindow : Window
         DataContext = viewModel;
 
         InitializeComponent();
+
+        // Обычное Window, а не FluentWindow: FluentWindow поднимает тему WPF-UI себе сам, а
+        // простое окно обязано вызвать это само - иначе строки таблиц и кнопки остаются
+        // нестилизованными, то есть белыми поверх тёмного окна.
+        ApplicationThemeManager.Apply(this);
+
+        CheckBoxBrushes.OverrideCheckedStates(this);
+        AccentButtonBrushes.Override(this);
+
+        // Фон и цвет текста привязываются только здесь, а не в разметке: ui:ThemeResource
+        // разворачивается при разборе XAML, то есть до того, как Apply положит словари темы в окно,
+        // и ключ тогда не находится. Незакрашенный фон окна виден как чёрные полосы при растягивании.
+        SetResourceReference(BackgroundProperty, "ApplicationBackgroundBrush");
+        SetResourceReference(ForegroundProperty, "TextFillColorPrimaryBrush");
     }
 
     public SchedulesWindowViewModel ViewModel { get; }
 
     /// <summary>
-    ///     Строки, отмеченные пользователем, — пусто, если окно закрыли отменой.
+    ///     Переключает галочку строки. Щелчок гасится здесь и до таблицы не доходит.
     /// </summary>
-    public IReadOnlyList<ScheduleRowViewModel> Result { get; private set; } = [];
-
-    /// <summary>
-    ///     Переключение галочки в строке, входящей в выделение, применяется ко всему выделению: иначе
-    ///     отметить диапазон и снять его одним движением невозможно.
-    /// </summary>
-    private void CheckBox_Click(object sender, RoutedEventArgs eventArgs)
+    /// <remarks>
+    ///     Переключение делается вручную, а <c>IsChecked</c> привязан односторонне: иначе
+    ///     <c>ToggleButton</c> переключит значение сам, и на один щелчок придётся два изменения.
+    ///     Гашение события заодно не отдаёт щелчок таблице, чтобы он не менял выделение строк.
+    /// </remarks>
+    private void CheckBoxCell_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs eventArgs)
     {
-        if (sender is not CheckBox { IsChecked: { } isChecked, DataContext: ScheduleRowViewModel row })
+        if (sender is not CheckBox { DataContext: ISelectableRow row })
         {
             return;
         }
 
-        var selected = SchedulesGrid.SelectedItems.OfType<ScheduleRowViewModel>().ToList();
-
-        ViewModel.ApplySelectionTo(selected.Contains(row) ? selected : [row], isChecked);
+        row.IsSelected = !row.IsSelected;
+        eventArgs.Handled = true;
     }
 
     /// <summary>
-    ///     То же правило для таблицы переводов: галочка внутри выделения применяется ко всему выделению.
+    ///     Открывает настройки перевода. Окно модальное над главным: настройки меняют то, как пойдёт
+    ///     сборка, и запускать её, пока их правят, нельзя.
     /// </summary>
-    private void TranslationCheckBox_Click(object sender, RoutedEventArgs eventArgs)
+    /// <summary>
+    ///     Сообщает вьюмодели, какая вкладка открыта: кнопки выбора, перевода и показа одни на окно
+    ///     и работают по ней. Какая вкладка активна, знает разметка, а не вьюмодель.
+    /// </summary>
+    private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
     {
-        if (sender is not CheckBox { IsChecked: { } isChecked, DataContext: TranslationRowViewModel row })
+        if (sender is TabControl { SelectedItem: TabItem { Tag: string key } })
+        {
+            ViewModel.UseSurface(key);
+        }
+    }
+
+    private void ButtonSettings_Click(object sender, RoutedEventArgs eventArgs)
+    {
+        var settings = new SettingsViewModel(ViewModel.Config);
+        var window = new SettingsWindow(settings) { Owner = this };
+
+        if (window.ShowDialog() is not true)
         {
             return;
         }
 
-        var selected = TranslationsGrid.SelectedItems.OfType<TranslationRowViewModel>().ToList();
+        var updated = settings.Result;
+        var failure = updated.TrySave();
 
-        foreach (var target in selected.Contains(row) ? selected : [row])
-        {
-            target.IsSelected = isChecked;
-        }
+        ViewModel.ApplySettings(updated);
+
+        ViewModel.StatusNote = failure is null
+            ? Text.StatusSettingsSaved
+            : string.Format(Text.SettingsSaveFailed, failure);
     }
 
-    private void ButtonBuild_Click(object sender, RoutedEventArgs eventArgs)
+    private void ButtonClose_Click(object sender, RoutedEventArgs eventArgs)
     {
-        Result = ViewModel.SelectedRows;
-
-        if (Result.Count is 0)
-        {
-            MessageBox.Show(
-                this,
-                "Не отмечено ни одной спецификации.",
-                Title,
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
-
-            return;
-        }
-
-        DialogResult = true;
-    }
-
-    private void ButtonCancel_Click(object sender, RoutedEventArgs eventArgs)
-    {
-        DialogResult = false;
+        Close();
     }
 }

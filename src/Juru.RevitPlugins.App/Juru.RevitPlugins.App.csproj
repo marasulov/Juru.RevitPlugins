@@ -75,6 +75,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Juru.RevitPlugins.ClashNavigator\Juru.RevitPlugins.ClashNavigator.csproj"/>
         <ProjectReference Include="..\Juru.RevitPlugins.Openings\Juru.RevitPlugins.Openings.csproj"/>
+        <ProjectReference Include="..\Juru.RevitPlugins.Schedules\Juru.RevitPlugins.Schedules.csproj"/>
     </ItemGroup>
 
 </Project>

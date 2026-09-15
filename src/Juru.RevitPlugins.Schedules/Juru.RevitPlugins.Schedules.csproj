@@ -1,4 +1,4 @@
-<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+﻿<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
 
     <PropertyGroup>
         <!-- Перегрузки RevitContext.BeginDialogSuppressionScope ссылаются на WPF MessageBoxResult. -->
@@ -32,6 +32,21 @@
     <ItemGroup Condition="'$(RevitVersion)' &lt; '2025'">
         <!-- На net48 HttpClient живёт в отдельной сборке платформы. -->
         <Reference Include="System.Net.Http" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Общий вид окон - тот же файл, что подключают ClashNavigator и "Отверстия", но
+             подключённый по пути, а не ссылкой на Juru.RevitPlugins.Core: Core тянет за собой
+             dosymep/Bim4Everyone, а этот проект намеренно живёт без них. Ссылка на файл, а не
+             копия, чтобы стили не разъезжались между плагинами. -->
+        <Page Include="..\Juru.RevitPlugins.Core\Resources\CustomStyles.xaml"
+              Link="Resources\CustomStyles.xaml" />
+        <Compile Include="..\Juru.RevitPlugins.Core\Resources\CheckBoxBrushes.cs"
+                 Link="Resources\CheckBoxBrushes.cs" />
+        <Compile Include="..\Juru.RevitPlugins.Core\Resources\AccentButtonBrushes.cs"
+                 Link="Resources\AccentButtonBrushes.cs" />
+        <Compile Include="..\Juru.RevitPlugins.Core\Theming\JuruTheme.cs"
+                 Link="Theming\JuruTheme.cs" />
     </ItemGroup>
 
     <ItemGroup>
