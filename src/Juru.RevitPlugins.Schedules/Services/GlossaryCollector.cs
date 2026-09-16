@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -62,6 +62,14 @@ public static class GlossaryCollector
         string scheduleName)
     {
         var key = text.Trim();
+
+        // Строка уже двуязычная - в модели лежит «исходник — перевод». Ключом идёт исходная
+        // половина: иначе в словаре появился бы ключ с русским и английским разом, и с каждым
+        // прогоном такие ключи множились бы.
+        if (RussianText.TrySplitBilingual(key, out var written, out _))
+        {
+            key = written;
+        }
 
         if (!RussianText.ContainsCyrillic(key) || RussianText.IsSpacerLabel(key))
         {

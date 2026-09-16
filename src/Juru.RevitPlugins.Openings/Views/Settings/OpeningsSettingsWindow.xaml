@@ -7,9 +7,10 @@
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
     xmlns:configs="clr-namespace:Juru.RevitPlugins.Openings.Models.Configs"
     xmlns:vms="clr-namespace:Juru.RevitPlugins.Openings.ViewModels.Settings"
+    xmlns:loc="clr-namespace:Juru.RevitPlugins.Core.Localization;assembly=Juru.RevitPlugins.Core"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     mc:Ignorable="d"
-    Title="Настройки выдачи заданий"
+    Title="{DynamicResource Settings.Title}"
     Width="880"
     Height="700"
     MinWidth="820"
@@ -114,7 +115,7 @@
 
         <ui:TitleBar
             Grid.Row="0"
-            Title="Настройки выдачи заданий" />
+            Title="{DynamicResource Settings.Title}" />
 
         <Grid
             Grid.Row="1"
@@ -144,10 +145,10 @@
                         Margin="12 10 12 4">
                         <TextBlock
                             Style="{StaticResource SectionTitle}"
-                            Text="Виды элементов" />
+                            Text="{DynamicResource Settings.CategoriesTitle}" />
                         <TextBlock
                             Style="{StaticResource Hint}"
-                            Text="Настройки задаются для каждого вида отдельно. Серым показаны те, для которых задания не выдаются." />
+                            Text="{DynamicResource Settings.CategoriesHint}" />
                     </StackPanel>
 
                     <ListBox
@@ -200,9 +201,9 @@
                                 Text="{Binding Name}" />
                             <TextBlock
                                 Style="{StaticResource Hint}"
-                                Text="Выключите, если для этого вида задания на отверстия не нужны: такие элементы не проверяются вовсе." />
+                                Text="{DynamicResource Settings.IssueForCategoryHint}" />
                             <CheckBox
-                                Content="Выдавать задания для этого вида"
+                                Content="{DynamicResource Settings.IssueForCategory}"
                                 IsChecked="{Binding IsSelected}" />
                         </StackPanel>
                     </Border>
@@ -216,17 +217,17 @@
                             IsEnabled="{Binding IsSelected}">
                             <TextBlock
                                 Style="{StaticResource SectionTitle}"
-                                Text="Какие элементы проверять" />
+                                Text="{DynamicResource Settings.CheckWhichTitle}" />
                             <TextBlock
                                 Style="{StaticResource Hint}"
-                                Text="Элементы мельче наименьшего габарита не проверяются: для них отверстия не выдают. Крупнее наибольшего - пропускаются как ошибка черчения." />
+                                Text="{DynamicResource Settings.CheckWhichHint}" />
 
                             <DockPanel
                                 Style="{StaticResource FieldRow}"
                                 Visibility="{Binding IsRound, Converter={StaticResource BoolToVisibility}}">
                                 <TextBlock
                                     Style="{StaticResource FieldName}"
-                                    Text="Наименьший диаметр, мм" />
+                                    Text="{DynamicResource Settings.MinDiameter}" />
                                 <ui:TextBox
                                     Style="{StaticResource FieldValue}"
                                     Text="{Binding MinDiameterMm, UpdateSourceTrigger=PropertyChanged}" />
@@ -237,7 +238,7 @@
                                     Style="{StaticResource FieldRow}">
                                     <TextBlock
                                         Style="{StaticResource FieldName}"
-                                        Text="Наименьшая ширина, мм" />
+                                        Text="{DynamicResource Settings.MinWidth}" />
                                     <ui:TextBox
                                         Style="{StaticResource FieldValue}"
                                         Text="{Binding MinWidthMm, UpdateSourceTrigger=PropertyChanged}" />
@@ -246,7 +247,7 @@
                                     Style="{StaticResource FieldRow}">
                                     <TextBlock
                                         Style="{StaticResource FieldName}"
-                                        Text="Наименьшая высота, мм" />
+                                        Text="{DynamicResource Settings.MinHeight}" />
                                     <ui:TextBox
                                         Style="{StaticResource FieldValue}"
                                         Text="{Binding MinHeightMm, UpdateSourceTrigger=PropertyChanged}" />
@@ -256,7 +257,7 @@
                                 Style="{StaticResource FieldRow}">
                                 <TextBlock
                                     Style="{StaticResource FieldName}"
-                                    Text="Наибольший габарит, мм" />
+                                    Text="{DynamicResource Settings.MaxSize}" />
                                 <ui:TextBox
                                     Style="{StaticResource FieldValue}"
                                     Text="{Binding MaxSizeMm, UpdateSourceTrigger=PropertyChanged}" />
@@ -265,16 +266,16 @@
                             <TextBlock
                                 Margin="0 10 0 2"
                                 Style="{StaticResource SectionTitle}"
-                                Text="В каких конструкциях" />
+                                Text="{DynamicResource Settings.InWhichStructures}" />
                             <StackPanel
                                 Margin="0 4"
                                 Orientation="Horizontal">
                                 <CheckBox
                                     Margin="0 0 24 0"
-                                    Content="Стены"
+                                    Content="{DynamicResource Settings.Walls}"
                                     IsChecked="{Binding CheckWalls}" />
                                 <CheckBox
-                                    Content="Перекрытия"
+                                    Content="{DynamicResource Settings.Floors}"
                                     IsChecked="{Binding CheckFloors}" />
                             </StackPanel>
                         </StackPanel>
@@ -289,16 +290,16 @@
                             IsEnabled="{Binding IsSelected}">
                             <TextBlock
                                 Style="{StaticResource SectionTitle}"
-                                Text="Размер отверстия" />
+                                Text="{DynamicResource Settings.OpeningSizeTitle}" />
                             <TextBlock
                                 Style="{StaticResource Hint}"
-                                Text="Зазор - насколько отверстие шире элемента с каждой стороны. Для каждого диапазона габаритов свой зазор и своя форма отверстия: мелкие трассы обычно круглые, крупные прямоугольные." />
+                                Text="{DynamicResource Settings.OpeningSizeHint}" />
 
                             <DockPanel
                                 Style="{StaticResource FieldRow}">
                                 <TextBlock
                                     Style="{StaticResource FieldName}"
-                                    Text="Округление габаритов, мм" />
+                                    Text="{DynamicResource Settings.SizeRounding}" />
                                 <ui:TextBox
                                     Style="{StaticResource FieldValue}"
                                     Text="{Binding SizeRoundingMm, UpdateSourceTrigger=PropertyChanged}" />
@@ -307,7 +308,7 @@
                                 Style="{StaticResource FieldRow}">
                                 <TextBlock
                                     Style="{StaticResource FieldName}"
-                                    Text="Округление отметок, мм" />
+                                    Text="{DynamicResource Settings.ElevationRounding}" />
                                 <ui:TextBox
                                     Style="{StaticResource FieldValue}"
                                     Text="{Binding ElevationRoundingMm, UpdateSourceTrigger=PropertyChanged}" />
@@ -317,24 +318,25 @@
                                 Margin="0 10 0 4">
                                 <TextBlock
                                     Style="{StaticResource SectionTitle}"
-                                    Text="Зазоры по диапазонам габаритов" />
+                                    Text="{DynamicResource Settings.OffsetsTitle}" />
                                 <StackPanel
                                     HorizontalAlignment="Right"
                                     Orientation="Horizontal">
                                     <ui:Button
                                         Width="110"
                                         Margin="4 0"
-                                        Content="Добавить"
+                                        Content="{DynamicResource Common.Add}"
                                         Command="{Binding AddOffsetCommand}" />
                                     <ui:Button
                                         Width="110"
                                         Margin="4 0"
-                                        Content="Удалить"
+                                        Content="{DynamicResource Common.Remove}"
                                         Command="{Binding RemoveOffsetCommand}" />
                                 </StackPanel>
                             </DockPanel>
 
                             <DataGrid
+                                x:Name="OffsetsGrid"
                                 MinHeight="150"
                                 AutoGenerateColumns="False"
                                 CanUserAddRows="False"
@@ -345,21 +347,21 @@
                                 VirtualizingPanel.VirtualizationMode="Standard">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn
-                                        Header="Габарит от, мм"
+                                        loc:ColumnLocalization.Key="Settings.Column.From"
                                         Width="120"
                                         Binding="{Binding FromMm, UpdateSourceTrigger=PropertyChanged}" />
                                     <DataGridTextColumn
-                                        Header="до, мм"
+                                        loc:ColumnLocalization.Key="Settings.Column.To"
                                         Width="120"
                                         Binding="{Binding ToMm, UpdateSourceTrigger=PropertyChanged}" />
                                     <DataGridTextColumn
-                                        Header="Зазор, мм"
+                                        loc:ColumnLocalization.Key="Settings.Column.Offset"
                                         Width="120"
                                         Binding="{Binding OffsetMm, UpdateSourceTrigger=PropertyChanged}" />
                                     <!-- Шаблон, а не DataGridComboBoxColumn: та показывает значение
                                          только в режиме правки, и колонка выглядит пустой. -->
                                     <DataGridTemplateColumn
-                                        Header="Форма отверстия"
+                                        loc:ColumnLocalization.Key="Settings.Column.Shape"
                                         Width="*">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -383,47 +385,47 @@
                             Margin="12 10">
                             <TextBlock
                                 Style="{StaticResource SectionTitle}"
-                                Text="Общее для всех видов" />
+                                Text="{DynamicResource Settings.CommonTitle}" />
                             <TextBlock
                                 Style="{StaticResource Hint}"
-                                Text="Соприкасающиеся отверстия плагин заменяет одним: труба сквозь штукатурку, кладку и штукатурку - это одно отверстие, а не три." />
+                                Text="{DynamicResource Settings.CommonHint}" />
 
                             <DockPanel
                                 Style="{StaticResource FieldRow}"
-                                ToolTip="Габариты объединённого отверстия округляются до этого шага.">
+                                ToolTip="{DynamicResource Settings.UnitedRoundingTooltip}">
                                 <TextBlock
                                     Style="{StaticResource FieldName}"
-                                    Text="Округление объединённых, мм" />
+                                    Text="{DynamicResource Settings.UnitedRounding}" />
                                 <ui:TextBox
                                     Style="{StaticResource FieldValue}"
                                     Text="{Binding UnitedTaskSizeRoundingMm, UpdateSourceTrigger=PropertyChanged}" />
                             </DockPanel>
                             <DockPanel
                                 Style="{StaticResource FieldRow}"
-                                ToolTip="Слои конструкции могут идти с воздушной прослойкой. Если она не больше этого значения, отверстия объединяются.">
+                                ToolTip="{DynamicResource Settings.UnitedMaxGapTooltip}">
                                 <TextBlock
                                     Style="{StaticResource FieldName}"
-                                    Text="Наибольший зазор между слоями, мм" />
+                                    Text="{DynamicResource Settings.UnitedMaxGap}" />
                                 <ui:TextBox
                                     Style="{StaticResource FieldValue}"
                                     Text="{Binding UnitedTaskMaxGapMm, UpdateSourceTrigger=PropertyChanged}" />
                             </DockPanel>
                             <DockPanel
                                 Style="{StaticResource FieldRow}"
-                                ToolTip="Насколько отверстия могут не доходить друг до друга вдоль конструкции, чтобы всё же считаться соприкасающимися. Большое значение склеит соседние отверстия в одно огромное.">
+                                ToolTip="{DynamicResource Settings.TouchToleranceTooltip}">
                                 <TextBlock
                                     Style="{StaticResource FieldName}"
-                                    Text="Допуск соприкосновения, мм" />
+                                    Text="{DynamicResource Settings.TouchTolerance}" />
                                 <ui:TextBox
                                     Style="{StaticResource FieldValue}"
                                     Text="{Binding UnitedTaskTouchToleranceMm, UpdateSourceTrigger=PropertyChanged}" />
                             </DockPanel>
                             <DockPanel
                                 Style="{StaticResource FieldRow}"
-                                ToolTip="Элемент, задевший конструкцию углом, отверстия не требует. Ноль - выдавать задания и на касаниях.">
+                                ToolTip="{DynamicResource Settings.MinPassDepthTooltip}">
                                 <TextBlock
                                     Style="{StaticResource FieldName}"
-                                    Text="Наименьшая глубина прохода, мм" />
+                                    Text="{DynamicResource Settings.MinPassDepth}" />
                                 <ui:TextBox
                                     Style="{StaticResource FieldValue}"
                                     Text="{Binding MinPassDepthMm, UpdateSourceTrigger=PropertyChanged}" />
@@ -431,7 +433,7 @@
 
                             <CheckBox
                                 Margin="0 8 0 0"
-                                Content="Показывать отчёт об ошибках расстановки"
+                                Content="{DynamicResource Settings.ShowPlacingErrors}"
                                 IsChecked="{Binding ShowPlacingErrors}" />
                         </StackPanel>
                     </Border>
@@ -443,16 +445,16 @@
                             Margin="12 10">
                             <TextBlock
                                 Style="{StaticResource SectionTitle}"
-                                Text="Сервер согласования" />
+                                Text="{DynamicResource Settings.ServerTitle}" />
                             <TextBlock
                                 Style="{StaticResource Hint}"
-                                Text="Куда уходят выданные задания и решения по согласованию. Пусто - берётся адрес из ClashServer.json рядом со сборкой плагина (тот же сервер, что у ClashNavigator)." />
+                                Text="{DynamicResource Settings.ServerHint}" />
 
                             <DockPanel
                                 Style="{StaticResource FieldRow}">
                                 <TextBlock
                                     Style="{StaticResource FieldName}"
-                                    Text="Адрес сервера" />
+                                    Text="{DynamicResource Settings.ServerUrl}" />
                                 <ui:TextBox
                                     Width="300"
                                     HorizontalAlignment="Left"
@@ -483,13 +485,13 @@
                         Width="120"
                         Margin="6 0"
                         Appearance="Info"
-                        Content="Сохранить"
+                        Content="{DynamicResource Common.Save}"
                         Click="ButtonOk_Click"
                         Command="{Binding AcceptViewCommand}" />
                     <ui:Button
                         Width="120"
                         Margin="6 0"
-                        Content="Отмена"
+                        Content="{DynamicResource Common.Cancel}"
                         IsCancel="True"
                         Click="ButtonCancel_Click" />
                 </StackPanel>

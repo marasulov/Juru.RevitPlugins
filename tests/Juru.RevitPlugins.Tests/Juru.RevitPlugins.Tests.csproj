@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <IsPackable>false</IsPackable>
@@ -21,6 +21,10 @@
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
         <PackageReference Include="xunit" Version="2.9.2" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+
+        <!-- Операторы диапазона из подключённого файлом RussianText: на net48 System.Index и
+             System.Range приходят пакетом, как и в самом Juru.RevitPlugins.Schedules. -->
+        <PackageReference Include="Polyfill" Version="10.5.1" PrivateAssets="all" />
     </ItemGroup>
 
     <!-- Только Core: здесь лежит логика, у которой нет ни одной ссылки на Revit API, и она
@@ -28,6 +32,15 @@
          рядом. -->
     <ItemGroup>
         <ProjectReference Include="..\..\src\Juru.RevitPlugins.Core\Juru.RevitPlugins.Core.csproj" />
+    </ItemGroup>
+
+    <!-- Файлом, а не ссылкой на проект: Juru.RevitPlugins.Schedules тянет сборки Ревита, с
+         которыми тесты не выполняются (см. Readme.md). Сам RussianText под критерий подходит - в
+         нём нет ни одной ссылки на Revit API, это чистый разбор строк, и ошибка в нём тиха:
+         неразобранная двуязычная строка просто множит ключи в словаре. -->
+    <ItemGroup>
+        <Compile Include="..\..\src\Juru.RevitPlugins.Schedules\Services\RussianText.cs"
+                 Link="RussianText.cs" />
     </ItemGroup>
 
 </Project>

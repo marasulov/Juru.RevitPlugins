@@ -125,11 +125,9 @@
                    Text="{Binding Note}" />
 
         <DockPanel Grid.Row="2" Margin="0,16,0,0">
-            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                       Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                       ToolTip="{Binding ConfigPath}"
-                       Text="{Binding ConfigPath}" />
-
+            <!-- Кнопки объявлены раньше пути: DockPanel раздаёт ширину в порядке объявления, и
+                 путь, объявленный первым, забирал её себе целиком - «Проверить» выдавливалась за
+                 край окна. Путь идёт последним и занимает остаток, обрезаясь многоточием. -->
             <ui:Button DockPanel.Dock="Right" Content="{x:Static loc:Text.Cancel}" Width="100" Margin="8,0,0,0"
                        Click="ButtonCancel_Click" />
             <ui:Button DockPanel.Dock="Right" Content="{x:Static loc:Text.Save}" Width="110" Appearance="Primary"
@@ -137,7 +135,10 @@
             <ui:Button DockPanel.Dock="Right" Content="{x:Static loc:Text.Check}" Width="110" Margin="8,0,8,0"
                        Command="{Binding CheckCommand}" />
 
-            <Border />
+            <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                       Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                       ToolTip="{Binding ConfigPath}"
+                       Text="{Binding ConfigPath}" />
         </DockPanel>
     </Grid>
 </Window>

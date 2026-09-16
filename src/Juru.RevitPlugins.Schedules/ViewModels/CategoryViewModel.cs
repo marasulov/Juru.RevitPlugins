@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
@@ -53,7 +52,8 @@ public sealed partial class CategoryViewModel : ObservableObject
         this.settings = settings;
         this.show = show;
 
-        Rows = new ObservableCollection<ElementTextRowViewModel>(rows);
+        Rows = new RowCollection<ElementTextRowViewModel>();
+        Rows.Reset(rows);
 
         view = new CollectionViewSource { Source = Rows }.View;
         view.Filter = Matches;
@@ -72,7 +72,7 @@ public sealed partial class CategoryViewModel : ObservableObject
     /// <summary>Текст вместо таблицы, когда переводить в этой категории нечего.</summary>
     public string EmptyNote { get; }
 
-    public ObservableCollection<ElementTextRowViewModel> Rows { get; }
+    public RowCollection<ElementTextRowViewModel> Rows { get; }
 
     public bool HasRows
     {
@@ -124,13 +124,13 @@ public sealed partial class CategoryViewModel : ObservableObject
             row.PropertyChanged -= OnRowChanged;
         }
 
-        Rows.Clear();
-
         foreach (var row in rows)
         {
             row.PropertyChanged += OnRowChanged;
-            Rows.Add(row);
         }
+
+        // Целиком, а не построчно: см. RowCollection.
+        Rows.Reset(rows);
 
         view.Refresh();
 

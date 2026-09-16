@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,7 +46,7 @@ public sealed class CopyScheduleToDraftingViewCommand : ExternalCommand
         using var transaction = new Transaction(document, $"Английская копия: {schedule.Name}");
         transaction.Start();
 
-        var snapshot = new ScheduleTableReader(document).Read(schedule, exportedText);
+        var snapshot = new ScheduleTableReader().Read(schedule, exportedText);
         var writer = new DraftingTableWriter(document);
         var result = writer.Draw(snapshot, glossary);
 

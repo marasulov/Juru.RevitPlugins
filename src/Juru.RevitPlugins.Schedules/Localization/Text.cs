@@ -173,9 +173,92 @@ public static class Text
         get { return Pick("Спецификации", "Schedules"); }
     }
 
-    public static string TranslationsTab
+    public static string Dictionary
     {
-        get { return Pick("Строки на перевод", "Texts to translate"); }
+        get { return Pick("Словарь", "Dictionary"); }
+    }
+
+    public static string DictionaryTooltip
+    {
+        get { return Pick("Весь словарь переводов: правка вручную и свои строки", "The whole translation dictionary: edit by hand and add your own entries"); }
+    }
+
+    public static string DictionaryTitle
+    {
+        get { return Pick("Словарь переводов", "Translation dictionary"); }
+    }
+
+    public static string DictionaryHint
+    {
+        get { return Pick("Перевод, вписанный здесь, помечается как сделанный вручную: машинный перевод его не перетирает ни в этом прогоне, ни в следующих. Словарь общий для всех моделей.", "A translation typed here is marked as made by hand: machine translation never overwrites it, neither in this run nor in later ones. The dictionary is shared across models."); }
+    }
+
+    public static string DictionarySearchPlaceholder
+    {
+        get { return Pick("Поиск по тексту или переводу", "Search by text or translation"); }
+    }
+
+    public static string DictionaryAdd
+    {
+        get { return Pick("Добавить строку", "Add a row"); }
+    }
+
+    public static string DictionaryRemove
+    {
+        get { return Pick("Удалить", "Remove"); }
+    }
+
+    public static string DictionaryEmpty
+    {
+        get { return Pick("Словарь пуст. Он заполняется при сборке английского комплекта, а своё можно вписать кнопкой «Добавить строку».", "The dictionary is empty. It fills up when the English set is built, and you can type your own with «Add a row»."); }
+    }
+
+    /// <summary>Строк {0}, переведено {1}, из них вручную {2}.</summary>
+    public static string DictionarySummary
+    {
+        get { return Pick("Строк {0}, переведено {1}, из них вручную {2}", "Rows {0}, translated {1}, of them by hand {2}"); }
+    }
+
+    /// <summary>Словарь сохранён: строк {0}.</summary>
+    public static string DictionarySaved
+    {
+        get { return Pick("Словарь сохранён: строк {0}", "Dictionary saved: {0} rows"); }
+    }
+
+    /// <summary>Не удалось сохранить словарь: {0}.</summary>
+    public static string DictionarySaveFailed
+    {
+        get { return Pick("Не удалось сохранить словарь: {0}", "Could not save the dictionary: {0}"); }
+    }
+
+    public static string DictionaryNewKey
+    {
+        get { return Pick("Новая строка", "New entry"); }
+    }
+
+    public static string ColumnOrigin
+    {
+        get { return Pick("Источник", "Origin"); }
+    }
+
+    public static string OriginHuman
+    {
+        get { return Pick("вручную", "by hand"); }
+    }
+
+    public static string OriginMachine
+    {
+        get { return Pick("машинный", "machine"); }
+    }
+
+    public static string OriginBase
+    {
+        get { return Pick("базовый", "base"); }
+    }
+
+    public static string OriginDerived
+    {
+        get { return Pick("выведен", "derived"); }
     }
 
     public static string ColumnSchedule
@@ -598,6 +681,109 @@ public static class Text
         get { return Pick("Собираю английский комплект…", "Building the English set…"); }
     }
 
+    /// <summary>Служба перевода: {0}, переведено сейчас: {1}.</summary>
+    public static string DialogTranslationService
+    {
+        get { return Pick("Служба перевода: {0}, переведено сейчас: {1}", "Translation service: {0}, translated now: {1}"); }
+    }
+
+    /// <summary>Строк словаря без перевода: {0}.</summary>
+    public static string DialogDictionaryUntranslated
+    {
+        get { return Pick("Строк словаря без перевода: {0}", "Dictionary rows without a translation: {0}"); }
+    }
+
+    /// <summary>Спецификаций нарисовано: {0}, с ошибками: {1}.</summary>
+    public static string DialogSchedules
+    {
+        get { return Pick("Спецификаций нарисовано: {0}, с ошибками: {1}", "Schedules drawn: {0}, failed: {1}"); }
+    }
+
+    public static string DialogCategoriesHeader
+    {
+        get { return Pick("Категории модели", "Model categories"); }
+    }
+
+    /// <summary>{0}: записано {1}, откачено {2}, без изменений {3}.</summary>
+    public static string DialogCategoryLine
+    {
+        get { return Pick("{0}: записано {1}, откачено {2}, без изменений {3}", "{0}: written {1}, reverted {2}, unchanged {3}"); }
+    }
+
+    public static string DialogNoCategories
+    {
+        get { return Pick("Категории модели не переводились.", "No model categories were translated."); }
+    }
+
+    /// <summary>Таблица ключевых примечаний: {0}.</summary>
+    public static string DialogKeynotes
+    {
+        get { return Pick("Таблица ключевых примечаний: {0}", "Keynote table: {0}"); }
+    }
+
+    /// <summary>Пропущено без перевода: {0}.</summary>
+    public static string DialogSkipped
+    {
+        get { return Pick("Отмечено, но перевода нет ни в окне, ни в словаре: {0}. Такие строки пропущены - переведите их кнопкой «Перевести недостающие» на вкладке категории либо впишите перевод в словарь.", "Marked, but no translation in the window or the dictionary: {0}. Such rows were skipped - translate them with «Translate missing» on the category tab, or type the translation into the dictionary."); }
+    }
+
+    /// <summary>Ошибок перевода: {0}. {1}</summary>
+    public static string DialogFailures
+    {
+        get { return Pick("Ошибок перевода: {0}. {1}", "Translation errors: {0}. {1}"); }
+    }
+
+    public static string DialogOpenReport
+    {
+        get { return Pick("Открыть отчёт", "Open the report"); }
+    }
+
+    public static string NoteDone
+    {
+        get { return Pick("Готово.", "Done."); }
+    }
+
+    /// <summary>Спецификаций нарисовано: {0}.</summary>
+    public static string NoteSchedulesDrawn
+    {
+        get { return Pick("Спецификаций: {0}", "Schedules: {0}"); }
+    }
+
+    /// <summary>Из них с ошибками: {0}.</summary>
+    public static string NoteSchedulesFailed
+    {
+        get { return Pick("из них с ошибками {0}", "of them failed {0}"); }
+    }
+
+    /// <summary>Записано в модель {0}, откачено {1}.</summary>
+    public static string NoteWritten
+    {
+        get { return Pick("Записано в модель: {0}, откачено: {1}.", "Written to the model: {0}, reverted: {1}."); }
+    }
+
+    /// <summary>Переведено машиной сейчас: {0}.</summary>
+    public static string NoteMachineTranslated
+    {
+        get { return Pick("Переведено машиной: {0}.", "Machine-translated now: {0}."); }
+    }
+
+    /// <summary>Отмечено, но перевода нет: {0}.</summary>
+    public static string NoteSkippedWithoutTranslation
+    {
+        get { return Pick("Пропущено без перевода: {0}.", "Skipped without a translation: {0}."); }
+    }
+
+    /// <summary>Предваряет путь файла отчёта в строке состояния.</summary>
+    public static string NoteReportAt
+    {
+        get { return Pick("Отчёт:", "Report:"); }
+    }
+
+    public static string StatusModelClosed
+    {
+        get { return Pick("Модель закрыта", "The model is closed"); }
+    }
+
     public static string StatusReadFailed
     {
         get { return Pick("Прочитать спецификации не удалось.", "Could not read the schedules."); }
@@ -784,11 +970,6 @@ public static class Text
     public static string SummarySchedules
     {
         get { return Pick("Выбрано {0} из {1}, строк без перевода {2}", "Checked {0} of {1}, texts without a translation {2}"); }
-    }
-
-    public static string SummaryTranslations
-    {
-        get { return Pick("Строк {0}, без перевода {1}", "Texts {0}, without a translation {1}"); }
     }
 
     public static string SummaryCategory

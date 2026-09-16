@@ -6,6 +6,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 
 using Juru.RevitPlugins.Core.FileNaming;
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.Core.Theming;
 using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.Models.Server;
@@ -41,9 +42,11 @@ public class ShowOpeningTasksCommand : IExternalCommand {
         var uiApplication = commandData.Application;
         var doc = uiApplication.ActiveUIDocument.Document;
         var config = OpeningsConfig.GetOpeningsConfig();
+        var culture = PluginCulture.Resolve(config, uiApplication.Application.Language);
+        var localization = PluginLocalization.Load(typeof(ShowOpeningTasksCommand), culture);
 
-        if(!IsMepDocument(doc, config, out string error)) {
-            TaskDialog.Show("Навигатор по заданиям", error);
+        if(!IsMepDocument(doc, config, localization, out string error)) {
+            TaskDialog.Show(localization.GetString("Navigator.DialogTitle"), error);
             return Result.Cancelled;
         }
 
@@ -55,12 +58,12 @@ public class ShowOpeningTasksCommand : IExternalCommand {
         JuruTheme.Apply();
 
         var viewModel = new OpeningsNavigatorViewModel(
-            config, new RevitActionRunner(), GetFileInfo(doc), GetClient(config));
+            config, localization, new RevitActionRunner(), GetFileInfo(doc), GetClient(config));
         // Первая загрузка идёт прямо здесь: команда выполняется в контексте API, и внешнее событие
         // для неё не нужно. Обновление из окна пойдёт уже через событие.
         viewModel.Reload(uiApplication);
 
-        _window = new OpeningsNavigatorWindow { DataContext = viewModel };
+        _window = new OpeningsNavigatorWindow(localization) { DataContext = viewModel };
         _window.Closed += (_, _) => _window = null;
         new WindowInteropHelper(_window) { Owner = uiApplication.MainWindowHandle };
         _window.Show();
@@ -89,18 +92,15 @@ public class ShowOpeningTasksCommand : IExternalCommand {
     /// <summary>
     /// Проверяет, что файл выдаёт задания на отверстия: пока навигатор показывает только исходящие.
     /// </summary>
-    private bool IsMepDocument(Document doc, OpeningsConfig config, out string error) {
+    private bool IsMepDocument(Document doc, OpeningsConfig config, PluginLocalization localization, out string error) {
         error = null;
         if(!new DisciplineResolver(config).TryResolve(doc.PathName, out var discipline, out _)) {
-            error = "Дисциплину файла определить не удалось: имя не соответствует стандарту "
-                + "(Проект-Объект-Дисциплина-vNN) и не подходит ни под одно правило из настроек.";
+            error = localization.GetString("Navigator.WrongFileNameError");
             return false;
         }
 
         if(!discipline.IssuesOpeningTasks()) {
-            error = "Дисциплина файла - " + discipline
-                + ". Навигатор показывает исходящие задания и работает в файлах WSS, ELE и HVC. "
-                + "Полученные задания в файлах ARC и STR смотрят в окне согласования.";
+            error = localization.GetString("Navigator.WrongDisciplineErrorFormat", discipline);
             return false;
         }
 

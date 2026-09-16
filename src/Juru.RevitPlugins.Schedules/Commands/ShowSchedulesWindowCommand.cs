@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Windows.Interop;
 
 using Autodesk.Revit.Attributes;
@@ -44,6 +46,39 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
 
     private static SchedulesWindow? openWindow;
 
+    /// <summary>
+    ///     Регистрирует поиск зависимостей рядом с этой сборкой один раз на сеанс - раньше любого
+    ///     обращения к ним.
+    /// </summary>
+    /// <remarks>
+    ///     AddinManager копирует всю папку сборки во временный каталог, и нужные DLL (например,
+    ///     System.Text.Encoding.CodePages, которым <see cref="Services.ScheduleTextExporter" />
+    ///     подключает кодовую страницу 1251) лежат там же, рядом. Но .NET Framework их не находит:
+    ///     обычная привязка Fusion не пробует папку загруженной сборки сама по себе - тот же класс
+    ///     проблемы, что уже встречался с Wpf.Ui.dll под pyRevit (см. память проекта), только без
+    ///     стороннего конфликтующего экземпляра - просто мимо. При обычной установке эта DLL лежит
+    ///     в папке плагина и обычно резолвится штатно, но обработчик безвреден и там - сработает,
+    ///     только если понадобится.
+    /// </remarks>
+    static ShowSchedulesWindowCommand()
+    {
+        AppDomain.CurrentDomain.AssemblyResolve += ResolveSiblingAssembly;
+    }
+
+    private static Assembly? ResolveSiblingAssembly(object sender, ResolveEventArgs args)
+    {
+        var directory = Path.GetDirectoryName(typeof(ShowSchedulesWindowCommand).Assembly.Location);
+
+        if (directory is null)
+        {
+            return null;
+        }
+
+        var path = Path.Combine(directory, new AssemblyName(args.Name).Name + ".dll");
+
+        return File.Exists(path) ? Assembly.LoadFrom(path) : null;
+    }
+
     public override void Execute()
     {
         if (openWindow is not null)
@@ -58,13 +93,15 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
         JuruTheme.Apply();
 
         var config = SchedulesConfig.Load();
-        var host = new Host(Application.ActiveUIDocument, config, new RevitActionRunner());
+        var modelKey = DocumentKey(Application.ActiveUIDocument.Document);
+        var host = new Host(modelKey, config, new RevitActionRunner());
         var viewModel = new SchedulesWindowViewModel(config, host);
 
         host.Attach(viewModel);
 
         openWindow = new SchedulesWindow(viewModel);
-        openWindow.Closed += (_, _) => openWindow = null;
+
+        CloseWithDocument(openWindow, Application.Application, modelKey);
 
         new WindowInteropHelper(openWindow) { Owner = Application.MainWindowHandle };
 
@@ -76,12 +113,90 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
     }
 
     /// <summary>
+    ///     Закрывает окно вместе с моделью, для которой оно открыто.
+    /// </summary>
+    /// <remarks>
+    ///     Окно немодальное и живёт само по себе: Ревит закроет файл, а оно останется висеть со
+    ///     строками исчезнувшей модели. Дальше любое действие обращается к закрытому документу, а
+    ///     это не исключение, а <c>AccessViolationException</c> из нативной части Ревита —
+    ///     «Attempted to read or write protected memory». Заодно снимается и вторая беда: экземпляр
+    ///     окна один на сеанс, и без закрытия команда в новой модели просто активировала бы старое
+    ///     окно, привязанное к закрытой.
+    /// </remarks>
+    private static void CloseWithDocument(
+        System.Windows.Window window,
+        Autodesk.Revit.ApplicationServices.Application application,
+        string path)
+    {
+        void OnClosing(object sender, Autodesk.Revit.DB.Events.DocumentClosingEventArgs args)
+        {
+            if (string.Equals(DocumentKey(args.Document), path, StringComparison.CurrentCultureIgnoreCase))
+            {
+                window.Close();
+            }
+        }
+
+        application.DocumentClosing += OnClosing;
+
+        window.Closed += (_, _) =>
+        {
+            application.DocumentClosing -= OnClosing;
+            openWindow = null;
+        };
+    }
+
+    /// <summary>
+    ///     Чем отличать одну открытую модель от другой. Путь, а не сам <c>Document</c>: ссылки на
+    ///     него сравнивать нельзя — Ревит отдаёт обёртки, а у несохранённой модели пути нет, и тогда
+    ///     остаётся имя.
+    /// </summary>
+    private static string DocumentKey(Document document)
+    {
+        return document.PathName is { Length: > 0 } path ? path : document.Title;
+    }
+
+    /// <summary>
     ///     Сторона модели: выполняет запросы окна во внешнем событии.
     /// </summary>
-    private sealed class Host(UIDocument uiDocument, SchedulesConfig config, RevitActionRunner runner)
+    private sealed class Host(string modelKey, SchedulesConfig config, RevitActionRunner runner)
         : ISchedulesHost
     {
         private SchedulesWindowViewModel? viewModel;
+
+        /// <summary>
+        ///     Живой <c>UIDocument</c> нашей модели либо <c>null</c>, если её больше нет.
+        /// </summary>
+        /// <remarks>
+        ///     Берётся заново на каждое действие, а не запоминается при открытии окна: запомненный
+        ///     переживает закрытие файла, и обращение к нему валит Ревит обращением к освобождённой
+        ///     памяти. По той же причине модель опознаётся запомненной строкой пути, а не ссылкой на
+        ///     <c>Document</c>: у закрытого и путь уже не спросить. Ищется среди открытых моделей, а
+        ///     не берётся активная: активной может быть вторая модель, а работать окно должно со
+        ///     своей.
+        /// </remarks>
+        private UIDocument? Live(UIApplication uiApplication)
+        {
+            // Активный, если это наша модель: у него есть активный вид, а у собранного по документу
+            // его может не быть вовсе.
+            if (uiApplication.ActiveUIDocument is { } active
+                && active.Document.IsValidObject
+                && string.Equals(DocumentKey(active.Document), modelKey, StringComparison.CurrentCultureIgnoreCase))
+            {
+                return active;
+            }
+
+            foreach (Document open in uiApplication.Application.Documents)
+            {
+                if (open.IsValidObject
+                    && !open.IsLinked
+                    && string.Equals(DocumentKey(open), modelKey, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return new UIDocument(open);
+                }
+            }
+
+            return null;
+        }
 
         public void Attach(SchedulesWindowViewModel attached)
         {
@@ -93,6 +208,13 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
             runner.Run(uiApplication =>
             {
                 using var suppression = RevitContext.BeginDialogSuppressionScope(TaskDialogResult.Ok);
+
+                if (Live(uiApplication) is not { } uiDocument)
+                {
+                    viewModel!.FinishLoading(Text.StatusModelClosed);
+
+                    return;
+                }
 
                 try
                 {
@@ -107,8 +229,7 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
 
                     viewModel!.Fill(
                         schedules.Select(schedule => new ScheduleRowViewModel(schedule, glossary)).ToList(),
-                        TranslationRowViewModel.Build(schedules, glossary, () => viewModel!.Layout),
-                        BuildCategories(Scope(uiApplication), glossary, () => viewModel!.Layout));
+                        BuildCategories(Scope(uiApplication, uiDocument), glossary, () => viewModel!.Layout));
 
                     if (schedules.Count is 0)
                     {
@@ -134,7 +255,13 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
         {
             runner.Run(uiApplication =>
             {
-                var document = uiApplication.ActiveUIDocument;
+                // Своя модель, а не активная: активной может быть вторая, а закрытой - ни одной.
+                if (Live(uiApplication) is not { } document)
+                {
+                    viewModel!.StatusNote = Text.StatusModelClosed;
+
+                    return;
+                }
 
                 if (document.Document.GetElement(viewId) is View view)
                 {
@@ -168,7 +295,12 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
             {
                 using var suppression = RevitContext.BeginDialogSuppressionScope(TaskDialogResult.Ok);
 
-                var document = uiApplication.ActiveUIDocument;
+                if (Live(uiApplication) is not { } document)
+                {
+                    viewModel!.StatusNote = Text.StatusModelClosed;
+
+                    return;
+                }
 
                 // Лист, вид и спецификация - сами виды: их открывают, а не ищут в текущем виде.
                 // ShowElements для них подходящего вида не находит и молча ничего не делает -
@@ -198,8 +330,15 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
 
             viewModel!.SetBusy(true, Text.StatusBuilding);
 
-            runner.Run(_ =>
+            runner.Run(uiApplication =>
             {
+                if (Live(uiApplication) is not { } uiDocument)
+                {
+                    viewModel!.SetBusy(false, Text.StatusModelClosed);
+
+                    return;
+                }
+
                 EnglishSetResult result;
 
                 // Подавление диалогов глушит и наш собственный отчёт, поэтому оно закрывается до
@@ -223,7 +362,7 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
                     throw;
                 }
 
-                viewModel!.SetBusy(false, Describe(result));
+                viewModel!.SetBusy(false, Describe(result) + DescribeReport(result));
 
                 ShowResult(result);
 
@@ -241,7 +380,7 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
         ///     Область сканирования: вся модель либо активный вид. Вид берётся у приложения в момент
         ///     чтения, а не запоминается: пользователь мог сменить его, пока окно открыто.
         /// </summary>
-        private CollectScope Scope(UIApplication uiApplication)
+        private CollectScope Scope(UIApplication uiApplication, UIDocument uiDocument)
         {
             if (!viewModel!.ScanActiveViewOnly)
             {
@@ -295,51 +434,115 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
             return collected;
         }
 
+        /// <summary>
+        ///     Итог прогона одной строкой: что нарисовано, что записано в модель, что не далось.
+        /// </summary>
+        /// <remarks>
+        ///     Строка состояния - единственное место, где итог виден всегда: окно с подробностями
+        ///     показывается только при сбоях. Поэтому здесь все числа, а не «Готово», и собирается
+        ///     она из переводимых строк - интерфейс бывает и английским.
+        /// </remarks>
         private static string Describe(EnglishSetResult result)
         {
-            var written = result.Categories.Sum(category => category.WrittenCount);
-            var reverted = result.Categories.Sum(category => category.RevertedCount);
+            var parts = new List<string> { Text.NoteDone };
 
-            var schedules = result.DrawnCount + result.FailedCount is 0
-                ? string.Empty
-                : $"Спецификаций {result.DrawnCount}"
-                    + (result.FailedCount is 0 ? string.Empty : $", с ошибками {result.FailedCount}")
-                    + ". ";
+            if (result.DrawnCount + result.FailedCount > 0)
+            {
+                var schedules = string.Format(Text.NoteSchedulesDrawn, result.DrawnCount);
 
-            var skipped = result.WithoutTranslationCount is 0
-                ? string.Empty
-                : $" Отмечено без перевода и пропущено: {result.WithoutTranslationCount}.";
+                parts.Add(result.FailedCount is 0
+                    ? schedules + "."
+                    : $"{schedules}, {string.Format(Text.NoteSchedulesFailed, result.FailedCount)}.");
+            }
 
-            return $"Готово. {schedules}В модели записано {written}, откачено {reverted}.{skipped}";
+            parts.Add(string.Format(
+                Text.NoteWritten,
+                result.Categories.Sum(category => category.WrittenCount),
+                result.Categories.Sum(category => category.RevertedCount)));
+
+            if (result.TranslatedNowCount > 0)
+            {
+                parts.Add(string.Format(Text.NoteMachineTranslated, result.TranslatedNowCount));
+            }
+
+            if (result.WithoutTranslationCount > 0)
+            {
+                parts.Add(string.Format(Text.NoteSkippedWithoutTranslation, result.WithoutTranslationCount));
+            }
+
+            return string.Join(" ", parts);
         }
 
+        /// <summary>
+        ///     Путь отчёта для строки состояния: без диалога его иначе негде взять.
+        /// </summary>
+        private static string DescribeReport(EnglishSetResult result)
+        {
+            return result.ReportPath is null ? string.Empty : $" {Text.NoteReportAt} {result.ReportPath}";
+        }
+
+        /// <summary>
+        ///     Показывает итог прогона: что удалось и что нет.
+        /// </summary>
+        /// <remarks>
+        ///     Разделено на «сделано» и «не получилось»: в одном списке вперемешку числа успеха
+        ///     теряются среди причин отказа, а решение принимают как раз по вторым. Строки, которые
+        ///     не к чему сказать, в текст не попадают - пустая «Ошибок перевода: 0» только мешает.
+        /// </remarks>
         private static void ShowResult(EnglishSetResult result)
         {
-            var failures = result.Failures.Count is 0
-                ? string.Empty
-                : $"Ошибок перевода: {result.Failures.Count}. {result.Failures[0]}";
+            var done = new List<string>
+            {
+                string.Format(Text.DialogTranslationService, result.TranslatorNote, result.TranslatedNowCount)
+            };
 
-            var skipped = result.WithoutTranslationCount is 0
-                ? string.Empty
-                : $"{Environment.NewLine}Отмечено, но перевода нет ни в окне, ни в глоссарии: "
-                    + $"{result.WithoutTranslationCount}. Такие строки пропущены — переведите их "
-                    + "кнопкой «Перевести недостающие» на вкладке категории или впишите вручную.";
+            if (result.DrawnCount + result.FailedCount > 0)
+            {
+                done.Add(string.Format(Text.DialogSchedules, result.DrawnCount, result.FailedCount));
+            }
+
+            done.Add(DescribeCategories(result));
+
+            if (result.KeynotePath is { Length: > 0 } keynotes)
+            {
+                done.Add(string.Format(Text.DialogKeynotes, keynotes));
+            }
+
+            var problems = new List<string>();
+
+            if (result.UntranslatedCount > 0)
+            {
+                problems.Add(string.Format(Text.DialogDictionaryUntranslated, result.UntranslatedCount));
+            }
+
+            if (result.WithoutTranslationCount > 0)
+            {
+                problems.Add(string.Format(Text.DialogSkipped, result.WithoutTranslationCount));
+            }
+
+            if (result.Failures.Count > 0)
+            {
+                problems.Add(string.Format(Text.DialogFailures, result.Failures.Count, result.Failures[0]));
+            }
+
+            foreach (var failure in result.Categories.SelectMany(category => category.Failures))
+            {
+                problems.Add(failure);
+            }
 
             var dialog = new TaskDialog(DialogTitle)
             {
                 MainInstruction = Describe(result),
-                MainContent = $"""
-                               Служба перевода: {result.TranslatorNote}, переведено сейчас {result.TranslatedNowCount}
-                               Строк глоссария без перевода: {result.UntranslatedCount}
-                               {DescribeCategories(result)}{skipped}
-                               {failures}
-                               """,
+                MainContent = string.Join(Environment.NewLine, done),
+                ExpandedContent = problems.Count is 0
+                    ? string.Empty
+                    : string.Join(Environment.NewLine, problems),
                 CommonButtons = TaskDialogCommonButtons.Close
             };
 
             if (result.ReportPath is not null)
             {
-                dialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink1, "Открыть отчёт");
+                dialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink1, Text.DialogOpenReport);
             }
 
             if (dialog.Show() is TaskDialogResult.CommandLink1 && result.ReportPath is not null)
@@ -352,14 +555,17 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
         {
             if (result.Categories.Count is 0)
             {
-                return "Категории модели не переводились.";
+                return Text.DialogNoCategories;
             }
 
             return string.Join(
                 Environment.NewLine,
-                result.Categories.Select(category =>
-                    $"{category.Category}: записано {category.WrittenCount}, "
-                    + $"откачено {category.RevertedCount}, без изменений {category.UnchangedCount}"));
+                result.Categories.Select(category => string.Format(
+                    Text.DialogCategoryLine,
+                    category.Category,
+                    category.WrittenCount,
+                    category.RevertedCount,
+                    category.UnchangedCount)));
         }
     }
 

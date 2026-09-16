@@ -5,6 +5,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 
 using Juru.RevitPlugins.Core.FileNaming;
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.Models.Server;
 
@@ -23,51 +24,50 @@ public class SendOpeningTasksCommand : IExternalCommand {
     public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements) {
         var doc = commandData.Application.ActiveUIDocument.Document;
         var config = OpeningsConfig.GetOpeningsConfig();
+        var culture = PluginCulture.Resolve(config, commandData.Application.Application.Language);
+        var localization = PluginLocalization.Load(typeof(SendOpeningTasksCommand), culture);
 
         if(!RevitFileNameInfo.TryParse(doc.PathName, out var fileInfo)) {
-            TaskDialog.Show("Отправка заданий",
-                "Имя файла не соответствует стандарту наименования "
-                + "(Проект-Объект-Дисциплина-vNN): без него нельзя определить проект и объект "
-                + "для сервера.");
+            TaskDialog.Show(
+                localization.GetString("Send.DialogTitle"),
+                localization.GetString("Navigator.WrongFileNameError"));
             return Result.Cancelled;
         }
 
         if(!fileInfo.Discipline.IssuesOpeningTasks()) {
-            TaskDialog.Show("Отправка заданий",
-                "Дисциплина файла - " + fileInfo.Discipline
-                + ". Задания на отверстия отправляются из файлов WSS, ELE и HVC.");
+            TaskDialog.Show(
+                localization.GetString("Send.DialogTitle"),
+                localization.GetString("Send.WrongDisciplineErrorFormat", fileInfo.Discipline));
             return Result.Cancelled;
         }
 
         string serverUrl = OpeningsServerOptions.ResolveUrl(config);
         if(string.IsNullOrWhiteSpace(serverUrl)) {
-            TaskDialog.Show("Отправка заданий",
-                "Адрес сервера не задан ни в настройках плагина, ни в ClashServer.json рядом со сборкой.");
+            TaskDialog.Show(
+                localization.GetString("Send.DialogTitle"),
+                localization.GetString("Approval.NoServerUrlError"));
             return Result.Cancelled;
         }
 
         var sender = new OpeningTasksSender(doc, config, new OpeningsServerClient(serverUrl));
-        if(sender.NeedsCoordinateWarning && !ConfirmWithoutSharedCoordinates()) {
+        if(sender.NeedsCoordinateWarning && !ConfirmWithoutSharedCoordinates(localization)) {
             return Result.Cancelled;
         }
 
         try {
             var outcome = sender.Send(fileInfo);
-            TaskDialog.Show("Отправка заданий", outcome.Report);
+            TaskDialog.Show(localization.GetString("Send.DialogTitle"), outcome.Report);
             return outcome.IsRefused ? Result.Cancelled : Result.Succeeded;
         } catch(Exception exception) when(exception is InvalidOperationException or TimeoutException) {
-            TaskDialog.Show("Отправка заданий", exception.Message);
+            TaskDialog.Show(localization.GetString("Send.DialogTitle"), exception.Message);
             return Result.Failed;
         }
     }
 
-    private bool ConfirmWithoutSharedCoordinates() {
-        var confirm = TaskDialog.Show("Отправка заданий",
-            "В файле не настроены общие координаты (Acquire Coordinates): "
-            + "точка съёмки и базовая точка проекта совпадают с внутренними координатами.\n\n"
-            + "Задания уйдут на сервер относительно базовой точки проекта - если общие координаты "
-            + "не согласованы с файлом АР/КР, они встанут там со смещением.\n\n"
-            + "Отправить всё равно?",
+    private bool ConfirmWithoutSharedCoordinates(PluginLocalization localization) {
+        var confirm = TaskDialog.Show(
+            localization.GetString("Send.DialogTitle"),
+            localization.GetString("Navigator.NoSharedCoordinatesText"),
             TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No, TaskDialogResult.No);
         return confirm == TaskDialogResult.Yes;
     }

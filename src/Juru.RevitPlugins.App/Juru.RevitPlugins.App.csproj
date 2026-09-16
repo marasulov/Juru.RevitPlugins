@@ -1,4 +1,4 @@
-<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+﻿<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
 
     <PropertyGroup>
         <UseWPF>true</UseWPF>
@@ -70,6 +70,8 @@
         <Resource Include="Resources\Icons\LoadOpeningsIcon32.png"/>
         <Resource Include="Resources\Icons\ApproveOpeningsIcon16.png"/>
         <Resource Include="Resources\Icons\ApproveOpeningsIcon32.png"/>
+        <Resource Include="Resources\Icons\EnglishSchedulesIcon16.png"/>
+        <Resource Include="Resources\Icons\EnglishSchedulesIcon32.png"/>
     </ItemGroup>
 
     <ItemGroup>

@@ -36,7 +36,7 @@ public sealed class FamilyTypes : TranslatableCategory
 
     public override IReadOnlyList<ElementText> Collect(CollectScope scope)
     {
-        var used = scope.Instances(typeof(Element))
+        var used = scope.AllInstances()
             .Select(element => element.GetTypeId())
             .Where(id => id != ElementId.InvalidElementId)
             .ToHashSet();

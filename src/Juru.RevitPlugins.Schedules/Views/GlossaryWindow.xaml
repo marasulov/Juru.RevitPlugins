@@ -1,0 +1,125 @@
+﻿<Window x:Class="Juru.RevitPlugins.Schedules.Views.GlossaryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:viewModels="clr-namespace:Juru.RevitPlugins.Schedules.ViewModels"
+        xmlns:loc="clr-namespace:Juru.RevitPlugins.Schedules.Localization"
+        mc:Ignorable="d"
+        Title="{x:Static loc:Text.DictionaryTitle}"
+        Height="640" Width="980" MinHeight="420" MinWidth="720"
+        FontSize="12"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        d:DataContext="{d:DesignInstance viewModels:GlossaryWindowViewModel, IsDesignTimeCreatable=False}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Juru.RevitPlugins.Schedules;component/Resources/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Margin="0,0,0,8"
+                   TextWrapping="Wrap"
+                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                   Text="{x:Static loc:Text.DictionaryHint}" />
+
+        <DockPanel Grid.Row="1" Margin="0,0,0,8">
+            <ui:Button DockPanel.Dock="Left" Content="{x:Static loc:Text.DictionaryAdd}" Margin="0,0,8,0"
+                       Command="{Binding AddCommand}" />
+            <ui:Button DockPanel.Dock="Left" Content="{x:Static loc:Text.DictionaryRemove}" Margin="0,0,16,0"
+                       Command="{Binding RemoveCommand}" />
+
+            <ui:TextBox DockPanel.Dock="Left" Width="260"
+                        PlaceholderText="{x:Static loc:Text.DictionarySearchPlaceholder}"
+                        Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+            <Border />
+        </DockPanel>
+
+        <!-- Пустой словарь выглядит сломанным: непонятно, файла нет или он не нашёлся. -->
+        <TextBlock Grid.Row="2" Margin="24" MaxWidth="520" TextWrapping="Wrap"
+                   TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"
+                   Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                   Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}"
+                   Text="{x:Static loc:Text.DictionaryEmpty}" />
+
+        <DataGrid Grid.Row="2"
+                  x:Name="Grid"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserReorderColumns="False"
+                  GridLinesVisibility="Horizontal"
+                  HeadersVisibility="Column"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow"
+                  IsSynchronizedWithCurrentItem="True"
+                  BorderThickness="1"
+                  BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}"
+                  EnableColumnVirtualization="False"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Standard"
+                  VirtualizingPanel.ScrollUnit="Pixel"
+                  ItemsSource="{Binding View}">
+
+            <DataGrid.Columns>
+                <!-- Исходный текст правится только у добавленных строк: у пришедших из файла он
+                     ключ подстановки, и правка ключа означала бы потерю связи с текстом модели. -->
+                <DataGridTextColumn Header="{x:Static loc:Text.ColumnSourceText}" Width="*"
+                                    Binding="{Binding SourceText, UpdateSourceTrigger=PropertyChanged}">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsNew}" Value="False">
+                                    <Setter Property="IsEnabled" Value="False" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="{x:Static loc:Text.ColumnTranslation}" Width="*"
+                                    Binding="{Binding Translation, UpdateSourceTrigger=PropertyChanged}" />
+
+                <DataGridTextColumn Header="{x:Static loc:Text.ColumnOrigin}" Width="100" IsReadOnly="True"
+                                    Binding="{Binding OriginNote}" />
+
+                <DataGridTextColumn Header="{x:Static loc:Text.ColumnSchedules}" Width="180" IsReadOnly="True"
+                                    Binding="{Binding Schedules}" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <DockPanel Grid.Row="3" Margin="0,12,0,0">
+            <!-- Кнопки раньше текста: DockPanel раздаёт ширину в порядке объявления, и текст,
+                 объявленный первым, забирает её себе, выдавливая кнопки за край окна. -->
+            <ui:Button DockPanel.Dock="Right" Content="{x:Static loc:Text.Cancel}" MinWidth="96"
+                       Click="ButtonCancel_Click" />
+            <ui:Button DockPanel.Dock="Right" Content="{x:Static loc:Text.Save}" MinWidth="96" Margin="0,0,8,0"
+                       Appearance="Primary"
+                       Click="ButtonSave_Click" />
+
+            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,16,0"
+                       Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                       Text="{Binding Summary}" />
+
+            <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                       Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                       ToolTip="{Binding Path}"
+                       Text="{Binding Path}" />
+        </DockPanel>
+    </Grid>
+</Window>

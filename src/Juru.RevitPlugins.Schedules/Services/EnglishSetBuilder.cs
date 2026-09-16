@@ -22,8 +22,11 @@ namespace Juru.RevitPlugins.Schedules.Services;
 ///     рисует их копии, а затем записывает переводы категорий модели.
 /// </summary>
 /// <remarks>
-///     Порядок важен: глоссарий должен лечь на диск до отрисовки, потому что подстановка при
-///     отрисовке идёт по файлу, а не по тому, что осталось в памяти окна.
+///     Порядок важен: спецификации перечитываются первыми, их текст дописывается в глоссарий, и
+///     только потом идёт отрисовка — подстановка при отрисовке читает файл, а не память окна.
+///     Перечитывание стоит здесь, а не при открытии окна: чтобы собрать текст спецификации целиком,
+///     её надо выгрузить на диск, и семьдесят таких выгрузок делали открытие окна долгим, тогда как
+///     нужны они только тому, кто нажал «Построить».
 /// </remarks>
 public sealed class EnglishSetBuilder(UIDocument uiDocument, SchedulesConfig config)
 {
@@ -66,13 +69,29 @@ public sealed class EnglishSetBuilder(UIDocument uiDocument, SchedulesConfig con
         var reportDirectory = ReportLocation.Create("EnglishSchedules", document.Title, runStamp);
         var glossaryPath = config.ResolveGlossaryPath();
 
+        // Отмеченное перечитывается до глоссария: его текст в глоссарий и попадёт. Без
+        // перерисовки перечитывать незачем — значения ячеек в живую спецификацию не записать.
+        var printed = redrawAsLines
+            ? new SheetScheduleCopyService(uiDocument).ReadPrinted(
+                selected.Select(schedule => schedule.Source).ToList(),
+                reportDirectory,
+                Step(progress, "Перечитываю отмеченные спецификации"))
+            : selected;
+
         progress?.Report("Сохраняю глоссарий и перевожу недостающие строки");
 
-        var merged = SaveGlossary(translations, glossaryPath, reportDirectory, out var translated, out var note);
+        var collected = CollectScheduleTexts(printed, redrawAsLines, glossaryPath);
+        var merged = SaveGlossary(
+            translations.Concat(collected).ToList(),
+            glossaryPath,
+            reportDirectory,
+            out var translated,
+            out var note);
+
         var glossary = Glossary.Load(glossaryPath, layout);
 
         var copies = redrawAsLines
-            ? Draw(selected, glossary, reportDirectory, progress)
+            ? Draw(printed, glossary, reportDirectory, progress)
             : [];
 
         var inPlace = redrawAsLines
@@ -235,28 +254,92 @@ public sealed class EnglishSetBuilder(UIDocument uiDocument, SchedulesConfig con
     }
 
     private IReadOnlyList<SheetScheduleCopy> Draw(
-        IReadOnlyList<ReadSchedule> selected,
+        IReadOnlyList<ReadSchedule> printed,
         Glossary glossary,
         string reportDirectory,
         IProgress<string>? progress)
     {
-        if (selected.Count is 0)
+        if (printed.Count is 0)
         {
             return [];
         }
 
-        var service = new SheetScheduleCopyService(uiDocument);
-
-        progress?.Report("Перечитываю отмеченные спецификации");
-
-        var printed = service.ReadPrinted(
-            selected.Select(schedule => schedule.Source).ToList(),
-            reportDirectory,
-            progress);
-
         progress?.Report("Рисую английские копии");
 
-        return service.DrawAll(printed, glossary, reportDirectory);
+        return new SheetScheduleCopyService(uiDocument).DrawAll(printed, glossary, reportDirectory);
+    }
+
+    /// <summary>
+    ///     Строки самих спецификаций для глоссария.
+    /// </summary>
+    /// <remarks>
+    ///     С перерисовкой берётся весь текст таблицы: в копии переводится каждая ячейка. Без неё —
+    ///     только то, что API даёт записать в живую спецификацию: имя, заголовки колонок и строковые
+    ///     значения фильтров. Собирать там значения ячеек незачем — записать их всё равно некуда.
+    /// </remarks>
+    private IReadOnlyList<GlossaryEntry> CollectScheduleTexts(
+        IReadOnlyList<ReadSchedule> printed,
+        bool redrawAsLines,
+        string glossaryPath)
+    {
+        var existing = GlossaryFile.ReadEntries(glossaryPath);
+
+        if (redrawAsLines)
+        {
+            // Базовый словарь - общий на все проекты, он лежит рядом с плагином, а не в глоссарии
+            // модели: глоссарий модели уже пришёл сюда как existing и сильнее базового.
+            var baseTerms = ReadBaseTerms(config.ResolveBaseGlossaryPath());
+
+            return GlossaryCollector.Collect(printed, existing, baseTerms).Entries;
+        }
+
+        var texts = new ScheduleTexts().Collect(printed.Select(schedule => schedule.Source.Schedule));
+
+        return texts
+            .Select(text => Source(text.SourceText))
+            .Where(text => text.Length > 0)
+            .Distinct(StringComparer.CurrentCulture)
+            .Select(text => new GlossaryEntry
+            {
+                Key = text,
+                Readable = RussianText.Normalize(text),
+                Suggestion = existing.TryGetValue(text, out var found) ? found.Text : string.Empty,
+                Source = existing.TryGetValue(text, out var kept) ? kept.Source : TranslationSource.Machine,
+                Occurrences = 0,
+                Schedules = []
+            })
+            .ToList();
+    }
+
+    /// <summary>
+    ///     Исходная половина строки, если она уже двуязычная. Иначе строка целиком.
+    /// </summary>
+    private static string Source(string text)
+    {
+        var trimmed = text.Trim();
+
+        return RussianText.TrySplitBilingual(trimmed, out var written, out _) ? written : trimmed;
+    }
+
+    /// <summary>Общий словарь повторяющихся терминов: проверяется после глоссария проекта.</summary>
+    private static IReadOnlyDictionary<string, string> ReadBaseTerms(string path)
+    {
+        var terms = new Dictionary<string, string>(StringComparer.CurrentCulture);
+
+        foreach (var pair in GlossaryFile.ReadEntries(path))
+        {
+            terms[RussianText.Normalize(pair.Key)] = pair.Value.Text;
+        }
+
+        return terms;
+    }
+
+    /// <summary>Сообщает о шаге и дальше пересылает ход работы как есть.</summary>
+    private static IProgress<string>? Step(IProgress<string>? progress, string note)
+    {
+        progress?.Report(note);
+
+        return progress;
     }
 
     /// <summary>

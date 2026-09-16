@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.Openings.Models.Configs;
 
 namespace Juru.RevitPlugins.Openings.ViewModels.Settings;
@@ -8,6 +9,8 @@ namespace Juru.RevitPlugins.Openings.ViewModels.Settings;
 /// Строка таблицы зазоров: диапазон габаритов элемента, зазор и форма отверстия.
 /// </summary>
 public partial class OffsetRangeViewModel : ObservableObject {
+    private readonly PluginLocalization _localization;
+
     [ObservableProperty]
     private string _fromMm;
 
@@ -20,7 +23,8 @@ public partial class OffsetRangeViewModel : ObservableObject {
     [ObservableProperty]
     private OpeningShape _shape;
 
-    public OffsetRangeViewModel(OffsetRange range) {
+    public OffsetRangeViewModel(OffsetRange range, PluginLocalization localization) {
+        _localization = localization;
         _fromMm = range.FromMm.ToString("0.##");
         _toMm = range.ToMm.ToString("0.##");
         _offsetMm = range.OffsetMm.ToString("0.##");
@@ -32,13 +36,13 @@ public partial class OffsetRangeViewModel : ObservableObject {
     /// </summary>
     public string GetError() {
         if(!double.TryParse(FromMm, out double from) || from < 0) {
-            return "Начало диапазона должно быть неотрицательным числом.";
+            return _localization.GetString("Settings.Error.RangeStartNonNegative");
         }
         if(!double.TryParse(ToMm, out double to) || to <= from) {
-            return "Конец диапазона должен быть больше начала.";
+            return _localization.GetString("Settings.Error.RangeEndGreaterThanStart");
         }
         if(!double.TryParse(OffsetMm, out double offset) || offset < 0) {
-            return "Зазор должен быть неотрицательным числом.";
+            return _localization.GetString("Settings.Error.OffsetNonNegative");
         }
         return null;
     }

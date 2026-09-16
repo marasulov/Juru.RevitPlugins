@@ -80,6 +80,14 @@ public sealed class Glossary
             return layout.Compose(key, translation);
         }
 
+        // Строку уже переводили и записали двуязычной: в словаре она лежит под исходной половиной,
+        // а из модели пришла целиком. Без этого перевод не нашёлся бы, и строка ушла бы в промахи.
+        if (RussianText.TrySplitBilingual(key, out var written, out _)
+            && translations.TryGetValue(written, out var found))
+        {
+            return layout.Compose(written, found);
+        }
+
         if (RussianText.ContainsCyrillic(key))
         {
             misses.TryGetValue(key, out var count);

@@ -48,15 +48,17 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
     ///     Читает то, что нужно окну выбора: имена, листы, заголовки колонок и снимок таблицы.
     /// </summary>
     /// <remarks>
-    ///     Выгрузка на диск нужна и здесь: <c>GetCellText</c> отдаёт текст не всех ячеек — текстовые
-    ///     параметры вроде состава пола возвращаются пустыми, и такая строка не попала бы ни в список
-    ///     на перевод, ни в глоссарий. А вот активация видов пропускается: она нужна только отрисовке
-    ///     копии, а окну выбора стоит перелистывания всех спецификаций модели на глазах
-    ///     у пользователя.
+    ///     Ни выгрузки на диск, ни активации видов: обе нужны только отрисовке копии. Выгрузка
+    ///     добирает текст, который <c>GetCellText</c> не отдаёт (текстовые параметры вроде состава
+    ///     пола возвращаются пустыми), но стоит она секунд на каждую спецификацию - на модели с
+    ///     семью десятками спецификаций это семь секунд на открытие окна ради двух счётчиков.
+    ///     Поэтому выгрузка делается один раз, при сборке, где она нужна по делу, а счётчики окна
+    ///     считаются по тому, что отдаёт таблица вида: они приблизительны, и на выбор спецификаций
+    ///     это не влияет.
     /// </remarks>
     public IReadOnlyList<ReadSchedule> ReadForSelection(IProgress<string>? progress = null, ElementId? sheetId = null)
     {
-        return ReadAll(null, progress, useExport: true, activateView: false, sheetId);
+        return ReadAll(null, progress, useExport: false, activateView: false, sheetId);
     }
 
     /// <summary>
@@ -78,7 +80,7 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
         }
 
         LeaveCopyView();
-        OriginalViewId = uiDocument.ActiveView.Id;
+        OriginalViewId = uiDocument.ActiveView?.Id;
 
         var read = new List<ReadSchedule>(entries.Count);
 
@@ -101,8 +103,10 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
     {
         // Активной может быть копия прошлого прогона: её удаление Revit запретит, а ссылка на неё после
         // удаления станет недействительной. Поэтому уходим с копии заранее и запоминаем вид по номеру.
+        // Активного вида может не быть вовсе: окно работает со своей моделью, а она не обязана
+        // быть открытой на виду - Ревит тогда отдаёт null, и возвращаться после отрисовки некуда.
         LeaveCopyView();
-        OriginalViewId = uiDocument.ActiveView.Id;
+        OriginalViewId = uiDocument.ActiveView?.Id;
 
         var found = new SheetScheduleFinder(document).Find(sheetId);
         var read = new List<ReadSchedule>(found.Count);
@@ -157,7 +161,7 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
             VisibleColumnHeadings = fields.Where(field => !field.IsHidden).Select(DescribeColumn).ToList(),
             HiddenFieldNames = fields.Where(field => field.IsHidden).Select(field => field.GetName()).ToList(),
             IsSplit = schedule.IsSplit(),
-            RowCountBeforeActivation = ReadBodyRowCount(schedule),
+            RowCountBeforeActivation = activateView ? ReadBodyRowCount(schedule) : 0,
             WasActivated = activateView && TryActivate(schedule),
             ExportedRowCount = exportedText?.Count ?? 0,
             ExportWarning = exportWarning
@@ -168,7 +172,7 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
 
         try
         {
-            var snapshot = new ScheduleTableReader(document).Read(schedule, exportedText);
+            var snapshot = new ScheduleTableReader().Read(schedule, exportedText);
 
             transaction.RollBack();
 
@@ -413,6 +417,16 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
         }
     }
 
+    /// <summary>
+    ///     Число строк тела до активации вида. Считается только там, где вид активируется: это
+    ///     число и нужно лишь для сравнения «до и после» в отчёте.
+    /// </summary>
+    /// <remarks>
+    ///     <c>GetTableData</c> вычисляет тело спецификации целиком - на модели с семью десятками
+    ///     спецификаций это пять секунд. А следующий за ним <c>RefreshData</c> в
+    ///     <see cref="ScheduleTableReader" /> это вычисление сбрасывает, и тело считается заново:
+    ///     окно выбора платило вдвое, второй раз - ради одного числа, которое в его отчёт не идёт.
+    /// </remarks>
     private int ReadBodyRowCount(ViewSchedule schedule)
     {
         try

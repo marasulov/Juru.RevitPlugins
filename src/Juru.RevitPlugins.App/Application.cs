@@ -129,6 +129,8 @@ namespace Juru.RevitPlugins.App
             var panel = Application.CreatePanel("Спецификации", TabName);
 
             panel.AddPushButton<ShowSchedulesWindowCommand>("Английский\nкомплект")
+                .SetImage(IconsPath + "EnglishSchedulesIcon16.png")
+                .SetLargeImage(IconsPath + "EnglishSchedulesIcon32.png")
                 .SetToolTip("Переводит спецификации, помещения, листы и другие категории модели на английский");
         }
     }

@@ -80,6 +80,26 @@ public partial class SchedulesWindow : Window
         }
     }
 
+    /// <summary>
+    ///     Открывает словарь переводов. Окно модальное над главным: словарь читает и пишет тот же
+    ///     файл, из которого сборка берёт перевод, и править его во время сборки нельзя.
+    /// </summary>
+    private void ButtonDictionary_Click(object sender, RoutedEventArgs eventArgs)
+    {
+        var dictionary = new GlossaryWindowViewModel(ViewModel.Config.ResolveGlossaryPath());
+        var window = new GlossaryWindow(dictionary) { Owner = this };
+
+        if (window.ShowDialog() is not true)
+        {
+            return;
+        }
+
+        ViewModel.StatusNote = window.Note ?? string.Empty;
+
+        // Колонки «Без перевода» считаются по словарю, а он только что изменился.
+        ViewModel.RefreshAgainstGlossary();
+    }
+
     private void ButtonSettings_Click(object sender, RoutedEventArgs eventArgs)
     {
         var settings = new SettingsViewModel(ViewModel.Config);

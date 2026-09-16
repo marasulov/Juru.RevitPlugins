@@ -1,14 +1,20 @@
 using System;
 using System.Windows;
 
+using Juru.RevitPlugins.Core.Localization;
+
 namespace Juru.RevitPlugins.Openings.Views;
 
 /// <summary>
 /// Окно хода расчёта с возможностью отмены.
 /// </summary>
 public partial class ProgressWindow : Window {
-    public ProgressWindow() {
+    private readonly PluginLocalization _localization;
+
+    public ProgressWindow(PluginLocalization localization) {
+        _localization = localization;
         InitializeComponent();
+        localization.ApplyTo(this);
     }
 
     /// <summary>
@@ -36,6 +42,6 @@ public partial class ProgressWindow : Window {
     private void OnCancelClick(object sender, RoutedEventArgs e) {
         Cancelled = true;
         CancelButton.IsEnabled = false;
-        StageText.Text = "Отмена...";
+        StageText.Text = _localization.GetString("Progress.Cancelling");
     }
 }
