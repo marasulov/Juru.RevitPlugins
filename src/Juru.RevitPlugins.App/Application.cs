@@ -21,38 +21,42 @@ namespace Juru.RevitPlugins.App
         ///     с <c>ArgumentException: The value cannot be empty</c>. U+200B (пробел нулевой
         ///     ширины) пробелом не считается, обрезку проходит и ничего не рисует.
         /// </summary>
-        private const string NoText = "\u200b";
+        private const string NoText = "​";
 
         public override void OnStartup()
         {
+            // Язык ставится до сборки панелей: подписи кнопок Revit забирает в момент создания и
+            // потом не перечитывает.
+            RibbonText.Use(Application.ControlledApplication.Language);
+
             CreateClashNavigatorPanel();
             CreateOpeningsPanel();
-            CreateSchedulesPanel();
+            CreateTextPanel();
         }
 
         private void CreateClashNavigatorPanel()
         {
             var panel = Application.CreatePanel("ClashNavigator", TabName);
 
-            panel.AddPushButton<FindClashesCommand>("Поиск\nколлизий")
+            panel.AddPushButton<FindClashesCommand>(RibbonText.FindClashes)
                 .SetImage(IconsPath + "FindClashesIcon16.png")
                 .SetLargeImage(IconsPath + "FindClashesIcon32.png")
-                .SetToolTip("Ищет коллизии в этом файле и связях по настроенным проверкам");
+                .SetToolTip(RibbonText.FindClashesTip);
 
-            panel.AddPushButton<GetClashesCommand>("Навигатор\nколлизий")
+            panel.AddPushButton<GetClashesCommand>(RibbonText.ClashNavigator)
                 .SetImage(IconsPath + "NavigatorIcon16Small.png")
                 .SetLargeImage(IconsPath + "NavigatorIcon32.png")
-                .SetToolTip("Открывает навигатор коллизий");
+                .SetToolTip(RibbonText.ClashNavigatorTip);
 
-            panel.AddPushButton<SetFiltersCommand>("Поисковые\nнаборы")
+            panel.AddPushButton<SetFiltersCommand>(RibbonText.SearchSets)
                 .SetImage(IconsPath + "SearchSetsIcon16.png")
                 .SetLargeImage(IconsPath + "SearchSetsIcon32.png")
-                .SetToolTip("Настраивает наборы, которыми проверки набирают элементы для сравнения");
+                .SetToolTip(RibbonText.SearchSetsTip);
 
-            panel.AddPushButton<SetSettingsCommand>("Настройки")
+            panel.AddPushButton<SetSettingsCommand>(RibbonText.ClashSettings)
                 .SetImage(IconsPath + "SettingsIcon16.png")
                 .SetLargeImage(IconsPath + "SettingsIcon32.png")
-                .SetToolTip("Настройки навигатора коллизий");
+                .SetToolTip(RibbonText.ClashSettingsTip);
         }
 
         /// <summary>
@@ -62,13 +66,12 @@ namespace Juru.RevitPlugins.App
         /// </summary>
         private void CreateOpeningsPanel()
         {
-            var panel = Application.CreatePanel("Отверстия", TabName);
+            var panel = Application.CreatePanel(RibbonText.OpeningsPanel, TabName);
 
-            panel.AddPushButton<PlaceOpeningTasksCommand>("Вставить\nзадания")
+            panel.AddPushButton<PlaceOpeningTasksCommand>(RibbonText.PlaceOpenings)
                 .SetImage(IconsPath + "PlaceOpeningsIcon16.png")
                 .SetLargeImage(IconsPath + "PlaceOpeningsIcon32.png")
-                .SetToolTip("Расставляет задания на отверстия по пересечениям инженерных "
-                            + "элементов с конструкциями из связей");
+                .SetToolTip(RibbonText.PlaceOpeningsTip);
 
             // Склейка, навигатор и отправка - шаги вокруг той же вставки, поэтому стоят мелкими
             // друг над другом, а не наравне с ней. Подписи убраны, чтобы кнопки не растягивали
@@ -82,56 +85,60 @@ namespace Juru.RevitPlugins.App
             stackPanel.AddPushButton<UniteOpeningTasksCommand>(NoText)
                 .SetImage(IconsPath + "UniteOpeningsIcon16.png")
                 .SetLargeImage(IconsPath + "UniteOpeningsIcon32.png")
-                .SetToolTip("Объединить задания\n"
-                            + "Объединяет выбранные задания на отверстия в одно");
+                .SetToolTip(RibbonText.UniteOpeningsTip);
 
             stackPanel.AddPushButton<ShowOpeningTasksCommand>(NoText)
                 .SetImage(IconsPath + "OpeningsNavigatorIcon16.png")
                 .SetLargeImage(IconsPath + "OpeningsNavigatorIcon32.png")
-                .SetToolTip("Навигатор заданий\n"
-                            + "Открывает навигатор по заданиям, выданным из этого файла");
+                .SetToolTip(RibbonText.OpeningsNavigatorTip);
 
             stackPanel.AddPushButton<SendOpeningTasksCommand>(NoText)
                 .SetImage(IconsPath + "SendOpeningsIcon16.png")
                 .SetLargeImage(IconsPath + "SendOpeningsIcon32.png")
-                .SetToolTip("Отправить задания\n"
-                            + "Отправляет задания этого файла на сервер согласования");
+                .SetToolTip(RibbonText.SendOpeningsTip);
 
             panel.AddSeparator();
 
             // Загрузка и согласование - два шага одной работы в файле АР или КР, и делает их один
             // человек подряд, поэтому они делят одно место на панели и переключаются стрелкой.
-            var incomingButton = panel.AddSplitButton("IncomingOpeningTasks", "Задания от инженеров");
+            var incomingButton = panel.AddSplitButton("IncomingOpeningTasks", RibbonText.IncomingOpenings);
 
-            incomingButton.AddPushButton<LoadOpeningTasksCommand>("Загрузить\nзадания")
+            incomingButton.AddPushButton<LoadOpeningTasksCommand>(RibbonText.LoadOpenings)
                 .SetImage(IconsPath + "LoadOpeningsIcon16.png")
                 .SetLargeImage(IconsPath + "LoadOpeningsIcon32.png")
-                .SetToolTip("Загружает задания на отверстия с сервера в файл АР или КР");
+                .SetToolTip(RibbonText.LoadOpeningsTip);
 
-            incomingButton.AddPushButton<ShowIncomingOpeningTasksCommand>("Согласование\nзаданий")
+            incomingButton.AddPushButton<ShowIncomingOpeningTasksCommand>(RibbonText.ApproveOpenings)
                 .SetImage(IconsPath + "ApproveOpeningsIcon16.png")
                 .SetLargeImage(IconsPath + "ApproveOpeningsIcon32.png")
-                .SetToolTip("Открывает навигатор согласования полученных заданий");
+                .SetToolTip(RibbonText.ApproveOpeningsTip);
 
             panel.AddSeparator();
 
-            panel.AddPushButton<SetOpeningsSettingsCommand>("Настройки")
+            panel.AddPushButton<SetOpeningsSettingsCommand>(RibbonText.OpeningsSettings)
                 .SetImage(IconsPath + "SettingsIcon16.png")
                 .SetLargeImage(IconsPath + "SettingsIcon32.png")
-                .SetToolTip("Настройки выдачи заданий на отверстия");
+                .SetToolTip(RibbonText.OpeningsSettingsTip);
         }
 
         /// <summary>
-        ///     Английский комплект: перевод спецификаций, помещений, листов и прочих категорий модели.
+        ///     Перевод текста модели: спецификации, помещения, листы и прочие категории.
         /// </summary>
-        private void CreateSchedulesPanel()
+        private void CreateTextPanel()
         {
-            var panel = Application.CreatePanel("Спецификации", TabName);
+            var panel = Application.CreatePanel(RibbonText.TextPanel, TabName);
 
-            panel.AddPushButton<ShowSchedulesWindowCommand>("Английский\nкомплект")
-                .SetImage(IconsPath + "EnglishSchedulesIcon16.png")
-                .SetLargeImage(IconsPath + "EnglishSchedulesIcon32.png")
-                .SetToolTip("Переводит спецификации, помещения, листы и другие категории модели на английский");
+            panel.AddPushButton<ShowSchedulesWindowCommand>(RibbonText.Translator)
+                .SetImage(IconsPath + "TranslateIcon16.png")
+                .SetLargeImage(IconsPath + "TranslateIcon32.png")
+                .SetToolTip(RibbonText.TranslateTip);
+
+            // Обновление копии стоит отдельной кнопкой, а не в окне перевода: оно идёт по открытому
+            // виду, ничего не спрашивает и заканчивается раньше, чем окно успело бы открыться.
+            panel.AddPushButton<UpdateScheduleCopyCommand>(RibbonText.UpdateCopy)
+                .SetImage(IconsPath + "UpdateCopyIcon16.png")
+                .SetLargeImage(IconsPath + "UpdateCopyIcon32.png")
+                .SetToolTip(RibbonText.UpdateCopyTip);
         }
     }
 }

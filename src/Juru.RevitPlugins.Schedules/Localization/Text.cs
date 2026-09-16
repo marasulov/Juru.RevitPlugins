@@ -60,7 +60,12 @@ public static class Text
 
     public static string RedrawHint
     {
-        get { return Pick("С галочкой «Перерисовать в линии» копия рисуется заново линиями и текстом: переведены и значения ячеек, но копия статична. Без неё перевод пишется в саму спецификацию - имя, заголовки колонок и фильтры: спецификация остаётся живой, а её значения станут английскими по мере перевода объектов на вкладках категорий.", "With «Redraw as lines» each schedule is redrawn as lines and text: cell values are translated too, but the copy is static. Without it the translation goes into the schedule itself - its name, column headings and filters: the schedule stays live, and its values turn English as the objects on the category tabs get translated."); }
+        get
+        {
+            return Pick(
+                "Перевод всегда ложится в новую таблицу, оригинал не трогается. «Копия линиями» рисует её заново линиями и надписями в чертёжном виде. «Копия спецификацией» кладёт переведённую таблицу в шапку новой спецификации теми же строками и колонками - копия остаётся спецификацией. Имя копии берёт язык перевода: «34 RU_Список сокращений» становится «34 EN_Список сокращений».",
+                "The translation always goes into a new table, the original is left alone. «Copy as lines» redraws it as lines and text in a drafting view. «Copy as a schedule» puts the translated table into the header of a new schedule with the same rows and columns - the copy stays a schedule. The copy's name carries the target language: «34 RU_Список сокращений» becomes «34 EN_Список сокращений».");
+        }
     }
 
     public static string SelectAll
@@ -106,6 +111,61 @@ public static class Text
     public static string ScanActiveViewTooltip
     {
         get { return Pick("Искать только в активном виде: на большой модели это заметно быстрее", "Look only in the active view: on a large model that is noticeably faster"); }
+    }
+
+    public static string NotOnSheet
+    {
+        get { return Pick("не на листе", "not on a sheet"); }
+    }
+
+    public static string UpdateTitle
+    {
+        get { return Pick("Обновление перевода таблицы", "Updating the translated table"); }
+    }
+
+    public static string UpdateNoCopies
+    {
+        get
+        {
+            return Pick(
+                "В модели нет переведённых копий: обновлять нечего. Копию делают в окне перевода.",
+                "There are no translated copies in the model: nothing to update. Copies are made in the translation window.");
+        }
+    }
+
+    public static string UpdateOrphanLine
+    {
+        get
+        {
+            return Pick(
+                "{0}: оригинал удалён, копия оставлена как есть.",
+                "{0}: the original is gone, the copy was left as it is.");
+        }
+    }
+
+    public static string UpdateDoneLine
+    {
+        get { return Pick("{0}: пересобрана, строк {1}.", "{0}: rebuilt, {1} rows."); }
+    }
+
+    public static string UpdateFailedLine
+    {
+        get { return Pick("{0}: не удалось - {1}", "{0}: failed - {1}"); }
+    }
+
+    public static string AllSchedules
+    {
+        get { return Pick("Все спецификации", "All schedules"); }
+    }
+
+    public static string AllSchedulesTooltip
+    {
+        get
+        {
+            return Pick(
+                "Показывать и спецификации, которых нет ни на одном листе. Без галочки окно показывает выпускаемый комплект - только размещённые на листах.",
+                "Also show schedules that are not placed on any sheet. Without it the window shows the issued set - only the ones placed on sheets.");
+        }
     }
 
     public static string StatusReadingScope
@@ -160,7 +220,32 @@ public static class Text
 
     public static string RedrawAsLines
     {
-        get { return Pick("Перерисовать в линии", "Redraw as lines"); }
+        get { return Pick("Копия линиями", "Copy as lines"); }
+    }
+
+    public static string CopyAsSchedule
+    {
+        get { return Pick("Копия спецификацией", "Copy as a schedule"); }
+    }
+
+    public static string RedrawAsLinesTooltip
+    {
+        get
+        {
+            return Pick(
+                "Копия рисуется заново линиями и надписями в чертёжном виде: переведено всё, включая значения ячеек, но спецификацией копия быть перестаёт.",
+                "The copy is redrawn as lines and text in a drafting view: everything is translated, cell values included, but the copy is no longer a schedule.");
+        }
+    }
+
+    public static string CopyAsScheduleTooltip
+    {
+        get
+        {
+            return Pick(
+                "Переведённая таблица ложится в шапку новой спецификации теми же строками и колонками: переведено всё, а копия остаётся спецификацией - и в диспетчере, и на листе.",
+                "The translated table goes into the header of a new schedule with the same rows and columns: everything is translated, and the copy stays a schedule - in the browser and on the sheet.");
+        }
     }
 
     public static string TranslationService
@@ -446,11 +531,6 @@ public static class Text
         get { return Pick("Параметры", "Parameters"); }
     }
 
-    public static string CategoryScheduleTexts
-    {
-        get { return Pick("Текст спецификаций", "Schedule texts"); }
-    }
-
     public static string EmptyRooms
     {
         get { return Pick("В модели нет помещений с русским текстом — переводить нечего.", "The model has no rooms with source-language text."); }
@@ -509,11 +589,6 @@ public static class Text
     public static string EmptyKeynotes
     {
         get { return Pick("Таблица ключевых примечаний не назначена, недоступна или в ней нет русского текста. Путь к таблице задаётся в «Аннотации — Ключевое примечание — Настройка».", "The keynote table is not assigned, is unavailable, or has no source-language text. Its path is set in Annotate — Keynote — Keynoting Settings."); }
-    }
-
-    public static string EmptyScheduleTexts
-    {
-        get { return Pick("В спецификациях нет русского текста в имени, заголовках колонок и фильтрах.", "Schedules have no source-language text in their names, column headings or filters."); }
     }
 
     public static string TargetName
@@ -728,6 +803,16 @@ public static class Text
     }
 
     /// <summary>Ошибок перевода: {0}. {1}</summary>
+    public static string DialogTranslationFailed
+    {
+        get
+        {
+            return Pick(
+                "Служба перевода не ответила ({0} запрос(ов) из отмеченных). Недостающие переводы остались пустыми: {1}",
+                "The translation service did not answer ({0} request(s)). The missing translations stayed empty: {1}");
+        }
+    }
+
     public static string DialogFailures
     {
         get { return Pick("Ошибок перевода: {0}. {1}", "Translation errors: {0}. {1}"); }
@@ -1035,6 +1120,16 @@ public static class Text
     public static string NoteTranslated
     {
         get { return Pick("Переведено {0} из {1} ({2}).", "Translated {0} of {1} ({2})."); }
+    }
+
+    public static string NoteTranslatorFailed
+    {
+        get { return Pick("Служба перевода не ответила: {0}", "The translation service did not answer: {0}"); }
+    }
+
+    public static string NoteTranslateFailed
+    {
+        get { return Pick("Перевести не удалось: {0}", "Translation failed: {0}"); }
     }
 
     public static string NoteTranslatedWithErrors

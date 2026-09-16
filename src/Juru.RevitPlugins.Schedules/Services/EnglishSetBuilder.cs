@@ -37,16 +37,16 @@ public sealed class EnglishSetBuilder(UIDocument uiDocument, SchedulesConfig con
     /// <param name="selected">Отмеченные спецификации, прочитанные окном облегчённо.</param>
     /// <param name="categories">Что записать в параметры элементов модели.</param>
     /// <param name="layout">Только перевод или исходник и перевод рядом.</param>
-    /// <param name="redrawAsLines">
-    ///     Перерисовать копии линиями и текстом либо перевести в самих спецификациях их имя,
-    ///     заголовки колонок и фильтры.
+    /// <param name="mode">
+    ///     Что сделать с отмеченными спецификациями: копия линиями, копия спецификацией или перевод в
+    ///     самих спецификациях.
     /// </param>
     public EnglishSetResult Build(
         IReadOnlyList<GlossaryEntry> translations,
         IReadOnlyList<ReadSchedule> selected,
         IReadOnlyList<CategoryWrite> categories,
         TranslationLayout layout,
-        bool redrawAsLines,
+        ScheduleCopyMode mode,
         IProgress<string>? progress = null)
     {
         if (translations is null)
@@ -69,18 +69,17 @@ public sealed class EnglishSetBuilder(UIDocument uiDocument, SchedulesConfig con
         var reportDirectory = ReportLocation.Create("EnglishSchedules", document.Title, runStamp);
         var glossaryPath = config.ResolveGlossaryPath();
 
-        // Отмеченное перечитывается до глоссария: его текст в глоссарий и попадёт. Без
-        // перерисовки перечитывать незачем — значения ячеек в живую спецификацию не записать.
-        var printed = redrawAsLines
-            ? new SheetScheduleCopyService(uiDocument).ReadPrinted(
-                selected.Select(schedule => schedule.Source).ToList(),
-                reportDirectory,
-                Step(progress, "Перечитываю отмеченные спецификации"))
-            : selected;
+        // Отмеченное перечитывается до глоссария: его текст в глоссарий и попадёт. Копия рисуется по
+        // напечатанной таблице, а прочитанного окном для этого мало - там нет ни текста ячеек, ни
+        // размеров строк.
+        var printed = new SheetScheduleCopyService(uiDocument).ReadPrinted(
+            selected.Select(schedule => schedule.Source).ToList(),
+            reportDirectory,
+            Step(progress, "Перечитываю отмеченные спецификации"));
 
         progress?.Report("Сохраняю глоссарий и перевожу недостающие строки");
 
-        var collected = CollectScheduleTexts(printed, redrawAsLines, glossaryPath);
+        var collected = CollectScheduleTexts(printed, glossaryPath);
         var merged = SaveGlossary(
             translations.Concat(collected).ToList(),
             glossaryPath,
@@ -90,13 +89,9 @@ public sealed class EnglishSetBuilder(UIDocument uiDocument, SchedulesConfig con
 
         var glossary = Glossary.Load(glossaryPath, layout);
 
-        var copies = redrawAsLines
+        var drawn = mode is ScheduleCopyMode.RedrawAsLines
             ? Draw(printed, glossary, reportDirectory, progress)
-            : [];
-
-        var inPlace = redrawAsLines
-            ? null
-            : TranslateInPlace(document, selected, glossary, progress);
+            : CopyAsSchedules(printed, glossary, progress);
 
         // Ключевые примечания записываются перезаписью внешнего файла, а не в элементы модели,
         // поэтому идут отдельно от остальных категорий.
@@ -111,19 +106,14 @@ public sealed class EnglishSetBuilder(UIDocument uiDocument, SchedulesConfig con
             applied = applied.Concat([keynoteResult.Value.Applied]).ToList();
         }
 
-        if (inPlace is not null)
-        {
-            applied = applied.Concat([inPlace]).ToList();
-        }
-
-        var reportPath = copies.Count is 0
+        var reportPath = drawn.Count is 0
             ? null
-            : SheetScheduleCopyReportWriter.Write(copies, document.Title, glossary, runStamp);
+            : SheetScheduleCopyReportWriter.Write(drawn, document.Title, glossary, runStamp);
 
         return new EnglishSetResult
         {
-            DrawnCount = copies.Count(copy => copy.Error is null),
-            FailedCount = copies.Count(copy => copy.Error is not null),
+            DrawnCount = drawn.Count(copy => copy.Error is null),
+            FailedCount = drawn.Count(copy => copy.Error is not null),
             TranslatedNowCount = translated.TranslatedCount,
             UntranslatedCount = merged.Count(entry => entry.Suggestion.Length is 0),
             Categories = applied,
@@ -209,48 +199,20 @@ public sealed class EnglishSetBuilder(UIDocument uiDocument, SchedulesConfig con
             .GetResult();
     }
 
-    /// <summary>
-    ///     Переводит в самих спецификациях то, что доступно API: имя, заголовки видимых колонок и
-    ///     строковые значения фильтров.
-    /// </summary>
-    /// <remarks>
-    ///     Значения ячеек так не переводятся — тело обычной спецификации через API не
-    ///     переопределяется. Зато спецификация остаётся живой, а её значения становятся английскими
-    ///     по мере перевода самих объектов модели на вкладках категорий.
-    /// </remarks>
-    private static ElementTextApplyResult TranslateInPlace(
-        Document document,
-        IReadOnlyList<ReadSchedule> selected,
+    private IReadOnlyList<SheetScheduleCopy> CopyAsSchedules(
+        IReadOnlyList<ReadSchedule> printed,
         Glossary glossary,
         IProgress<string>? progress)
     {
-        progress?.Report("Перевожу имена, заголовки и фильтры спецификаций");
-
-        var texts = new ScheduleTexts().Collect(selected.Select(schedule => schedule.Source.Schedule));
-        var writer = new ElementTextWriter(document);
-
-        using var transaction = new Transaction(document, "Перевод текста спецификаций");
-
-        Prepare(transaction);
-
-        transaction.Start();
-
-        foreach (var text in texts)
+        if (printed.Count is 0)
         {
-            var translated = glossary.Translate(text.SourceText);
-
-            // Подстановка вернула исходник - перевода нет, и записывать нечего: пустая строка тут
-            // означала бы откат, а строку никто не переводил.
-            writer.Write(
-                text,
-                string.Equals(translated, text.SourceText, StringComparison.CurrentCulture)
-                    ? string.Empty
-                    : translated);
+            return [];
         }
 
-        transaction.Commit();
+        progress?.Report("Собираю английские спецификации");
 
-        return writer.Describe(Text.CategoryScheduleTexts);
+        return new SheetScheduleCopyService(uiDocument)
+            .CopyAllAsSchedules(printed, glossary, config.Translation.TargetLanguage);
     }
 
     private IReadOnlyList<SheetScheduleCopy> Draw(
@@ -270,55 +232,63 @@ public sealed class EnglishSetBuilder(UIDocument uiDocument, SchedulesConfig con
     }
 
     /// <summary>
-    ///     Строки самих спецификаций для глоссария.
+    ///     Строки таблицы для глоссария: под копию берётся весь её текст, в копии переводится каждая ячейка.
     /// </summary>
-    /// <remarks>
-    ///     С перерисовкой берётся весь текст таблицы: в копии переводится каждая ячейка. Без неё —
-    ///     только то, что API даёт записать в живую спецификацию: имя, заголовки колонок и строковые
-    ///     значения фильтров. Собирать там значения ячеек незачем — записать их всё равно некуда.
-    /// </remarks>
     private IReadOnlyList<GlossaryEntry> CollectScheduleTexts(
         IReadOnlyList<ReadSchedule> printed,
-        bool redrawAsLines,
         string glossaryPath)
     {
         var existing = GlossaryFile.ReadEntries(glossaryPath);
 
-        if (redrawAsLines)
-        {
-            // Базовый словарь - общий на все проекты, он лежит рядом с плагином, а не в глоссарии
-            // модели: глоссарий модели уже пришёл сюда как existing и сильнее базового.
-            var baseTerms = ReadBaseTerms(config.ResolveBaseGlossaryPath());
+        // Базовый словарь - общий на все проекты, он лежит рядом с плагином, а не в глоссарии
+        // модели: глоссарий модели уже пришёл сюда как existing и сильнее базового.
+        var baseTerms = ReadBaseTerms(config.ResolveBaseGlossaryPath());
 
-            return GlossaryCollector.Collect(printed, existing, baseTerms).Entries;
-        }
+        var collected = GlossaryCollector.Collect(printed, existing, baseTerms).Entries;
 
-        var texts = new ScheduleTexts().Collect(printed.Select(schedule => schedule.Source.Schedule));
-
-        return texts
-            .Select(text => Source(text.SourceText))
-            .Where(text => text.Length > 0)
-            .Distinct(StringComparer.CurrentCulture)
-            .Select(text => new GlossaryEntry
-            {
-                Key = text,
-                Readable = RussianText.Normalize(text),
-                Suggestion = existing.TryGetValue(text, out var found) ? found.Text : string.Empty,
-                Source = existing.TryGetValue(text, out var kept) ? kept.Source : TranslationSource.Machine,
-                Occurrences = 0,
-                Schedules = []
-            })
-            .ToList();
+        return collected.Concat(ScheduleTitles(printed, collected, existing, baseTerms)).ToList();
     }
 
     /// <summary>
-    ///     Исходная половина строки, если она уже двуязычная. Иначе строка целиком.
+    ///     Названия таблиц. В снимке строка названия пуста, когда её не переопределяли руками: Ревит
+    ///     рисует там имя вида, и в ячейке лежать нечему. Без этого шапка копии оставалась бы русской -
+    ///     переводить было бы нечего, потому что в глоссарий название не попадало.
     /// </summary>
-    private static string Source(string text)
+    private static IReadOnlyList<GlossaryEntry> ScheduleTitles(
+        IReadOnlyList<ReadSchedule> printed,
+        IReadOnlyList<GlossaryEntry> collected,
+        IReadOnlyDictionary<string, GlossaryTranslation> existing,
+        IReadOnlyDictionary<string, string> baseTerms)
     {
-        var trimmed = text.Trim();
+        var known = collected.Select(entry => entry.Key).ToHashSet(StringComparer.CurrentCulture);
 
-        return RussianText.TrySplitBilingual(trimmed, out var written, out _) ? written : trimmed;
+        return printed
+            .Select(schedule => ScheduleCopyName.TitleOf(schedule.Source.Schedule.Name).Trim())
+            .Where(title => title.Length > 0 && RussianText.ContainsLetters(title))
+            .Distinct(StringComparer.CurrentCulture)
+            .Where(title => !known.Contains(title))
+            .Select(title => Entry(title, existing, baseTerms))
+            .ToList();
+    }
+
+    /// <summary>Строка глоссария по тем же правилам, что и у текста таблицы.</summary>
+    private static GlossaryEntry Entry(
+        string text,
+        IReadOnlyDictionary<string, GlossaryTranslation> existing,
+        IReadOnlyDictionary<string, string> baseTerms)
+    {
+        var readable = RussianText.Normalize(text);
+        var translation = GlossaryCollector.Resolve(text, readable, existing, baseTerms);
+
+        return new GlossaryEntry
+        {
+            Key = text,
+            Readable = readable,
+            Suggestion = translation.Text,
+            Source = translation.Source,
+            Occurrences = 0,
+            Schedules = []
+        };
     }
 
     /// <summary>Общий словарь повторяющихся терминов: проверяется после глоссария проекта.</summary>

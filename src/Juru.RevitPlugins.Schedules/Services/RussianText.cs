@@ -468,6 +468,40 @@ public static class RussianText
     ///     Распознаёт марку изделия: одно слово с цифрой, вроде «ДВ-2», «КП-120», «ФЭ-П-1». Марки в переводе
     ///     сохраняются, чтобы совпадать с планами и разрезами.
     /// </summary>
+    /// <summary>
+    ///     Однобуквенное обозначение: «П», «В», «К», «А». В спецификациях это марки систем и трубопроводов,
+    ///     а не слова, и машинный перевод делает из них «In», «To», «A».
+    /// </summary>
+    /// <remarks>
+    ///     Считается однобуквенным и «Т.», и «П:» - знак препинания при букве обозначения не меняет.
+    /// </remarks>
+    public static bool IsSingleLetterMark(string text)
+    {
+        var letters = 0;
+
+        foreach (var symbol in text.Trim())
+        {
+            if (char.IsLetter(symbol))
+            {
+                letters++;
+
+                if (letters > 1)
+                {
+                    return false;
+                }
+
+                continue;
+            }
+
+            if (char.IsDigit(symbol))
+            {
+                return false;
+            }
+        }
+
+        return letters is 1;
+    }
+
     public static bool IsProductMark(string text)
     {
         var mark = text.Trim();

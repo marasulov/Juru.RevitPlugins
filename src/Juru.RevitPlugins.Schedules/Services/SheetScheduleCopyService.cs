@@ -56,9 +56,16 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
     ///     считаются по тому, что отдаёт таблица вида: они приблизительны, и на выбор спецификаций
     ///     это не влияет.
     /// </remarks>
-    public IReadOnlyList<ReadSchedule> ReadForSelection(IProgress<string>? progress = null, ElementId? sheetId = null)
+    /// <param name="includeUnplaced">
+    ///     Читать и спецификации, которых нет ни на одном листе: их тоже переводят, хотя в комплект
+    ///     они не входят.
+    /// </param>
+    public IReadOnlyList<ReadSchedule> ReadForSelection(
+        IProgress<string>? progress = null,
+        ElementId? sheetId = null,
+        bool includeUnplaced = false)
     {
-        return ReadAll(null, progress, useExport: false, activateView: false, sheetId);
+        return ReadAll(null, progress, useExport: false, activateView: false, sheetId, includeUnplaced);
     }
 
     /// <summary>
@@ -99,7 +106,8 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
         IProgress<string>? progress,
         bool useExport,
         bool activateView,
-        ElementId? sheetId = null)
+        ElementId? sheetId = null,
+        bool includeUnplaced = false)
     {
         // Активной может быть копия прошлого прогона: её удаление Revit запретит, а ссылка на неё после
         // удаления станет недействительной. Поэтому уходим с копии заранее и запоминаем вид по номеру.
@@ -108,7 +116,7 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
         LeaveCopyView();
         OriginalViewId = uiDocument.ActiveView?.Id;
 
-        var found = new SheetScheduleFinder(document).Find(sheetId);
+        var found = new SheetScheduleFinder(document).Find(sheetId, includeUnplaced);
         var read = new List<ReadSchedule>(found.Count);
 
         foreach (var entry in found)
@@ -122,12 +130,12 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
     }
 
     /// <summary>
-    ///     Сколько спецификаций стоит на листах. Известно до чтения, поэтому годится под шкалу:
+    ///     Сколько спецификаций будет прочитано. Известно до чтения, поэтому годится под шкалу:
     ///     полоса показывает настоящую долю прочитанного, а не бежит вслепую.
     /// </summary>
-    public int CountOnSheets(ElementId? sheetId = null)
+    public int CountOnSheets(ElementId? sheetId = null, bool includeUnplaced = false)
     {
-        return new SheetScheduleFinder(document).Find(sheetId).Count;
+        return new SheetScheduleFinder(document).Find(sheetId, includeUnplaced).Count;
     }
 
     /// <summary>Вид, который был открыт до прогона: к нему возвращаются после отрисовки.</summary>
@@ -210,6 +218,186 @@ public sealed class SheetScheduleCopyService(UIDocument uiDocument)
 
         return copies;
     }
+
+    /// <summary>
+    ///     Делает копии спецификациями, а не линиями: переведённая таблица ложится в шапку новой
+    ///     спецификации. Для таблиц, набранных текстом, и для тех, кому копию надо держать таблицей, а не
+    ///     набором отрезков.
+    /// </summary>
+    /// <param name="language">Язык перевода: его код встаёт в имя копии.</param>
+    public IReadOnlyList<SheetScheduleCopy> CopyAllAsSchedules(
+        IReadOnlyList<ReadSchedule> schedules,
+        Glossary glossary,
+        string language)
+    {
+        if (glossary is null)
+        {
+            throw new ArgumentNullException(nameof(glossary));
+        }
+
+        var copies = schedules
+            .Select(schedule => CopyAsSchedule(schedule, glossary, language))
+            .ToList();
+
+        if (OriginalViewId is not null)
+        {
+            TryActivate(OriginalViewId);
+        }
+
+        return copies;
+    }
+
+    private SheetScheduleCopy CopyAsSchedule(ReadSchedule read, Glossary glossary, string language)
+    {
+        if (read.Snapshot is null)
+        {
+            return read.Described;
+        }
+
+        var schedule = read.Source.Schedule;
+        var copyName = ScheduleCopyName.For(schedule.Name, language);
+        var replaced = DeletePreviousScheduleCopies(schedule, copyName);
+        var described = read.Described with { ReplacedCopyCount = replaced.Count };
+
+        using var transaction = new Transaction(document, $"Копия спецификации: {schedule.Name}");
+        transaction.Start();
+
+        try
+        {
+            var result = new ScheduleTableCopyWriter(document)
+                .Write(read.Snapshot, glossary, copyName, schedule.Name);
+
+            // Копия помнит оригинал, а не только повторяет его имя: по этой связи следующий прогон
+            // обновит именно её, даже если оригинал успели переименовать.
+            if (document.GetElement(result.ViewId) is View copy)
+            {
+                ScheduleCopyLink.Remember(copy, schedule);
+            }
+
+            var placement = Restore(result.ViewId, replaced.Placements);
+
+            transaction.Commit();
+
+            return described with
+            {
+                ViewName = result.ViewName,
+                RowCount = result.RowCount,
+                TableWidthMillimeters = result.WidthInFeet * MillimetersPerFoot,
+                SkippedCellCount = result.SkippedCellCount,
+                PlacedOnSheet = placement.SheetNumber,
+                NotPlacedOnSheets = placement.SkippedSheetNumbers,
+                PlacementError = placement.Error
+            };
+        }
+        catch (RevitException exception)
+        {
+            transaction.RollBack();
+
+            return described with { Error = exception.Message };
+        }
+    }
+
+    /// <summary>
+    ///     Удаляет спецификации-копии прошлых прогонов: обновление копии - это её замена. Настоящие
+    ///     спецификации не трогаются - копией считается вид, помнящий этот оригинал, либо вид с тем же
+    ///     именем, какое копия получила бы сейчас (так подбираются копии, снятые до того, как связь
+    ///     стала записываться).
+    /// </summary>
+    private ReplacedCopies DeletePreviousScheduleCopies(ViewSchedule original, string copyName)
+    {
+        var linked = ScheduleCopyLink.FindCopies(document, original).Select(view => view.Id);
+
+        var named = new FilteredElementCollector(document)
+            .OfClass(typeof(ViewSchedule))
+            .Cast<ViewSchedule>()
+            .Where(view => IsPreviousCopy(view.Name, copyName))
+            .Select(view => view.Id);
+
+        var stale = linked
+            .Concat(named)
+            .Distinct()
+            .Where(id => id != original.Id)
+            .ToList();
+
+        if (stale.Count is 0)
+        {
+            return new ReplacedCopies(0, []);
+        }
+
+        // Где стояла прежняя копия, там встанет и новая: копию кладут на лист руками, и обновление не
+        // должно стоить этого места. Удаление вида уносит его экземпляры с листов, поэтому места
+        // запоминаются до удаления.
+        var places = Places(stale);
+
+        using var transaction = new Transaction(document, $"Удаление прежних копий: {copyName}");
+        transaction.Start();
+
+        try
+        {
+            document.Delete(stale);
+            transaction.Commit();
+
+            return new ReplacedCopies(stale.Count, places);
+        }
+        catch (RevitException)
+        {
+            transaction.RollBack();
+
+            return new ReplacedCopies(0, []);
+        }
+    }
+
+    /// <summary>Листы и точки, на которых стоят эти виды.</summary>
+    private IReadOnlyList<SheetPlacement> Places(IReadOnlyList<ElementId> views)
+    {
+        var places = new List<SheetPlacement>();
+
+        foreach (var instance in new FilteredElementCollector(document)
+                     .OfClass(typeof(ScheduleSheetInstance))
+                     .Cast<ScheduleSheetInstance>()
+                     .Where(instance => views.Contains(instance.ScheduleId)))
+        {
+            if (document.GetElement(instance.OwnerViewId) is ViewSheet sheet)
+            {
+                places.Add(new SheetPlacement(sheet.Id, sheet.SheetNumber, instance.Point));
+            }
+        }
+
+        return places;
+    }
+
+    /// <summary>
+    ///     Возвращает копию на листы, где стояла прежняя. Ничего не стояло - копия остаётся только в
+    ///     диспетчере: сама по себе на лист она не просится.
+    /// </summary>
+    private PlacementResult Restore(ElementId copyId, IReadOnlyList<SheetPlacement> places)
+    {
+        if (places.Count is 0)
+        {
+            return new PlacementResult(null, [], null);
+        }
+
+        var placed = new List<string>();
+
+        foreach (var place in places)
+        {
+            try
+            {
+                ScheduleSheetInstance.Create(document, place.SheetId, copyId, place.Point);
+
+                placed.Add(place.SheetNumber);
+            }
+            catch (RevitException exception)
+            {
+                return new PlacementResult(placed.FirstOrDefault(), [], exception.Message);
+            }
+        }
+
+        return new PlacementResult(placed.FirstOrDefault(), placed.Skip(1).ToList(), null);
+    }
+
+    /// <summary>Что осталось от прежних копий: сколько их было и где они стояли.</summary>
+    private sealed record ReplacedCopies(int Count, IReadOnlyList<SheetPlacement> Placements);
 
     private SheetScheduleCopy Draw(ReadSchedule read, Glossary glossary, string? cellDumpDirectory)
     {

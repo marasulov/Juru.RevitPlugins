@@ -222,6 +222,13 @@ public sealed partial class CategoryViewModel : ObservableObject
         {
             Note = await TranslateAsync(translator, current, pending).ConfigureAwait(true);
         }
+        catch (Exception exception)
+        {
+            // Сбои службы её собственный код приводит к TranslationException и разбирает пачками;
+            // сюда доходит непредвиденное. Наружу его выпускать нельзя: исключение из асинхронной
+            // команды никто не ловит, и оно закрывает окно вместо того, чтобы назвать причину.
+            Note = string.Format(Text.NoteTranslateFailed, exception.Message);
+        }
         finally
         {
             OnPropertyChanged(nameof(Summary));

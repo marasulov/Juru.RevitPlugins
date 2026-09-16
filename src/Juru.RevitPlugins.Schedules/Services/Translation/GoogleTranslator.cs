@@ -38,12 +38,32 @@ public sealed class GoogleTranslator(HttpClient httpClient, string apiKey, Trans
         var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
         var url = $"{Endpoint}?key={Uri.EscapeDataString(apiKey)}";
 
-        using var response = await httpClient.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
-        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        // Сеть, прокси и таймаут бросают свои исключения, а не наш TranslationException. Наружу их
+        // выпускать нельзя: сбой перевода - ожидаемый исход, о котором окно сообщает строкой, тогда
+        // как чужое исключение из асинхронной команды роняет само окно.
+        HttpResponseMessage response;
+        string body;
 
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            throw new TranslationException($"Google ответил {(int)response.StatusCode}: {Shorten(body)}");
+            response = await httpClient.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
+            body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        }
+        catch (HttpRequestException exception)
+        {
+            throw new TranslationException($"Google недоступен: {TranslationFailure.Describe(exception)}");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TranslationException($"Google не ответил за {httpClient.Timeout.TotalSeconds:0} с.");
+        }
+
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new TranslationException($"Google ответил {(int)response.StatusCode}: {Shorten(body)}");
+            }
         }
 
         return ParseTranslations(body, texts.Count);
@@ -51,7 +71,7 @@ public sealed class GoogleTranslator(HttpClient httpClient, string apiKey, Trans
 
     private static IReadOnlyList<string> ParseTranslations(string body, int expectedCount)
     {
-        using var document = JsonDocument.Parse(body);
+        using var document = TranslationFailure.Parse(body, "Google");
 
         if (!document.RootElement.TryGetProperty("data", out var data)
             || !data.TryGetProperty("translations", out var translations))

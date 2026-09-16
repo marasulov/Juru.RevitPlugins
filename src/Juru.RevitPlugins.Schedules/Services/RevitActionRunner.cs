@@ -52,45 +52,12 @@ public sealed class RevitActionRunner : IExternalEventHandler
             // Исключение всплывает вне стека команды: без своего сообщения Ревит покажет только
             // собственную ошибку без причины.
 #if DEBUG
-            TaskDialog.Show(Localization.Text.WindowTitle, $"{exception.Message}\n\n{Dump(exception)}");
+            TaskDialog.Show(Localization.Text.WindowTitle, $"{exception.Message}\n\n{CrashLog.Write(exception)}");
 #else
             TaskDialog.Show(Localization.Text.WindowTitle, exception.Message);
 #endif
         }
     }
-
-#if DEBUG
-    /// <summary>
-    ///     Кладёт исключение целиком в файл и возвращает путь к нему.
-    /// </summary>
-    /// <remarks>
-    ///     <c>TaskDialog</c> обрезает длинный текст, а у исключений из недр WPF весь смысл в нижних
-    ///     кадрах стека - именно они называют того, кто начал перестроение, тогда как верхние у любого
-    ///     такого сбоя одинаковы. Читать их из диалога невозможно, поэтому стек пишется на диск.
-    /// </remarks>
-    private static string Dump(Exception exception)
-    {
-        try
-        {
-            var directory = System.IO.Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                "JuruPlugins",
-                "Crash");
-
-            System.IO.Directory.CreateDirectory(directory);
-
-            var path = System.IO.Path.Combine(directory, $"Schedules_{DateTime.Now:yyyyMMdd_HHmmss_fff}.txt");
-
-            System.IO.File.WriteAllText(path, exception.ToString(), new System.Text.UTF8Encoding(true));
-
-            return path;
-        }
-        catch (System.IO.IOException failure)
-        {
-            return $"Стек записать не удалось: {failure.Message}";
-        }
-    }
-#endif
 
     public string GetName()
     {

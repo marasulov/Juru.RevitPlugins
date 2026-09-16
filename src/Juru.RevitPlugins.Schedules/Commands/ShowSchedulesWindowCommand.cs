@@ -79,11 +79,50 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
         return File.Exists(path) ? Assembly.LoadFrom(path) : null;
     }
 
+    /// <summary>
+    ///     Открывает окно. Своя обработка ошибок: сбой до показа окна иначе виден как «кнопка
+    ///     нажимается, и ничего не происходит» - исключение до пользователя не доходит.
+    /// </summary>
     public override void Execute()
     {
-        if (openWindow is not null)
+        try
         {
-            openWindow.Activate();
+            Open();
+        }
+        catch (Exception exception)
+        {
+            // Окно могло не открыться, а поле - уже быть занятым: иначе кнопка после сбоя
+            // молча «активировала» бы несуществующее окно и перестала работать до перезапуска.
+            openWindow = null;
+
+#if DEBUG
+            TaskDialog.Show(DialogTitle, $"{exception.Message}\n\n{CrashLog.Write(exception)}");
+#else
+            TaskDialog.Show(DialogTitle, exception.Message);
+#endif
+        }
+    }
+
+    private void Open()
+    {
+        // Показать уже открытое, а если оно закрыто - открыть заново. Activate на закрытом окне
+        // бросает исключение, и без этой развилки одна осечка оставляла бы кнопку мёртвой.
+        if (openWindow is { } shown)
+        {
+            if (TryActivate(shown))
+            {
+                return;
+            }
+
+            openWindow = null;
+        }
+
+        // Без открытой модели читать нечего, а ActiveUIDocument пуст - обращение к нему уронило бы
+        // команду прежде, чем она успела бы это объяснить.
+        if (Application.ActiveUIDocument?.Document is null)
+        {
+            TaskDialog.Show(DialogTitle, Text.StatusModelClosed);
+
             return;
         }
 
@@ -113,6 +152,27 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
     }
 
     /// <summary>
+    ///     Показывает уже открытое окно. <c>false</c>, если окна больше нет.
+    /// </summary>
+    /// <remarks>
+    ///     У <c>Window</c> нет способа спросить, закрыто ли оно, а <c>Activate</c> на закрытом
+    ///     бросает <c>InvalidOperationException</c>. Поэтому проверка тут только попыткой.
+    /// </remarks>
+    private static bool TryActivate(SchedulesWindow window)
+    {
+        try
+        {
+            window.Activate();
+
+            return true;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     ///     Закрывает окно вместе с моделью, для которой оно открыто.
     /// </summary>
     /// <remarks>
@@ -130,9 +190,18 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
     {
         void OnClosing(object sender, Autodesk.Revit.DB.Events.DocumentClosingEventArgs args)
         {
-            if (string.Equals(DocumentKey(args.Document), path, StringComparison.CurrentCultureIgnoreCase))
+            if (!string.Equals(DocumentKey(args.Document), path, StringComparison.CurrentCultureIgnoreCase))
+            {
+                return;
+            }
+
+            try
             {
                 window.Close();
+            }
+            catch (InvalidOperationException)
+            {
+                // Окно уже закрыли руками, а отписаться не удалось: закрывать нечего.
             }
         }
 
@@ -140,8 +209,22 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
 
         window.Closed += (_, _) =>
         {
-            application.DocumentClosing -= OnClosing;
+            // Поле сбрасывается первым, до отписки. Ревит запрещает менять подписки изнутри
+            // обработчика своего же события, а сюда мы приходим в том числе из OnClosing - через
+            // window.Close(). Отписка тогда срывается, и стоя первой она уносила бы с собой сброс
+            // поля: кнопка осталась бы со ссылкой на закрытое окно и перестала открывать его
+            // до перезапуска Ревита.
             openWindow = null;
+
+            try
+            {
+                application.DocumentClosing -= OnClosing;
+            }
+            catch (Exception)
+            {
+                // Обработчик переживёт окно, но вреда от него нет: Close на закрытом окне -
+                // пустая операция, а следующее окно заводит свой обработчик.
+            }
         };
     }
 
@@ -222,10 +305,12 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
                     var service = new SheetScheduleCopyService(uiDocument);
                     var sheetId = ScheduleSheetScope(uiApplication);
 
-                    viewModel!.StartReading(service.CountOnSheets(sheetId));
+                    var includeUnplaced = viewModel!.AllSchedules;
+
+                    viewModel!.StartReading(service.CountOnSheets(sheetId, includeUnplaced));
 
                     var schedules = service.ReadForSelection(
-                        new DirectProgress(name => viewModel!.Reading(name)), sheetId);
+                        new DirectProgress(name => viewModel!.Reading(name)), sheetId, includeUnplaced);
 
                     viewModel!.Fill(
                         schedules.Select(schedule => new ScheduleRowViewModel(schedule, glossary)).ToList(),
@@ -326,7 +411,7 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
             var selected = viewModel!.SelectedRows.Select(row => row.Read).ToList();
             var categories = viewModel!.SelectedCategories;
             var layout = viewModel!.Layout;
-            var redrawAsLines = viewModel!.RedrawAsLines;
+            var mode = viewModel!.CopyMode;
 
             viewModel!.SetBusy(true, Text.StatusBuilding);
 
@@ -352,7 +437,7 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
                         selected,
                         categories,
                         layout,
-                        redrawAsLines,
+                        mode,
                         new DirectProgress(note => viewModel!.SetBusy(true, note)));
                 }
                 catch (Exception)
@@ -470,6 +555,14 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
                 parts.Add(string.Format(Text.NoteSkippedWithoutTranslation, result.WithoutTranslationCount));
             }
 
+            // Сбой службы перевода идёт в саму строку состояния, а не только в отчёт: без машинного
+            // перевода прогон записывает лишь то, что уже было в глоссарии, и со стороны это выглядит
+            // как «плагин ничего не сделал».
+            if (result.Failures.Count > 0)
+            {
+                parts.Add(string.Format(Text.NoteTranslatorFailed, result.Failures[0]));
+            }
+
             return string.Join(" ", parts);
         }
 
@@ -499,6 +592,13 @@ public sealed class ShowSchedulesWindowCommand : ExternalCommand
             if (result.DrawnCount + result.FailedCount > 0)
             {
                 done.Add(string.Format(Text.DialogSchedules, result.DrawnCount, result.FailedCount));
+            }
+
+            // Сбой службы стоит среди видимого, а не под «подробностями»: закрытый список деталей
+            // никто не раскрывает, и ответ службы «403 Forbidden» оставался незамеченным.
+            if (result.Failures.Count > 0)
+            {
+                done.Add(string.Format(Text.DialogTranslationFailed, result.Failures.Count, result.Failures[0]));
             }
 
             done.Add(DescribeCategories(result));

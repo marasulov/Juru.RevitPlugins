@@ -33,7 +33,11 @@ public sealed partial class ScheduleRowViewModel : ObservableObject, ISelectable
         var described = read.Described;
 
         ScheduleName = described.ScheduleName;
-        Sheets = string.Join(", ", described.SheetNumbers);
+        // Пусто в этой колонке читалось бы как «не прочитали», поэтому отсутствие листа названо
+        // словами: спецификация в списке есть, а на листах её нет.
+        Sheets = described.SheetNumbers.Count is 0
+            ? Text.NotOnSheet
+            : string.Join(", ", described.SheetNumbers);
         ColumnCount = described.VisibleColumnHeadings.Count;
         RowCount = described.RowCount;
         Error = described.Error;

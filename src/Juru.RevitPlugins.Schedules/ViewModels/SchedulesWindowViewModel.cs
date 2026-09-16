@@ -73,6 +73,18 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    ///     Показывать все спецификации модели, а не только размещённые на листах.
+    /// </summary>
+    /// <remarks>
+    ///     По умолчанию окно показывает выпускаемый комплект - то, что стоит на листах. Переводят,
+    ///     однако, и неразмещённые: заготовку под будущий лист или спецификацию, которую печатают из
+    ///     вида. Отбор до листа сильнее: с областью «активный вид» на листе речь идёт именно про этот
+    ///     лист, и неразмещённые в него не попадают.
+    /// </remarks>
+    [ObservableProperty]
+    private bool allSchedules;
+
     /// <summary>Сколько прочитано и сколько всего: полоса показывает это, а не бежит вслепую.</summary>
     [ObservableProperty]
     private int readTotal;
@@ -263,16 +275,38 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    ///     Перерисовывать отмеченные спецификации в чертёжные виды линиями и текстом.
+    ///     Что сделать с отмеченными спецификациями: копия линиями, копия спецификацией или перевод в
+    ///     самих спецификациях.
     /// </summary>
-    /// <remarks>
-    ///     Снятая галочка означает второй способ: перевод в самой спецификации — имя, заголовки
-    ///     колонок и строковые значения фильтров. Значения ячеек так не переводятся, тело обычной
-    ///     спецификации через API не переопределяется; зато копия остаётся живой и обновляется вместе
-    ///     с моделью, а ячейки становятся английскими по мере перевода самих объектов на вкладках.
-    /// </remarks>
     [ObservableProperty]
-    private bool redrawAsLines = true;
+    [NotifyPropertyChangedFor(nameof(RedrawAsLines))]
+    [NotifyPropertyChangedFor(nameof(CopyAsSchedule))]
+    private ScheduleCopyMode copyMode = ScheduleCopyMode.RedrawAsLines;
+
+    /// <summary>
+    ///     Переключатели способа: у каждого своё свойство, а снятие отметки игнорируется - выбор делает
+    ///     тот, кого включили. То же правило, что у области сканирования, и по той же причине: общее
+    ///     свойство на группу переворачивалось бы её собственным <c>false</c>.
+    /// </summary>
+    public bool RedrawAsLines
+    {
+        get { return CopyMode is ScheduleCopyMode.RedrawAsLines; }
+        set { Select(value, ScheduleCopyMode.RedrawAsLines); }
+    }
+
+    public bool CopyAsSchedule
+    {
+        get { return CopyMode is ScheduleCopyMode.CopyAsSchedule; }
+        set { Select(value, ScheduleCopyMode.CopyAsSchedule); }
+    }
+
+    private void Select(bool isChecked, ScheduleCopyMode mode)
+    {
+        if (isChecked)
+        {
+            CopyMode = mode;
+        }
+    }
 
     public ICollectionView View
     {
@@ -751,6 +785,12 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
 
     /// <summary>Смена области сканирования - это новое чтение: список текста будет другой.</summary>
     partial void OnScanActiveViewOnlyChanged(bool value)
+    {
+        host?.Load();
+    }
+
+    /// <summary>Смена набора спецификаций - тоже новое чтение: список строк будет другой.</summary>
+    partial void OnAllSchedulesChanged(bool value)
     {
         host?.Load();
     }

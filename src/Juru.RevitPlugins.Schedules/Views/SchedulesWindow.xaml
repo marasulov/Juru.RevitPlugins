@@ -102,6 +102,14 @@
                          ToolTip="{x:Static loc:Text.ScanActiveViewTooltip}"
                          IsChecked="{Binding ScanActiveViewOnly}" />
 
+            <!-- Набор спецификаций, а не область сканирования: поэтому не в группе «Scope», но
+                 рядом с ней - обе настройки отвечают на вопрос «что сюда попадёт». -->
+            <CheckBox DockPanel.Dock="Left" Margin="0,0,16,0"
+                      VerticalAlignment="Center"
+                      Content="{x:Static loc:Text.AllSchedules}"
+                      ToolTip="{x:Static loc:Text.AllSchedulesTooltip}"
+                      IsChecked="{Binding AllSchedules}" />
+
             <ui:TextBox DockPanel.Dock="Left" Width="220" Margin="0,0,8,0"
                         PlaceholderText="{x:Static loc:Text.SearchPlaceholder}"
                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
@@ -125,9 +133,23 @@
                 <!-- Галочка выбирает способ, а не украшение: снятая означает перевод в самой
                      спецификации. Только эта вкладка перерисовывает копии - остальные пишут
                      перевод прямо в параметры, поэтому галочка стоит здесь, а не в общей панели. -->
-                <CheckBox DockPanel.Dock="Top" Content="{x:Static loc:Text.RedrawAsLines}"
-                          Margin="8,8,8,4"
-                          IsChecked="{Binding RedrawAsLines}" />
+                <!-- Способ - у каждого переключателя своё свойство: снятие отметки группой уходит по
+                     привязке обратно, и общее свойство оно переворачивало бы. Стиль назначен явно:
+                     WPF-UI держит его под ключом и по типу ни на что не вешает. -->
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,8,8,4">
+                    <RadioButton GroupName="CopyMode" Margin="0,0,16,0"
+                                 Style="{StaticResource DefaultRadioButtonStyle}"
+                                 VerticalAlignment="Center"
+                                 Content="{x:Static loc:Text.RedrawAsLines}"
+                                 ToolTip="{x:Static loc:Text.RedrawAsLinesTooltip}"
+                                 IsChecked="{Binding RedrawAsLines}" />
+                    <RadioButton GroupName="CopyMode"
+                                 Style="{StaticResource DefaultRadioButtonStyle}"
+                                 VerticalAlignment="Center"
+                                 Content="{x:Static loc:Text.CopyAsSchedule}"
+                                 ToolTip="{x:Static loc:Text.CopyAsScheduleTooltip}"
+                                 IsChecked="{Binding CopyAsSchedule}" />
+                </StackPanel>
 
             <DataGrid
                 x:Name="SchedulesGrid"

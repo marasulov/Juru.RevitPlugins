@@ -70,8 +70,10 @@
         <Resource Include="Resources\Icons\LoadOpeningsIcon32.png"/>
         <Resource Include="Resources\Icons\ApproveOpeningsIcon16.png"/>
         <Resource Include="Resources\Icons\ApproveOpeningsIcon32.png"/>
-        <Resource Include="Resources\Icons\EnglishSchedulesIcon16.png"/>
-        <Resource Include="Resources\Icons\EnglishSchedulesIcon32.png"/>
+        <Resource Include="Resources\Icons\TranslateIcon16.png"/>
+        <Resource Include="Resources\Icons\TranslateIcon32.png"/>
+        <Resource Include="Resources\Icons\UpdateCopyIcon16.png"/>
+        <Resource Include="Resources\Icons\UpdateCopyIcon32.png"/>
     </ItemGroup>
 
     <ItemGroup>
