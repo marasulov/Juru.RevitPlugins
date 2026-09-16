@@ -1,0 +1,326 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Общие для всех окон плагина. -->
+    <sys:String x:Key="Common.Add">Добавить</sys:String>
+    <sys:String x:Key="Common.Remove">Удалить</sys:String>
+    <sys:String x:Key="Common.Save">Сохранить</sys:String>
+    <sys:String x:Key="Common.Cancel">Отмена</sys:String>
+
+    <!-- Окно прогресса (ProgressWindow). -->
+    <sys:String x:Key="Progress.WindowTitle">Задания на отверстия</sys:String>
+    <sys:String x:Key="Progress.InitialStage">Идёт расчёт</sys:String>
+    <sys:String x:Key="Progress.CancelButton">Отменить</sys:String>
+    <sys:String x:Key="Progress.Cancelling">Отмена...</sys:String>
+
+    <!-- PlaceOpeningTasksCommand. -->
+    <sys:String x:Key="Placement.NoCategoriesSelected">В настройках не выбран ни один вид инженерных элементов.</sys:String>
+    <sys:String x:Key="Placement.NoLinksFormat">Не найдено ни одной связи с конструкциями.
+
+Связи отбираются по дисциплине в имени файла: ARC или STR. {0}</sys:String>
+    <sys:String x:Key="Placement.NoMepElements">В файле нет инженерных элементов, подходящих под настройки: проверьте выбранные виды и диапазоны габаритов.</sys:String>
+    <sys:String x:Key="Placement.Stage.FindIntersections">Поиск пересечений</sys:String>
+    <sys:String x:Key="Placement.Stage.CalculateSizes">Расчёт габаритов</sys:String>
+    <sys:String x:Key="Placement.Stage.PlaceTasks">Расстановка заданий</sys:String>
+    <sys:String x:Key="Placement.Cancelled">Расчёт отменён, задания не размещены.</sys:String>
+    <sys:String x:Key="Placement.WrongDisciplineErrorFormat">Дисциплина файла - {0}. Задания на отверстия выдаются из файлов WSS, ELE и HVC.</sys:String>
+    <sys:String x:Key="Placement.UnrecognizedLinksFormat">Связи с именем не по стандарту (в поиске не участвуют): {0}</sys:String>
+    <sys:String x:Key="Report.DisciplineFormat">Дисциплина файла: {0}{1}</sys:String>
+    <sys:String x:Key="Report.DisciplineNotByStandard"> (по правилу из настроек, имя не по стандарту)</sys:String>
+    <sys:String x:Key="Report.OrphansRemovedFormat">Удалено заданий без исходного элемента: {0}</sys:String>
+    <sys:String x:Key="Report.LinksFormat">Связи с конструкциями: {0}</sys:String>
+    <sys:String x:Key="Report.MepCheckedFormat">Инженерных элементов проверено: {0}</sys:String>
+    <sys:String x:Key="Report.IntersectionsFoundFormat">Пересечений найдено: {0}</sys:String>
+    <sys:String x:Key="Report.UnitedFormat">Объединённых заданий: {0} (склеено проходов: {1})</sys:String>
+    <sys:String x:Key="Report.PlacedFormat">Заданий размещено: {0}</sys:String>
+    <sys:String x:Key="Report.MovedFormat">  из них подвинуто на месте (элемент сдвинулся): {0}</sys:String>
+    <sys:String x:Key="Report.SkippedDuplicateFormat">Пропущено, задание уже стоит: {0}</sys:String>
+    <sys:String x:Key="Report.RejectedFormat">Отклонено пересечений: {0}</sys:String>
+    <sys:String x:Key="Report.ReasonFormat">  {0} - {1}</sys:String>
+    <sys:String x:Key="Report.FailedFormat">Не удалось разместить: {0}</sys:String>
+    <sys:String x:Key="Report.LoadedFamiliesFormat">Загружены из папки эталонных семейств (в проекте их не было): {0}</sys:String>
+    <sys:String x:Key="Report.UpdatedFamiliesFormat">Обновлены эталоном (в проекте стояла не последняя версия): {0}</sys:String>
+    <sys:String x:Key="Report.MissingParametersHeader">Параметров нет в семействах, значения записать некуда:</sys:String>
+    <sys:String x:Key="Report.MissingParametersFormat">  {0}</sys:String>
+    <sys:String x:Key="Report.MissingFamiliesFormat">Семейства не загружены в проект: {0}</sys:String>
+
+    <!-- LoadOpeningTasksCommand. -->
+    <sys:String x:Key="Loading.DialogTitle">Загрузка заданий</sys:String>
+    <sys:String x:Key="Loading.WrongDisciplineErrorFormat">Дисциплина файла - {0}. Задания на отверстия принимаются в файлах ARC и STR.</sys:String>
+    <sys:String x:Key="Loading.TransactionName">Загрузка заданий на отверстия</sys:String>
+    <sys:String x:Key="Loading.Report.TotalFormat">Заданий на сервере: {0}</sys:String>
+    <sys:String x:Key="Loading.Report.AddedFormat">Поставлено новых: {0}</sys:String>
+    <sys:String x:Key="Loading.Report.UpdatedFormat">Обновлено: {0}</sys:String>
+    <sys:String x:Key="Loading.Report.RemovedFormat">Убрано (отмечены удалёнными): {0}</sys:String>
+    <sys:String x:Key="Loading.Report.CutDeletedFormat">По {0} удалённым заданиям отверстия уже прорезаны - конструкции остаются вскрытыми. Откройте "Согласование заданий": там видно, какие это отверстия, и их можно убрать.</sys:String>
+
+    <!-- SendOpeningTasksCommand. -->
+    <sys:String x:Key="Send.DialogTitle">Отправка заданий</sys:String>
+    <sys:String x:Key="Send.WrongDisciplineErrorFormat">Дисциплина файла - {0}. Задания на отверстия отправляются из файлов WSS, ELE и HVC.</sys:String>
+
+    <!-- UniteOpeningTasksCommand. -->
+    <sys:String x:Key="Unite.DialogTitle">Объединение заданий</sys:String>
+    <sys:String x:Key="Unite.NotMepFileError">Задания на отверстия объединяются только в файлах ВИС (WSS, ELE, HVC).</sys:String>
+    <sys:String x:Key="Unite.SelectHint">Выберите задания на отверстия для объединения (минимум два) и нажмите Готово</sys:String>
+    <sys:String x:Key="Unite.SelectAtLeastTwo">Выберите минимум два задания.</sys:String>
+    <sys:String x:Key="Unite.MixedSelectionError">Среди выбранного либо нестандартное семейство, либо вперемешку задания и в стене, и в перекрытии - такое объединить нельзя.</sys:String>
+    <sys:String x:Key="Unite.MissingSourceElementsError">Не удалось найти исходные инженерные элементы выбранных заданий - похоже, они удалены из модели.</sys:String>
+    <sys:String x:Key="Unite.NoLinksError">Не найдено ни одной связи с конструкциями.</sys:String>
+    <sys:String x:Key="Unite.RecalculateFailedError">Не удалось пересчитать геометрию выбранных заданий по текущей модели.</sys:String>
+    <sys:String x:Key="Unite.PlaceFailedFormat">Не удалось разместить объединённое задание.{0}</sys:String>
+    <sys:String x:Key="Unite.RemoveSourcesTransactionName">Удаление исходных заданий</sys:String>
+    <sys:String x:Key="Unite.SuccessFormat">Объединено {0} заданий в одно.</sys:String>
+
+    <!-- Окно настроек (OpeningsSettingsWindow). -->
+    <sys:String x:Key="Settings.Title">Настройки выдачи заданий</sys:String>
+    <sys:String x:Key="Settings.CategoriesTitle">Виды элементов</sys:String>
+    <sys:String x:Key="Settings.CategoriesHint">Настройки задаются для каждого вида отдельно. Серым показаны те, для которых задания не выдаются.</sys:String>
+    <sys:String x:Key="Settings.IssueForCategory">Выдавать задания для этого вида</sys:String>
+    <sys:String x:Key="Settings.IssueForCategoryHint">Выключите, если для этого вида задания на отверстия не нужны: такие элементы не проверяются вовсе.</sys:String>
+    <sys:String x:Key="Settings.CheckWhichTitle">Какие элементы проверять</sys:String>
+    <sys:String x:Key="Settings.CheckWhichHint">Элементы мельче наименьшего габарита не проверяются: для них отверстия не выдают. Крупнее наибольшего - пропускаются как ошибка черчения.</sys:String>
+    <sys:String x:Key="Settings.MinDiameter">Наименьший диаметр, мм</sys:String>
+    <sys:String x:Key="Settings.MinWidth">Наименьшая ширина, мм</sys:String>
+    <sys:String x:Key="Settings.MinHeight">Наименьшая высота, мм</sys:String>
+    <sys:String x:Key="Settings.MaxSize">Наибольший габарит, мм</sys:String>
+    <sys:String x:Key="Settings.InWhichStructures">В каких конструкциях</sys:String>
+    <sys:String x:Key="Settings.Walls">Стены</sys:String>
+    <sys:String x:Key="Settings.Floors">Перекрытия</sys:String>
+    <sys:String x:Key="Settings.OpeningSizeTitle">Размер отверстия</sys:String>
+    <sys:String x:Key="Settings.OpeningSizeHint">Зазор - насколько отверстие шире элемента с каждой стороны. Для каждого диапазона габаритов свой зазор и своя форма отверстия: мелкие трассы обычно круглые, крупные прямоугольные.</sys:String>
+    <sys:String x:Key="Settings.SizeRounding">Округление габаритов, мм</sys:String>
+    <sys:String x:Key="Settings.ElevationRounding">Округление отметок, мм</sys:String>
+    <sys:String x:Key="Settings.OffsetsTitle">Зазоры по диапазонам габаритов</sys:String>
+    <sys:String x:Key="Settings.Column.From">Габарит от, мм</sys:String>
+    <sys:String x:Key="Settings.Column.To">до, мм</sys:String>
+    <sys:String x:Key="Settings.Column.Offset">Зазор, мм</sys:String>
+    <sys:String x:Key="Settings.Column.Shape">Форма отверстия</sys:String>
+    <sys:String x:Key="Settings.CommonTitle">Общее для всех видов</sys:String>
+    <sys:String x:Key="Settings.CommonHint">Соприкасающиеся отверстия плагин заменяет одним: труба сквозь штукатурку, кладку и штукатурку - это одно отверстие, а не три.</sys:String>
+    <sys:String x:Key="Settings.UnitedRounding">Округление объединённых, мм</sys:String>
+    <sys:String x:Key="Settings.UnitedRoundingTooltip">Габариты объединённого отверстия округляются до этого шага.</sys:String>
+    <sys:String x:Key="Settings.UnitedMaxGap">Наибольший зазор между слоями, мм</sys:String>
+    <sys:String x:Key="Settings.UnitedMaxGapTooltip">Слои конструкции могут идти с воздушной прослойкой. Если она не больше этого значения, отверстия объединяются.</sys:String>
+    <sys:String x:Key="Settings.TouchTolerance">Допуск соприкосновения, мм</sys:String>
+    <sys:String x:Key="Settings.TouchToleranceTooltip">Насколько отверстия могут не доходить друг до друга вдоль конструкции, чтобы всё же считаться соприкасающимися. Большое значение склеит соседние отверстия в одно огромное.</sys:String>
+    <sys:String x:Key="Settings.MinPassDepth">Наименьшая глубина прохода, мм</sys:String>
+    <sys:String x:Key="Settings.MinPassDepthTooltip">Элемент, задевший конструкцию углом, отверстия не требует. Ноль - выдавать задания и на касаниях.</sys:String>
+    <sys:String x:Key="Settings.ShowPlacingErrors">Показывать отчёт об ошибках расстановки</sys:String>
+    <sys:String x:Key="Settings.ServerTitle">Сервер согласования</sys:String>
+    <sys:String x:Key="Settings.ServerHint">Куда уходят выданные задания и решения по согласованию. Пусто - берётся адрес из ClashServer.json рядом со сборкой плагина (тот же сервер, что у ClashNavigator).</sys:String>
+    <sys:String x:Key="Settings.ServerUrl">Адрес сервера</sys:String>
+
+    <!-- Названия видов инженерных элементов (MepCategoryViewModel.GetName). -->
+    <sys:String x:Key="Settings.MepKind.Pipe">Трубы</sys:String>
+    <sys:String x:Key="Settings.MepKind.RoundDuct">Воздуховоды (круглое сечение)</sys:String>
+    <sys:String x:Key="Settings.MepKind.RectangleDuct">Воздуховоды (прямоугольное сечение)</sys:String>
+    <sys:String x:Key="Settings.MepKind.CableTray">Лотки</sys:String>
+    <sys:String x:Key="Settings.MepKind.Conduit">Короба</sys:String>
+
+    <!-- Сообщения проверки окна настроек и его вьюмоделей. {0}/{1} - см. вызовы GetString(key, args). -->
+    <sys:String x:Key="Settings.Error.NoCategorySelected">Не выбран ни один вид инженерных элементов.</sys:String>
+    <sys:String x:Key="Settings.Error.UnitedRoundingPositive">Округление объединённых заданий должно быть положительным числом.</sys:String>
+    <sys:String x:Key="Settings.Error.UnitedGapNonNegative">Зазор склейки по толщине должен быть неотрицательным числом.</sys:String>
+    <sys:String x:Key="Settings.Error.TouchToleranceNonNegative">Допуск касания должен быть неотрицательным числом.</sys:String>
+    <sys:String x:Key="Settings.Error.MinPassDepthNonNegative">Наименьшая глубина прохода должна быть неотрицательным числом.</sys:String>
+
+    <sys:String x:Key="Settings.Error.NoStructure">{0}: не выбрана ни одна конструкция для проверки.</sys:String>
+    <sys:String x:Key="Settings.Error.MaxSizePositive">{0}: наибольший габарит должен быть положительным числом.</sys:String>
+    <sys:String x:Key="Settings.Error.SizeRoundingPositive">{0}: округление габаритов должно быть положительным числом.</sys:String>
+    <sys:String x:Key="Settings.Error.ElevationRoundingPositive">{0}: округление отметок должно быть положительным числом.</sys:String>
+    <sys:String x:Key="Settings.Error.NoOffsets">{0}: не задан ни один диапазон зазоров.</sys:String>
+    <sys:String x:Key="Settings.Error.WithDetail">{0}: {1}</sys:String>
+    <sys:String x:Key="Settings.Error.FieldNonNegative">{0}: {1} должна быть неотрицательным числом.</sys:String>
+    <sys:String x:Key="Settings.MinDiameterTitle">наименьший диаметр</sys:String>
+    <sys:String x:Key="Settings.MinWidthTitle">наименьшая ширина</sys:String>
+    <sys:String x:Key="Settings.MinHeightTitle">наименьшая высота</sys:String>
+
+    <sys:String x:Key="Settings.Error.RangeStartNonNegative">Начало диапазона должно быть неотрицательным числом.</sys:String>
+    <sys:String x:Key="Settings.Error.RangeEndGreaterThanStart">Конец диапазона должен быть больше начала.</sys:String>
+    <sys:String x:Key="Settings.Error.OffsetNonNegative">Зазор должен быть неотрицательным числом.</sys:String>
+
+    <!-- Общее для навигаторов (OpeningsNavigatorWindow, IncomingOpeningsNavigatorWindow). -->
+    <sys:String x:Key="Common.Close">Закрыть</sys:String>
+    <sys:String x:Key="Common.Refresh">Обновить</sys:String>
+    <sys:String x:Key="Navigator.SearchPlaceholder">Поиск</sys:String>
+    <sys:String x:Key="Navigator.ColumnsToggle">Колонки</sys:String>
+    <sys:String x:Key="Navigator.ColumnsToggleTooltip">Какие колонки показывать</sys:String>
+    <sys:String x:Key="Navigator.RowHint">Двойной щелчок по строке показывает задание в модели, Delete удаляет выделенные.</sys:String>
+    <sys:String x:Key="Navigator.PreviousButton">◀ Назад</sys:String>
+    <sys:String x:Key="Navigator.NextButton">Вперёд ▶</sys:String>
+    <sys:String x:Key="Navigator.PreviousTooltip">Предыдущее задание в списке - с показом в модели</sys:String>
+    <sys:String x:Key="Navigator.NextTooltip">Следующее задание в списке - с показом в модели</sys:String>
+
+    <!-- Решения по заданию (OpeningTaskViewModel.GetDecisionText). -->
+    <sys:String x:Key="Navigator.Decision.NotSent">не отправлялось</sys:String>
+    <sys:String x:Key="Navigator.Decision.Approved">согласовано</sys:String>
+    <sys:String x:Key="Navigator.Decision.Rejected">отклонено</sys:String>
+    <sys:String x:Key="Navigator.Decision.ResetChanged">сброшено: геометрия изменилась</sys:String>
+    <sys:String x:Key="Navigator.Decision.Pending">ожидает</sys:String>
+    <sys:String x:Key="Navigator.DateGroupFormat">Дата: {0}</sys:String>
+
+    <!-- Окно исходящего навигатора (OpeningsNavigatorWindow). -->
+    <sys:String x:Key="Navigator.Title">Навигатор по заданиям на отверстия</sys:String>
+    <sys:String x:Key="Navigator.ConfigHintPrefix">Состояния определены по настройкам:</sys:String>
+    <sys:String x:Key="Navigator.ConfigHintSuffix">и пересчитываются при каждом обновлении - в модели они не хранятся.</sys:String>
+    <sys:String x:Key="Navigator.Column.HostButton">Хост</sys:String>
+    <sys:String x:Key="Navigator.ShowHostTooltip">Показать хост - стену или перекрытие</sys:String>
+    <sys:String x:Key="Navigator.Column.Id">Id</sys:String>
+    <sys:String x:Key="Navigator.Column.MepSystem">Система</sys:String>
+    <sys:String x:Key="Navigator.Column.Size">Габариты, мм</sys:String>
+    <sys:String x:Key="Navigator.Column.Elevation">Отметка</sys:String>
+    <sys:String x:Key="Navigator.Column.CenterElevation">Отм. оси</sys:String>
+    <sys:String x:Key="Navigator.Column.ArcDecision">Решение ARC</sys:String>
+    <sys:String x:Key="Navigator.Column.StrDecision">Решение STR</sys:String>
+    <sys:String x:Key="Navigator.Column.DecisionComment">Причина отклонения</sys:String>
+    <sys:String x:Key="Navigator.Column.Structure">Конструкция</sys:String>
+    <sys:String x:Key="Navigator.Column.HostId">Id основы</sys:String>
+    <sys:String x:Key="Navigator.Column.Description">Описание</sys:String>
+    <sys:String x:Key="Navigator.Column.Author">Автор</sys:String>
+    <sys:String x:Key="Navigator.ApproveWithLabel">Согласовать с:</sys:String>
+    <sys:String x:Key="Navigator.ApproveArcTooltip">Согласовать с архитекторами</sys:String>
+    <sys:String x:Key="Navigator.ApproveStrTooltip">Согласовать с конструкторами</sys:String>
+    <sys:String x:Key="Navigator.DeleteTooltip">Удалить выделенные задания из модели. Согласующие узнают об этом со следующей отправки</sys:String>
+    <sys:String x:Key="Navigator.SendButton">Отправить на сервер</sys:String>
+    <sys:String x:Key="Navigator.SendTooltip">Отправить все задания этого файла на согласование отмеченным дисциплинам</sys:String>
+    <sys:String x:Key="Navigator.PositionFormat">Задание {0} из {1}</sys:String>
+
+    <!-- Сообщения OpeningsNavigatorViewModel. -->
+    <sys:String x:Key="Navigator.NoLinksHint">Связей с конструкциями не найдено: состояния определены только по инженерным элементам, проверка на недопустимые/разные конструкции не работает. Загрузите связи АР и КР.</sys:String>
+    <sys:String x:Key="Navigator.LinksTextFormat">Связи с конструкциями: {0}</sys:String>
+    <sys:String x:Key="Navigator.NoLinksDialogTitle">Задания на отверстия</sys:String>
+    <sys:String x:Key="Navigator.NoLinksDialogText">Не найдено ни одной связи с конструкциями (АР, КР). Состояния заданий без связей не могут быть посчитаны правильно - загрузите связи и обновите навигатор.</sys:String>
+    <sys:String x:Key="Navigator.ColorWarningFormat"> Вид навигатора не раскрашен: {0}</sys:String>
+    <sys:String x:Key="Navigator.NoTasksSummary">Заданий на отверстия в файле нет.</sys:String>
+    <sys:String x:Key="Navigator.SummaryFormat">Заданий: {0}. Требуют внимания: {1}.</sys:String>
+    <sys:String x:Key="Navigator.SummaryDecisionsFormat"> Согласовано обеими: {0}, отклонено: {1}.</sys:String>
+    <sys:String x:Key="Navigator.SummaryNotSentFormat"> Не отправлялось на сервер: {0}.</sys:String>
+    <sys:String x:Key="Navigator.NoFileNameServerText">Решения согласующих не показаны: имя файла не по стандарту (Проект-Объект-Дисциплина-vNN), и на сервере не найти, к какому объекту относятся задания.</sys:String>
+    <sys:String x:Key="Navigator.NoServerUrlText">Решения согласующих не показаны: адрес сервера не задан ни в настройках плагина, ни в ClashServer.json рядом со сборкой.</sys:String>
+    <sys:String x:Key="Navigator.ServerLoadErrorFormat">Решения согласующих не загружены: {0}</sys:String>
+    <sys:String x:Key="Navigator.ServerTextPrefixFormat">Решения с сервера: {0}. </sys:String>
+    <sys:String x:Key="Navigator.ServerTaskCountFormat">Заданий этой дисциплины на сервере: {0}</sys:String>
+    <sys:String x:Key="Navigator.ServerDeletedSuffixFormat"> плюс {0} помеченных удалёнными (запись хранит решение и историю).</sys:String>
+    <sys:String x:Key="Navigator.ProgressStage">Проверка заданий</sys:String>
+    <sys:String x:Key="Navigator.SendDialogTitle">Отправка заданий</sys:String>
+    <sys:String x:Key="Navigator.DeleteDialogTitle">Удаление заданий</sys:String>
+    <sys:String x:Key="Navigator.SelectToDeleteText">Выделите в списке задания, которые нужно удалить.</sys:String>
+    <sys:String x:Key="Navigator.ConfirmDeleteFormat">Удалить из модели заданий: {0}?</sys:String>
+    <sys:String x:Key="Navigator.ConfirmDeleteApprovedFormat">
+
+Из них уже согласованы: {0}. Согласующий увидит, что отверстие больше не требуется; его решение и переписка останутся в истории на сервере.</sys:String>
+    <sys:String x:Key="Navigator.ConfirmDeleteFooter">
+
+До отправки на сервер удаление видно только в этом файле.</sys:String>
+    <sys:String x:Key="Navigator.ConfirmSendAfterDeleteFormat">Удалено заданий: {0}.
+
+Отправить задания на сервер сейчас, чтобы АР и КР увидели, что удалённых заданий больше нет? Пока выгрузка не ушла, у них эти задания остаются живыми.</sys:String>
+    <sys:String x:Key="Navigator.PendingDeletionsFormat"> Удалено и не отправлено: {0} - до отправки согласующие видят эти задания живыми.</sys:String>
+    <sys:String x:Key="Navigator.NoSharedCoordinatesText">В файле не настроены общие координаты (Acquire Coordinates): точка съёмки и базовая точка проекта совпадают с внутренними координатами.
+
+Задания уйдут на сервер относительно базовой точки проекта - если общие координаты не согласованы с файлом АР/КР, они встанут там со смещением.
+
+Отправить всё равно?</sys:String>
+    <sys:String x:Key="Navigator.ZoomTransactionName">Зум навигатора заданий на отверстия</sys:String>
+    <sys:String x:Key="Navigator.DialogTitle">Навигатор по заданиям</sys:String>
+    <sys:String x:Key="Navigator.WrongFileNameError">Дисциплину файла определить не удалось: имя не соответствует стандарту (Проект-Объект-Дисциплина-vNN) и не подходит ни под одно правило из настроек.</sys:String>
+    <sys:String x:Key="Navigator.WrongDisciplineErrorFormat">Дисциплина файла - {0}. Навигатор показывает исходящие задания и работает в файлах WSS, ELE и HVC. Полученные задания в файлах ARC и STR смотрят в окне согласования.</sys:String>
+
+    <!-- Названия состояний задания (OpeningTaskStatus) - группируют список навигатора. -->
+    <sys:String x:Key="Navigator.Status.Correct">Корректно</sys:String>
+    <sys:String x:Key="Navigator.Status.TooSmall">Слишком маленькое задание</sys:String>
+    <sys:String x:Key="Navigator.Status.TooBig">Слишком большое задание</sys:String>
+    <sys:String x:Key="Navigator.Status.NotActual">Неактуальное задание</sys:String>
+    <sys:String x:Key="Navigator.Status.Intersects">Пересекающееся задание</sys:String>
+    <sys:String x:Key="Navigator.Status.United">Объединённое</sys:String>
+    <sys:String x:Key="Navigator.Status.ManuallyPlaced">Размещено вручную</sys:String>
+    <sys:String x:Key="Navigator.Status.UnacceptableConstructions">Недопустимые конструкции</sys:String>
+    <sys:String x:Key="Navigator.Status.DifferentConstructions">В разных конструкциях</sys:String>
+    <sys:String x:Key="Navigator.Status.Unique">Нестандартное</sys:String>
+    <sys:String x:Key="Navigator.Status.Invalid">Ошибка обработки геометрии</sys:String>
+
+    <!-- Строка входящего навигатора (IncomingOpeningTaskViewModel). -->
+    <sys:String x:Key="Approval.TaskDeletedByEngineer">Задание удалено инженером</sys:String>
+    <sys:String x:Key="Approval.Status.Sent">Ожидает согласования</sys:String>
+    <sys:String x:Key="Approval.Status.PartiallyApproved">Согласовано частично</sys:String>
+    <sys:String x:Key="Approval.Status.Approved">Согласовано</sys:String>
+    <sys:String x:Key="Approval.Status.Rejected">Отклонено</sys:String>
+    <sys:String x:Key="Approval.NoData">Нет данных</sys:String>
+    <sys:String x:Key="Approval.OtherDisciplineFormat">{0}: {1}</sys:String>
+    <sys:String x:Key="Approval.InsertHint.Deleted">Инженер удалил это задание - прорезать нечего</sys:String>
+    <sys:String x:Key="Approval.InsertHint.AlreadyCut">Уже прорезано</sys:String>
+    <sys:String x:Key="Approval.InsertHint.ReadyToCut">Прорезать вырезающим семейством вместо задания</sys:String>
+    <sys:String x:Key="Approval.InsertHint.WillSendAndCut">Отправит моё решение на сервер, перечитает статусы и прорежет, если задание согласовали все, кому оно адресовано</sys:String>
+    <sys:String x:Key="Approval.InsertHint.RejectedByOther">Задание отклонила вторая дисциплина - прорезать его нельзя</sys:String>
+    <sys:String x:Key="Approval.InsertHint.NoApproversFormat">Прорезают задания, согласованные всеми, кому они адресованы. Сейчас: {0}</sys:String>
+    <sys:String x:Key="Approval.InsertHint.ApproversFormat">Задание адресовано: {0}. Прорезают согласованные всеми ими. Сейчас: {1}</sys:String>
+    <sys:String x:Key="Approval.TechnicalGroupFormat">Конструкция: {0}</sys:String>
+    <sys:String x:Key="Approval.SenderGroupFormat">Откуда: {0}</sys:String>
+    <sys:String x:Key="Approval.StatusGroupFormat">Статус: {0}</sys:String>
+    <sys:String x:Key="Approval.DateGroupFormat">Дата: {0}</sys:String>
+
+    <!-- IncomingOpeningsNavigatorViewModel. -->
+    <sys:String x:Key="Approval.CoordinatesChangedFormat">Общие координаты изменились у отправителя после прошлой отправки: {0}. Геометрия заданий этой дисциплины могла сместиться - сверьтесь с моделью.</sys:String>
+    <sys:String x:Key="Approval.NothingCutFormat">Не прорезано ни одного задания. {0}</sys:String>
+    <sys:String x:Key="Approval.CutButNotSavedFormat">Прорезано заданий: {0}, но файл не сохранён: {1} Сохраните файл сами - иначе на сервере задание останется согласованным, а вырезающего семейства в файле не будет.</sys:String>
+    <sys:String x:Key="Approval.SkipReason.MissingFamiliesFormat">Не загружены вырезающие семейства: {0}.</sys:String>
+    <sys:String x:Key="Approval.SkipReason.NoHostFormat">У {0} согласованных заданий под точкой вставки нет стены или перекрытия: вырезающее семейство хостовое, вставлять его не во что. Проверьте, совпадают ли общие координаты с файлом отправителя.</sys:String>
+    <sys:String x:Key="Approval.SkipReason.NoInstanceFormat">У {0} согласованных заданий нет экземпляра в модели - их не удалось поставить при загрузке. Обновите окно и посмотрите, что в сводке.</sys:String>
+    <sys:String x:Key="Approval.SkipReason.AllCut">Всё уже прорезано.</sys:String>
+    <sys:String x:Key="Approval.SkipReason.WaitingOtherFormat">Ждут решения второй дисциплины или отклонены: {0}. Прорезают только задания, согласованные и ARC, и STR; общий статус считает сервер. Свои решения уже отправлены и статусы перечитаны - значит, дело за второй дисциплиной.</sys:String>
+    <sys:String x:Key="Approval.Summary.TasksFormat">Заданий: {0}. </sys:String>
+    <sys:String x:Key="Approval.Summary.WaitingMineFormat">Ожидают моего решения: {0}.</sys:String>
+    <sys:String x:Key="Approval.Summary.ApprovedNotCutFormat"> Согласовано, но не прорезано: {0} - кнопка "Вставить"/"Вставить все согласованные".</sys:String>
+    <sys:String x:Key="Approval.Summary.CutRevertedFormat"> Прорезано: {0}, возвращено в задание: {1}.</sys:String>
+    <sys:String x:Key="Approval.Summary.SaveNoteSynced"> Изменения синхронизированы.</sys:String>
+    <sys:String x:Key="Approval.Summary.SaveNoteSaved"> Файл сохранён.</sys:String>
+    <sys:String x:Key="Approval.Summary.DeletedFormat"> Инженер удалил заданий, по которым отверстия уже прорезаны: {0} - проверьте их и уберите кнопкой "Убрать" в строке.</sys:String>
+    <sys:String x:Key="Approval.Summary.MissingFamiliesFormat"> Семейства не загружены: {0}.</sys:String>
+    <sys:String x:Key="Approval.Summary.MissingRealFamiliesFormat"> Вырезающие семейства не загружены: {0}.</sys:String>
+    <sys:String x:Key="Approval.RemoveDialogTitle">Удалённое задание</sys:String>
+    <sys:String x:Key="Approval.RemoveConfirmFormat">Убрать из модели отверстие {0} мм ({1}) на уровне {2}?
+
+Инженер ({3}, {4}) удалил задание, по которому оно прорезано. Конструкция закроется обратно.</sys:String>
+    <sys:String x:Key="Approval.RemoveTransactionName">Удаление отверстия по удалённому заданию</sys:String>
+    <sys:String x:Key="Approval.SendFailedFormat">Не отправлено: {0}</sys:String>
+    <sys:String x:Key="Approval.SendFailedItemFormat">{0} - {1}</sys:String>
+
+    <!-- ShowIncomingOpeningTasksCommand. -->
+    <sys:String x:Key="Approval.DialogTitle">Согласование заданий</sys:String>
+    <sys:String x:Key="Approval.WrongFileNameError">Имя файла не соответствует стандарту наименования (Проект-Объект-Дисциплина-vNN): без него нельзя определить проект и объект для сервера.</sys:String>
+    <sys:String x:Key="Approval.WrongDisciplineErrorFormat">Дисциплина файла - {0}. Согласование работает в файлах ARC и STR.</sys:String>
+    <sys:String x:Key="Approval.NoServerUrlError">Адрес сервера не задан ни в настройках плагина, ни в ClashServer.json рядом со сборкой.</sys:String>
+
+    <!-- Окно входящего навигатора (IncomingOpeningsNavigatorWindow). -->
+    <sys:String x:Key="Approval.WindowTitle">Согласование заданий на отверстия</sys:String>
+    <sys:String x:Key="Approval.SaveHint">Решения копятся в окне и уходят на сервер одной пачкой по кнопке "Сохранить".</sys:String>
+    <sys:String x:Key="Approval.ShowLabel">Показывать:</sys:String>
+    <sys:String x:Key="Approval.ShowPending">Ожидают решения</sys:String>
+    <sys:String x:Key="Approval.ShowPendingTooltip">Задания, по которым я ещё не решил</sys:String>
+    <sys:String x:Key="Approval.ShowApproved">Согласованные</sys:String>
+    <sys:String x:Key="Approval.ShowApprovedTooltip">Задания, которые я согласовал</sys:String>
+    <sys:String x:Key="Approval.ShowRejected">Отклонённые</sys:String>
+    <sys:String x:Key="Approval.ShowRejectedTooltip">Задания, которые я отклонил</sys:String>
+    <sys:String x:Key="Approval.Column.HostName">Основа</sys:String>
+    <sys:String x:Key="Approval.Column.OpeningType">Тип</sys:String>
+    <sys:String x:Key="Approval.Column.Level">Уровень</sys:String>
+    <sys:String x:Key="Approval.Column.From">Откуда</sys:String>
+    <sys:String x:Key="Approval.Column.SentBy">Кто выдал</sys:String>
+    <sys:String x:Key="Approval.Column.SentAt">Когда</sys:String>
+    <sys:String x:Key="Approval.Column.OtherDiscipline">Другая дисциплина</sys:String>
+    <sys:String x:Key="Approval.Column.Technical">Конструкция</sys:String>
+    <sys:String x:Key="Approval.Column.MyDecision">Моё решение</sys:String>
+    <sys:String x:Key="Approval.Column.Show">Показать</sys:String>
+    <sys:String x:Key="Approval.Column.Insert">Вставить</sys:String>
+    <sys:String x:Key="Approval.Column.Remove">Убрать</sys:String>
+    <sys:String x:Key="Approval.Column.Comment">Комментарий (обязателен для отклонения)</sys:String>
+    <sys:String x:Key="Approval.ApproveTooltip">Согласовать</sys:String>
+    <sys:String x:Key="Approval.RejectTooltip">Отклонить - нужен комментарий</sys:String>
+    <sys:String x:Key="Approval.RemoveButtonTooltip">Инженер удалил задание - убрать прорезанное по нему отверстие</sys:String>
+    <sys:String x:Key="Approval.DirtyHint">Звёздочка - решение изменено, но ещё не отправлено.</sys:String>
+    <sys:String x:Key="Approval.InsertAllButton">Вставить все согласованные</sys:String>
+    <sys:String x:Key="Approval.InsertAllTooltip">Прорезать вырезающим семейством все согласованные задания, которые ещё не прорезаны</sys:String>
+
+</ResourceDictionary>

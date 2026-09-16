@@ -60,7 +60,12 @@ public static class Text
 
     public static string RedrawHint
     {
-        get { return Pick("С галочкой «Перерисовать в линии» копия рисуется заново линиями и текстом: переведены и значения ячеек, но копия статична. Без неё перевод пишется в саму спецификацию - имя, заголовки колонок и фильтры: спецификация остаётся живой, а её значения станут английскими по мере перевода объектов на вкладках категорий.", "With «Redraw as lines» each schedule is redrawn as lines and text: cell values are translated too, but the copy is static. Without it the translation goes into the schedule itself - its name, column headings and filters: the schedule stays live, and its values turn English as the objects on the category tabs get translated."); }
+        get
+        {
+            return Pick(
+                "Перевод всегда ложится в новую таблицу, оригинал не трогается. «Копия линиями» рисует её заново линиями и надписями в чертёжном виде. «Копия спецификацией» кладёт переведённую таблицу в шапку новой спецификации теми же строками и колонками - копия остаётся спецификацией. Имя копии берёт язык перевода: «34 RU_Список сокращений» становится «34 EN_Список сокращений».",
+                "The translation always goes into a new table, the original is left alone. «Copy as lines» redraws it as lines and text in a drafting view. «Copy as a schedule» puts the translated table into the header of a new schedule with the same rows and columns - the copy stays a schedule. The copy's name carries the target language: «34 RU_Список сокращений» becomes «34 EN_Список сокращений».");
+        }
     }
 
     public static string SelectAll
@@ -106,6 +111,61 @@ public static class Text
     public static string ScanActiveViewTooltip
     {
         get { return Pick("Искать только в активном виде: на большой модели это заметно быстрее", "Look only in the active view: on a large model that is noticeably faster"); }
+    }
+
+    public static string NotOnSheet
+    {
+        get { return Pick("не на листе", "not on a sheet"); }
+    }
+
+    public static string UpdateTitle
+    {
+        get { return Pick("Обновление перевода таблицы", "Updating the translated table"); }
+    }
+
+    public static string UpdateNoCopies
+    {
+        get
+        {
+            return Pick(
+                "В модели нет переведённых копий: обновлять нечего. Копию делают в окне перевода.",
+                "There are no translated copies in the model: nothing to update. Copies are made in the translation window.");
+        }
+    }
+
+    public static string UpdateOrphanLine
+    {
+        get
+        {
+            return Pick(
+                "{0}: оригинал удалён, копия оставлена как есть.",
+                "{0}: the original is gone, the copy was left as it is.");
+        }
+    }
+
+    public static string UpdateDoneLine
+    {
+        get { return Pick("{0}: пересобрана, строк {1}.", "{0}: rebuilt, {1} rows."); }
+    }
+
+    public static string UpdateFailedLine
+    {
+        get { return Pick("{0}: не удалось - {1}", "{0}: failed - {1}"); }
+    }
+
+    public static string AllSchedules
+    {
+        get { return Pick("Все спецификации", "All schedules"); }
+    }
+
+    public static string AllSchedulesTooltip
+    {
+        get
+        {
+            return Pick(
+                "Показывать и спецификации, которых нет ни на одном листе. Без галочки окно показывает выпускаемый комплект - только размещённые на листах.",
+                "Also show schedules that are not placed on any sheet. Without it the window shows the issued set - only the ones placed on sheets.");
+        }
     }
 
     public static string StatusReadingScope
@@ -160,7 +220,32 @@ public static class Text
 
     public static string RedrawAsLines
     {
-        get { return Pick("Перерисовать в линии", "Redraw as lines"); }
+        get { return Pick("Копия линиями", "Copy as lines"); }
+    }
+
+    public static string CopyAsSchedule
+    {
+        get { return Pick("Копия спецификацией", "Copy as a schedule"); }
+    }
+
+    public static string RedrawAsLinesTooltip
+    {
+        get
+        {
+            return Pick(
+                "Копия рисуется заново линиями и надписями в чертёжном виде: переведено всё, включая значения ячеек, но спецификацией копия быть перестаёт.",
+                "The copy is redrawn as lines and text in a drafting view: everything is translated, cell values included, but the copy is no longer a schedule.");
+        }
+    }
+
+    public static string CopyAsScheduleTooltip
+    {
+        get
+        {
+            return Pick(
+                "Переведённая таблица ложится в шапку новой спецификации теми же строками и колонками: переведено всё, а копия остаётся спецификацией - и в диспетчере, и на листе.",
+                "The translated table goes into the header of a new schedule with the same rows and columns: everything is translated, and the copy stays a schedule - in the browser and on the sheet.");
+        }
     }
 
     public static string TranslationService
@@ -173,9 +258,92 @@ public static class Text
         get { return Pick("Спецификации", "Schedules"); }
     }
 
-    public static string TranslationsTab
+    public static string Dictionary
     {
-        get { return Pick("Строки на перевод", "Texts to translate"); }
+        get { return Pick("Словарь", "Dictionary"); }
+    }
+
+    public static string DictionaryTooltip
+    {
+        get { return Pick("Весь словарь переводов: правка вручную и свои строки", "The whole translation dictionary: edit by hand and add your own entries"); }
+    }
+
+    public static string DictionaryTitle
+    {
+        get { return Pick("Словарь переводов", "Translation dictionary"); }
+    }
+
+    public static string DictionaryHint
+    {
+        get { return Pick("Перевод, вписанный здесь, помечается как сделанный вручную: машинный перевод его не перетирает ни в этом прогоне, ни в следующих. Словарь общий для всех моделей.", "A translation typed here is marked as made by hand: machine translation never overwrites it, neither in this run nor in later ones. The dictionary is shared across models."); }
+    }
+
+    public static string DictionarySearchPlaceholder
+    {
+        get { return Pick("Поиск по тексту или переводу", "Search by text or translation"); }
+    }
+
+    public static string DictionaryAdd
+    {
+        get { return Pick("Добавить строку", "Add a row"); }
+    }
+
+    public static string DictionaryRemove
+    {
+        get { return Pick("Удалить", "Remove"); }
+    }
+
+    public static string DictionaryEmpty
+    {
+        get { return Pick("Словарь пуст. Он заполняется при сборке английского комплекта, а своё можно вписать кнопкой «Добавить строку».", "The dictionary is empty. It fills up when the English set is built, and you can type your own with «Add a row»."); }
+    }
+
+    /// <summary>Строк {0}, переведено {1}, из них вручную {2}.</summary>
+    public static string DictionarySummary
+    {
+        get { return Pick("Строк {0}, переведено {1}, из них вручную {2}", "Rows {0}, translated {1}, of them by hand {2}"); }
+    }
+
+    /// <summary>Словарь сохранён: строк {0}.</summary>
+    public static string DictionarySaved
+    {
+        get { return Pick("Словарь сохранён: строк {0}", "Dictionary saved: {0} rows"); }
+    }
+
+    /// <summary>Не удалось сохранить словарь: {0}.</summary>
+    public static string DictionarySaveFailed
+    {
+        get { return Pick("Не удалось сохранить словарь: {0}", "Could not save the dictionary: {0}"); }
+    }
+
+    public static string DictionaryNewKey
+    {
+        get { return Pick("Новая строка", "New entry"); }
+    }
+
+    public static string ColumnOrigin
+    {
+        get { return Pick("Источник", "Origin"); }
+    }
+
+    public static string OriginHuman
+    {
+        get { return Pick("вручную", "by hand"); }
+    }
+
+    public static string OriginMachine
+    {
+        get { return Pick("машинный", "machine"); }
+    }
+
+    public static string OriginBase
+    {
+        get { return Pick("базовый", "base"); }
+    }
+
+    public static string OriginDerived
+    {
+        get { return Pick("выведен", "derived"); }
     }
 
     public static string ColumnSchedule
@@ -363,11 +531,6 @@ public static class Text
         get { return Pick("Параметры", "Parameters"); }
     }
 
-    public static string CategoryScheduleTexts
-    {
-        get { return Pick("Текст спецификаций", "Schedule texts"); }
-    }
-
     public static string EmptyRooms
     {
         get { return Pick("В модели нет помещений с русским текстом — переводить нечего.", "The model has no rooms with source-language text."); }
@@ -426,11 +589,6 @@ public static class Text
     public static string EmptyKeynotes
     {
         get { return Pick("Таблица ключевых примечаний не назначена, недоступна или в ней нет русского текста. Путь к таблице задаётся в «Аннотации — Ключевое примечание — Настройка».", "The keynote table is not assigned, is unavailable, or has no source-language text. Its path is set in Annotate — Keynote — Keynoting Settings."); }
-    }
-
-    public static string EmptyScheduleTexts
-    {
-        get { return Pick("В спецификациях нет русского текста в имени, заголовках колонок и фильтрах.", "Schedules have no source-language text in their names, column headings or filters."); }
     }
 
     public static string TargetName
@@ -596,6 +754,119 @@ public static class Text
     public static string StatusBuilding
     {
         get { return Pick("Собираю английский комплект…", "Building the English set…"); }
+    }
+
+    /// <summary>Служба перевода: {0}, переведено сейчас: {1}.</summary>
+    public static string DialogTranslationService
+    {
+        get { return Pick("Служба перевода: {0}, переведено сейчас: {1}", "Translation service: {0}, translated now: {1}"); }
+    }
+
+    /// <summary>Строк словаря без перевода: {0}.</summary>
+    public static string DialogDictionaryUntranslated
+    {
+        get { return Pick("Строк словаря без перевода: {0}", "Dictionary rows without a translation: {0}"); }
+    }
+
+    /// <summary>Спецификаций нарисовано: {0}, с ошибками: {1}.</summary>
+    public static string DialogSchedules
+    {
+        get { return Pick("Спецификаций нарисовано: {0}, с ошибками: {1}", "Schedules drawn: {0}, failed: {1}"); }
+    }
+
+    public static string DialogCategoriesHeader
+    {
+        get { return Pick("Категории модели", "Model categories"); }
+    }
+
+    /// <summary>{0}: записано {1}, откачено {2}, без изменений {3}.</summary>
+    public static string DialogCategoryLine
+    {
+        get { return Pick("{0}: записано {1}, откачено {2}, без изменений {3}", "{0}: written {1}, reverted {2}, unchanged {3}"); }
+    }
+
+    public static string DialogNoCategories
+    {
+        get { return Pick("Категории модели не переводились.", "No model categories were translated."); }
+    }
+
+    /// <summary>Таблица ключевых примечаний: {0}.</summary>
+    public static string DialogKeynotes
+    {
+        get { return Pick("Таблица ключевых примечаний: {0}", "Keynote table: {0}"); }
+    }
+
+    /// <summary>Пропущено без перевода: {0}.</summary>
+    public static string DialogSkipped
+    {
+        get { return Pick("Отмечено, но перевода нет ни в окне, ни в словаре: {0}. Такие строки пропущены - переведите их кнопкой «Перевести недостающие» на вкладке категории либо впишите перевод в словарь.", "Marked, but no translation in the window or the dictionary: {0}. Such rows were skipped - translate them with «Translate missing» on the category tab, or type the translation into the dictionary."); }
+    }
+
+    /// <summary>Ошибок перевода: {0}. {1}</summary>
+    public static string DialogTranslationFailed
+    {
+        get
+        {
+            return Pick(
+                "Служба перевода не ответила ({0} запрос(ов) из отмеченных). Недостающие переводы остались пустыми: {1}",
+                "The translation service did not answer ({0} request(s)). The missing translations stayed empty: {1}");
+        }
+    }
+
+    public static string DialogFailures
+    {
+        get { return Pick("Ошибок перевода: {0}. {1}", "Translation errors: {0}. {1}"); }
+    }
+
+    public static string DialogOpenReport
+    {
+        get { return Pick("Открыть отчёт", "Open the report"); }
+    }
+
+    public static string NoteDone
+    {
+        get { return Pick("Готово.", "Done."); }
+    }
+
+    /// <summary>Спецификаций нарисовано: {0}.</summary>
+    public static string NoteSchedulesDrawn
+    {
+        get { return Pick("Спецификаций: {0}", "Schedules: {0}"); }
+    }
+
+    /// <summary>Из них с ошибками: {0}.</summary>
+    public static string NoteSchedulesFailed
+    {
+        get { return Pick("из них с ошибками {0}", "of them failed {0}"); }
+    }
+
+    /// <summary>Записано в модель {0}, откачено {1}.</summary>
+    public static string NoteWritten
+    {
+        get { return Pick("Записано в модель: {0}, откачено: {1}.", "Written to the model: {0}, reverted: {1}."); }
+    }
+
+    /// <summary>Переведено машиной сейчас: {0}.</summary>
+    public static string NoteMachineTranslated
+    {
+        get { return Pick("Переведено машиной: {0}.", "Machine-translated now: {0}."); }
+    }
+
+    /// <summary>Отмечено, но перевода нет: {0}.</summary>
+    public static string NoteSkippedWithoutTranslation
+    {
+        get { return Pick("Пропущено без перевода: {0}.", "Skipped without a translation: {0}."); }
+    }
+
+    /// <summary>Предваряет путь файла отчёта в строке состояния.</summary>
+    public static string NoteReportAt
+    {
+        get { return Pick("Отчёт:", "Report:"); }
+    }
+
+    public static string StatusModelClosed
+    {
+        get { return Pick("Модель закрыта", "The model is closed"); }
     }
 
     public static string StatusReadFailed
@@ -786,11 +1057,6 @@ public static class Text
         get { return Pick("Выбрано {0} из {1}, строк без перевода {2}", "Checked {0} of {1}, texts without a translation {2}"); }
     }
 
-    public static string SummaryTranslations
-    {
-        get { return Pick("Строк {0}, без перевода {1}", "Texts {0}, without a translation {1}"); }
-    }
-
     public static string SummaryCategory
     {
         get { return Pick("Строк {0}, отмечено {1}, без перевода {2}", "Rows {0}, checked {1}, without a translation {2}"); }
@@ -854,6 +1120,16 @@ public static class Text
     public static string NoteTranslated
     {
         get { return Pick("Переведено {0} из {1} ({2}).", "Translated {0} of {1} ({2})."); }
+    }
+
+    public static string NoteTranslatorFailed
+    {
+        get { return Pick("Служба перевода не ответила: {0}", "The translation service did not answer: {0}"); }
+    }
+
+    public static string NoteTranslateFailed
+    {
+        get { return Pick("Перевести не удалось: {0}", "Translation failed: {0}"); }
     }
 
     public static string NoteTranslatedWithErrors

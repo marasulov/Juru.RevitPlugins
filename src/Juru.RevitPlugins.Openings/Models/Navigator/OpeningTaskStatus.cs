@@ -1,6 +1,6 @@
-using System;
 using System.ComponentModel;
-using System.Reflection;
+
+using Juru.RevitPlugins.Core.Localization;
 
 namespace Juru.RevitPlugins.Openings.Models.Navigator;
 
@@ -90,12 +90,11 @@ public enum OpeningTaskStatus {
 /// </summary>
 public static class OpeningTaskStatusExtensions {
     /// <summary>
-    /// Возвращает название состояния из его описания.
+    /// Возвращает название состояния для пользователя - ключ локализации "Navigator.Status.&lt;имя&gt;",
+    /// определённый в assets/Localization каждого плагина, который показывает эти состояния.
     /// </summary>
-    public static string GetDescription(this OpeningTaskStatus status) {
-        var field = typeof(OpeningTaskStatus).GetField(status.ToString(), BindingFlags.Public | BindingFlags.Static);
-        var description = field?.GetCustomAttribute<DescriptionAttribute>();
-        return description?.Description ?? status.ToString();
+    public static string GetDescription(this OpeningTaskStatus status, PluginLocalization localization) {
+        return localization.GetString("Navigator.Status." + status);
     }
 
     /// <summary>

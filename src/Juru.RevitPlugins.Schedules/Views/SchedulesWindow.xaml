@@ -7,7 +7,6 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:viewModels="clr-namespace:Juru.RevitPlugins.Schedules.ViewModels"
     xmlns:loc="clr-namespace:Juru.RevitPlugins.Schedules.Localization"
-    xmlns:converters="clr-namespace:Juru.RevitPlugins.Schedules.Views.Converters"
     xmlns:views="clr-namespace:Juru.RevitPlugins.Schedules.Views"
     mc:Ignorable="d"
     Title="{x:Static loc:Text.WindowTitle}"
@@ -31,7 +30,6 @@
             <Style TargetType="CheckBox" BasedOn="{StaticResource DefaultCheckBoxStyle}" />
 
             <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-            <converters:NotBoolConverter x:Key="NotBool" />
 
       </ResourceDictionary>
     </Window.Resources>
@@ -59,8 +57,11 @@
                              VerticalAlignment="Center" Margin="0,0,8,0"
                              Minimum="0" Maximum="{Binding ReadTotal}" Value="{Binding ReadDone}"
                              Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
+                <!-- Подсказкой то же самое целиком: строка одна на окно и обрезается, а итог
+                     сборки в неё не умещается. -->
                 <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                            Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                           ToolTip="{Binding StatusNote}"
                            Text="{Binding StatusNote}" />
             </DockPanel>
         </StackPanel>
@@ -83,20 +84,41 @@
 
             <!-- Область сканирования: у эталона это две кнопки, здесь - переключатели, чтобы было
                  видно, какая область действует сейчас. -->
+            <!-- У каждого переключателя своё свойство, а не одно на двоих через обратный
+                 преобразователь: снятие отметки группой уходит по привязке обратно, и общее свойство
+                 оно переворачивало - см. ScanWholeModel. Стиль назначен явно: WPF-UI держит его под
+                 ключом и по типу ни на что не вешает, а без него переключатель рисуется системным
+                 кружком Windows - то же, что было с флажками. -->
             <RadioButton DockPanel.Dock="Left" GroupName="Scope" Margin="0,0,8,0"
+                         Style="{StaticResource DefaultRadioButtonStyle}"
                          VerticalAlignment="Center"
                          Content="{x:Static loc:Text.ScanModel}"
                          ToolTip="{x:Static loc:Text.ScanModelTooltip}"
-                         IsChecked="{Binding ScanActiveViewOnly, Converter={StaticResource NotBool}}" />
+                         IsChecked="{Binding ScanWholeModel}" />
             <RadioButton DockPanel.Dock="Left" GroupName="Scope" Margin="0,0,16,0"
+                         Style="{StaticResource DefaultRadioButtonStyle}"
                          VerticalAlignment="Center"
                          Content="{x:Static loc:Text.ScanActiveView}"
                          ToolTip="{x:Static loc:Text.ScanActiveViewTooltip}"
                          IsChecked="{Binding ScanActiveViewOnly}" />
 
-            <ui:TextBox DockPanel.Dock="Left" Width="220"
+            <!-- Набор спецификаций, а не область сканирования: поэтому не в группе «Scope», но
+                 рядом с ней - обе настройки отвечают на вопрос «что сюда попадёт». -->
+            <CheckBox DockPanel.Dock="Left" Margin="0,0,16,0"
+                      VerticalAlignment="Center"
+                      Content="{x:Static loc:Text.AllSchedules}"
+                      ToolTip="{x:Static loc:Text.AllSchedulesTooltip}"
+                      IsChecked="{Binding AllSchedules}" />
+
+            <ui:TextBox DockPanel.Dock="Left" Width="220" Margin="0,0,8,0"
                         PlaceholderText="{x:Static loc:Text.SearchPlaceholder}"
                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+            <!-- Словарь - отдельное окно, а не вкладка: его строки не зависят ни от модели, ни от
+                 области сканирования, и собирать их при каждом открытии главного окна незачем. -->
+            <ui:Button DockPanel.Dock="Left" Content="{x:Static loc:Text.Dictionary}" Margin="0,0,8,0"
+                       ToolTip="{x:Static loc:Text.DictionaryTooltip}"
+                       Click="ButtonDictionary_Click" />
 
             <!-- Распорка: последний ребёнок DockPanel забирает остаток места. -->
             <Border />
@@ -111,9 +133,23 @@
                 <!-- Галочка выбирает способ, а не украшение: снятая означает перевод в самой
                      спецификации. Только эта вкладка перерисовывает копии - остальные пишут
                      перевод прямо в параметры, поэтому галочка стоит здесь, а не в общей панели. -->
-                <CheckBox DockPanel.Dock="Top" Content="{x:Static loc:Text.RedrawAsLines}"
-                          Margin="8,8,8,4"
-                          IsChecked="{Binding RedrawAsLines}" />
+                <!-- Способ - у каждого переключателя своё свойство: снятие отметки группой уходит по
+                     привязке обратно, и общее свойство оно переворачивало бы. Стиль назначен явно:
+                     WPF-UI держит его под ключом и по типу ни на что не вешает. -->
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,8,8,4">
+                    <RadioButton GroupName="CopyMode" Margin="0,0,16,0"
+                                 Style="{StaticResource DefaultRadioButtonStyle}"
+                                 VerticalAlignment="Center"
+                                 Content="{x:Static loc:Text.RedrawAsLines}"
+                                 ToolTip="{x:Static loc:Text.RedrawAsLinesTooltip}"
+                                 IsChecked="{Binding RedrawAsLines}" />
+                    <RadioButton GroupName="CopyMode"
+                                 Style="{StaticResource DefaultRadioButtonStyle}"
+                                 VerticalAlignment="Center"
+                                 Content="{x:Static loc:Text.CopyAsSchedule}"
+                                 ToolTip="{x:Static loc:Text.CopyAsScheduleTooltip}"
+                                 IsChecked="{Binding CopyAsSchedule}" />
+                </StackPanel>
 
             <DataGrid
                 x:Name="SchedulesGrid"
@@ -149,7 +185,17 @@
                                 <!-- Растянут на всю ячейку и Focusable=False: иначе первый щелчок
                                      попадает в ячейку и уходит на выделение строки и фокус, а
                                      галочка переключается только со второго. -->
+                                <!-- Стиль назначен явно, хотя тот же стиль назначает и привязка по
+                                     типу выше. Неявный стиль ищется по дереву: при перечитывании
+                                     модели Rows.Clear отключает строки от таблицы, окно вместе с его
+                                     ресурсами флажку больше не видно, и он откатывается к системному
+                                     стилю. Смена стиля меняет шаблон, старый шаблон рвётся, а часы
+                                     анимации WPF-UI на нём ещё живы - раскадровки VisualStateManager
+                                     не останавливаются - и чтение с них валится ArgumentNullException
+                                     прямо во внешнем событии Ревита. Заданный явно стиль - локальное
+                                     значение, и перестановки в дереве его не трогают. -->
                                 <CheckBox
+                                    Style="{StaticResource DefaultCheckBoxStyle}"
                                     HorizontalAlignment="Stretch"
                                     VerticalAlignment="Stretch"
                                     HorizontalContentAlignment="Center"
@@ -201,62 +247,6 @@
             </DockPanel>
             </TabItem>
 
-            <!-- Строка здесь - отдельный переводимый текст, а не спецификация: это поверхность вычитки
-                 перевода, та же, что сейчас правится в CSV. -->
-            <TabItem Header="{x:Static loc:Text.TranslationsTab}" Tag="Translations">
-            <DataGrid
-                x:Name="TranslationsGrid"
-                AutoGenerateColumns="False"
-                CanUserAddRows="False"
-                CanUserDeleteRows="False"
-                CanUserReorderColumns="False"
-                GridLinesVisibility="Horizontal"
-                HeadersVisibility="Column"
-                SelectionMode="Extended"
-                SelectionUnit="FullRow"
-                BorderThickness="0"
-                ItemsSource="{Binding TranslationsView}"
-                        EnableColumnVirtualization="False"
-                        VirtualizingPanel.IsVirtualizing="True"
-                        VirtualizingPanel.VirtualizationMode="Standard"
-                        VirtualizingPanel.ScrollUnit="Pixel">
-
-                <DataGrid.Columns>
-                    <DataGridTemplateColumn Width="56" CanUserResize="False" CanUserSort="False" IsReadOnly="True">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <!-- Растянут на всю ячейку и Focusable=False: иначе первый щелчок
-                                     попадает в ячейку и уходит на выделение строки и фокус, а
-                                     галочка переключается только со второго. -->
-                                <CheckBox
-                                    HorizontalAlignment="Stretch"
-                                    VerticalAlignment="Stretch"
-                                    HorizontalContentAlignment="Center"
-                                    Background="Transparent"
-                                    Margin="0"
-                                    Padding="0"
-                                    Focusable="False"
-                                    IsHitTestVisible="True"
-                                    IsChecked="{Binding IsSelected, Mode=OneWay}"
-                                    PreviewMouseLeftButtonDown="CheckBoxCell_PreviewMouseLeftButtonDown" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-
-                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnKind}" Width="130" IsReadOnly="True"
-                                        Binding="{Binding Kind}" SortMemberPath="Kind" />
-                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnSourceText}" Width="*" IsReadOnly="True"
-                                        Binding="{Binding Readable}" SortMemberPath="Readable" />
-                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnTranslation}" Width="*"
-                                        Binding="{Binding Translation, UpdateSourceTrigger=PropertyChanged}"
-                                        SortMemberPath="Translation" />
-                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnResult}" Width="*" IsReadOnly="True"
-                                        Binding="{Binding Result}" SortMemberPath="Result" />
-                    <DataGridTextColumn Header="{x:Static loc:Text.ColumnSchedules}" Width="160" IsReadOnly="True"
-                                        Binding="{Binding Schedules}" SortMemberPath="Schedules" />
-                </DataGrid.Columns>
-            </DataGrid>
-            </TabItem>
             <TabItem Header="{x:Static loc:Text.CategoryRooms}" Tag="Rooms">
                 <views:CategoryView DataContext="{Binding Rooms}" />
             </TabItem>

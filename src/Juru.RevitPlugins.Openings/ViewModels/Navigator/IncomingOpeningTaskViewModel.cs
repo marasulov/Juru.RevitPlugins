@@ -5,6 +5,7 @@ using Autodesk.Revit.DB;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Juru.RevitPlugins.Core.FileNaming;
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.Openings.Models.Navigator;
 using Juru.RevitPlugins.Openings.Models.Server;
 using Juru.RevitPlugins.Openings.Models.Server.Dto;
@@ -16,6 +17,7 @@ namespace Juru.RevitPlugins.Openings.ViewModels.Navigator;
 /// по нему - ещё не отправленное, пока пользователь не нажмёт "Сохранить".
 /// </summary>
 public partial class IncomingOpeningTaskViewModel : ObservableObject {
+    private readonly PluginLocalization _localization;
     private string _originalStatus;
     private string _originalComment;
 
@@ -27,6 +29,7 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
 
     public IncomingOpeningTaskViewModel(
         OpeningTaskViewDto task,
+        PluginLocalization localization,
         Discipline ownDiscipline,
         ElementId elementId,
         Element? host,
@@ -35,6 +38,7 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
         bool isTaskDeleted = false) {
 
         Task = task ?? throw new ArgumentNullException(nameof(task));
+        _localization = localization;
         ElementId = elementId;
         HostElementId = host?.Id;
         HostName = host?.Name ?? string.Empty;
@@ -49,11 +53,13 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
         _comment = _originalComment;
 
         SizeText = GetSizeText(task);
-        OverallStatusText = isTaskDeleted ? "Задание удалено инженером" : GetOverallStatusText(task.Status);
-        OtherDisciplineText = GetOtherDisciplineText(task, ownDiscipline);
+        OverallStatusText = isTaskDeleted
+            ? localization.GetString("Approval.TaskDeletedByEngineer")
+            : GetOverallStatusText(task.Status, localization);
+        OtherDisciplineText = GetOtherDisciplineText(task, ownDiscipline, localization);
         IsRejectedByOther = OpeningDecisionStatus.IsRejected(GetOtherDecision(task, ownDiscipline)?.Status);
         JustReset = ownDecision.ChangedAfterApproval;
-        TechnicalStatusText = GetTechnicalStatusText(technicalStatus, task.IsUnited);
+        TechnicalStatusText = GetTechnicalStatusText(technicalStatus, task.IsUnited, localization);
         TechnicalStatusNeedsAttention = technicalStatus is
             OpeningTaskStatus.UnacceptableConstructions or OpeningTaskStatus.DifferentConstructions;
 
@@ -119,31 +125,30 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
     public string InsertHint {
         get {
             if(IsTaskDeleted) {
-                return "Инженер удалил это задание - прорезать нечего";
+                return _localization.GetString("Approval.InsertHint.Deleted");
             }
 
             if(IsCut) {
-                return "Уже прорезано";
+                return _localization.GetString("Approval.InsertHint.AlreadyCut");
             }
 
             if(OpeningApproval.IsApproved(Task)) {
-                return "Прорезать вырезающим семейством вместо задания";
+                return _localization.GetString("Approval.InsertHint.ReadyToCut");
             }
 
             if(IsApproved) {
-                return "Отправит моё решение на сервер, перечитает статусы и прорежет, если "
-                    + "задание согласовали все, кому оно адресовано";
+                return _localization.GetString("Approval.InsertHint.WillSendAndCut");
             }
 
             if(IsRejectedByOther) {
-                return "Задание отклонила вторая дисциплина - прорезать его нельзя";
+                return _localization.GetString("Approval.InsertHint.RejectedByOther");
             }
 
+            string overallStatus = GetOverallStatusText(Task.Status, _localization);
             string approvers = OpeningApproval.GetApproversText(Task);
-            return (approvers.Length == 0
-                    ? "Прорезают задания, согласованные всеми, кому они адресованы. "
-                    : $"Задание адресовано: {approvers}. Прорезают согласованные всеми ими. ")
-                + "Сейчас: " + GetOverallStatusText(Task.Status);
+            return approvers.Length == 0
+                ? _localization.GetString("Approval.InsertHint.NoApproversFormat", overallStatus)
+                : _localization.GetString("Approval.InsertHint.ApproversFormat", approvers, overallStatus);
         }
     }
 
@@ -202,7 +207,7 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
     /// должны быть видны сразу, как у исходящего навигатора и у Bim4Everyone, а не потеряны
     /// среди десятков обычных заданий, сгруппированных только по тому, кто их выдал.
     /// </summary>
-    public string TechnicalGroupText => $"Конструкция: {TechnicalStatusText}";
+    public string TechnicalGroupText => _localization.GetString("Approval.TechnicalGroupFormat", TechnicalStatusText);
 
     /// <summary>
     /// Порядок группы по техническому статусу: проблемные - первыми.
@@ -238,11 +243,12 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
     /// текст группы, а не в отдельный шаблон уровня: <see cref="Views.Navigator.IncomingOpeningsNavigatorWindow"/>
     /// использует один и тот же стиль заголовка для всех трёх уровней.
     /// </summary>
-    public string SenderGroupText => $"Откуда: {SenderDiscipline}";
+    public string SenderGroupText => _localization.GetString("Approval.SenderGroupFormat", SenderDiscipline);
 
-    public string StatusGroupText => $"Статус: {OverallStatusText}";
+    public string StatusGroupText => _localization.GetString("Approval.StatusGroupFormat", OverallStatusText);
 
-    public string DateGroupText => $"Дата: {Task.SentAt.ToLocalTime():dd.MM.yyyy}";
+    public string DateGroupText =>
+        _localization.GetString("Approval.DateGroupFormat", Task.SentAt.ToLocalTime().ToString("dd.MM.yyyy"));
 
     /// <summary>
     /// Решение другой дисциплины - для контекста: видно, что уже сделал АР, пока смотришь из КР, и наоборот.
@@ -282,7 +288,7 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
     /// <summary>
     /// Своё решение по-человечески - подпись рядом с кнопками ✓/✕.
     /// </summary>
-    public string OwnStatusText => GetOverallStatusText(Status);
+    public string OwnStatusText => GetOverallStatusText(Status, _localization);
 
     /// <summary>
     /// Отмечает решение отправленным успешно - вызывается после сохранения пачки. Status/Comment
@@ -318,36 +324,40 @@ public partial class IncomingOpeningTaskViewModel : ObservableObject {
             : $"{task.WidthMm:0}×{task.HeightMm:0}";
     }
 
-    private static string GetOverallStatusText(string status) {
+    private static string GetOverallStatusText(string status, PluginLocalization localization) {
         return status switch {
-            "sent" => "Ожидает согласования",
-            "partiallyApproved" => "Согласовано частично",
-            "approved" => "Согласовано",
-            "rejected" => "Отклонено",
+            "sent" => localization.GetString("Approval.Status.Sent"),
+            "partiallyApproved" => localization.GetString("Approval.Status.PartiallyApproved"),
+            "approved" => localization.GetString("Approval.Status.Approved"),
+            "rejected" => localization.GetString("Approval.Status.Rejected"),
             _ => status
         };
     }
 
-    private static string GetTechnicalStatusText(OpeningTaskStatus? technicalStatus, bool isUnited) {
+    private static string GetTechnicalStatusText(
+        OpeningTaskStatus? technicalStatus, bool isUnited, PluginLocalization localization) {
+
         // Приоритет как на стороне ВИС: недопустимая конструкция важнее неоднозначной, и обе -
         // важнее того, что задание просто объединённое (это не проблема, факт для контекста).
         if(technicalStatus is OpeningTaskStatus.UnacceptableConstructions or OpeningTaskStatus.DifferentConstructions) {
-            return technicalStatus.Value.GetDescription();
+            return technicalStatus.Value.GetDescription(localization);
         }
         if(isUnited) {
-            return OpeningTaskStatus.United.GetDescription();
+            return OpeningTaskStatus.United.GetDescription(localization);
         }
-        return technicalStatus?.GetDescription() ?? "Нет данных";
+        return technicalStatus?.GetDescription(localization) ?? localization.GetString("Approval.NoData");
     }
 
     private static OpeningDecisionDto GetOtherDecision(OpeningTaskViewDto task, Discipline ownDiscipline) {
         return ownDiscipline == Discipline.ARC ? task.StrDecision : task.ArcDecision;
     }
 
-    private static string GetOtherDisciplineText(OpeningTaskViewDto task, Discipline ownDiscipline) {
+    private static string GetOtherDisciplineText(
+        OpeningTaskViewDto task, Discipline ownDiscipline, PluginLocalization localization) {
+
         var (label, decision) = ownDiscipline == Discipline.ARC
             ? ("STR", task.StrDecision)
             : ("ARC", task.ArcDecision);
-        return $"{label}: {GetOverallStatusText(decision.Status)}";
+        return localization.GetString("Approval.OtherDisciplineFormat", label, GetOverallStatusText(decision.Status, localization));
     }
 }

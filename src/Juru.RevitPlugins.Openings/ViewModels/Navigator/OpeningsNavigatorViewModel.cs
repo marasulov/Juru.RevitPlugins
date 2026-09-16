@@ -15,6 +15,7 @@ using ShowTaskCommand = CommunityToolkit.Mvvm.Input.RelayCommand<
 using ToolkitCommand = CommunityToolkit.Mvvm.Input.RelayCommand;
 
 using Juru.RevitPlugins.Core.FileNaming;
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.Models.Intersections;
 using Juru.RevitPlugins.Openings.Models.Navigator;
@@ -30,6 +31,7 @@ namespace Juru.RevitPlugins.Openings.ViewModels.Navigator;
 /// </summary>
 public partial class OpeningsNavigatorViewModel : ObservableObject {
     private readonly OpeningsConfig _config;
+    private readonly PluginLocalization _localization;
     private readonly RevitActionRunner _runner;
     private readonly RevitFileNameInfo? _fileInfo;
     private readonly OpeningsServerClient? _client;
@@ -95,11 +97,13 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
     /// <param name="client">Клиент сервера согласования либо <c>null</c>, если адрес не задан.</param>
     public OpeningsNavigatorViewModel(
         OpeningsConfig config,
+        PluginLocalization localization,
         RevitActionRunner runner,
         RevitFileNameInfo? fileInfo = null,
         OpeningsServerClient? client = null) {
 
         _config = config ?? throw new ArgumentNullException(nameof(config));
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         _runner = runner ?? throw new ArgumentNullException(nameof(runner));
         _fileInfo = fileInfo;
         _client = client;
@@ -155,18 +159,17 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
 
         NoLinksLoaded = links.Count == 0;
         LinksText = NoLinksLoaded
-            ? "Связей с конструкциями не найдено: состояния определены только по инженерным элементам, "
-                + "проверка на недопустимые/разные конструкции не работает. Загрузите связи АР и КР."
-            : "Связи с конструкциями: "
-                + string.Join(", ", links.Select(link => $"{link.LinkName} ({link.Discipline})"));
+            ? _localization.GetString("Navigator.NoLinksHint")
+            : _localization.GetString("Navigator.LinksTextFormat",
+                string.Join(", ", links.Select(link => $"{link.LinkName} ({link.Discipline})")));
 
         // Без связей проверка статусов бессмысленна почти целиком (недопустимые/разные конструкции,
         // а часто и хост вообще не находится) - тихой строки подсказки недостаточно, реально
         // сбивает с толку, когда все задания выглядят как никогда не проверявшиеся.
         if(NoLinksLoaded && tasks.Count > 0) {
-            TaskDialog.Show("Задания на отверстия",
-                "Не найдено ни одной связи с конструкциями (АР, КР). Состояния заданий без связей "
-                + "не могут быть посчитаны правильно - загрузите связи и обновите навигатор.");
+            TaskDialog.Show(
+                _localization.GetString("Navigator.NoLinksDialogTitle"),
+                _localization.GetString("Navigator.NoLinksDialogText"));
         }
 
         var updated = UpdateStatuses(uiApplication, doc, tasks, links);
@@ -185,16 +188,16 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
         } catch(Autodesk.Revit.Exceptions.ApplicationException exception) {
             // Раскраска - удобство, а не работа навигатора: из-за неё нельзя терять весь список
             // заданий. Причина остаётся в сводке, чтобы было видно, почему вид выглядит обычным.
-            colorWarning = " Вид навигатора не раскрашен: " + exception.Message;
+            colorWarning = _localization.GetString("Navigator.ColorWarningFormat", exception.Message);
         }
 
         Tasks.Clear();
         foreach(var task in updated) {
             decisions.TryGetValue(task.TaskKey, out var decision);
-            Tasks.Add(new OpeningTaskViewModel(task, decision, serverChecked));
+            Tasks.Add(new OpeningTaskViewModel(task, _localization, decision, serverChecked));
         }
 
-        Summary = GetSummary(Tasks, serverChecked) + colorWarning + GetPendingDeletionsText();
+        Summary = GetSummary(Tasks, serverChecked, _localization) + colorWarning + GetPendingDeletionsText();
         SelectedTask = Tasks.FirstOrDefault();
     }
 
@@ -212,14 +215,12 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
         DecisionsUnknown = true;
 
         if(_fileInfo is null) {
-            ServerText = "Решения согласующих не показаны: имя файла не по стандарту "
-                + "(Проект-Объект-Дисциплина-vNN), и на сервере не найти, к какому объекту относятся задания.";
+            ServerText = _localization.GetString("Navigator.NoFileNameServerText");
             return new Dictionary<string, OpeningTaskViewDto>();
         }
 
         if(_client is null) {
-            ServerText = "Решения согласующих не показаны: адрес сервера не задан "
-                + "ни в настройках плагина, ни в ClashServer.json рядом со сборкой.";
+            ServerText = _localization.GetString("Navigator.NoServerUrlText");
             return new Dictionary<string, OpeningTaskViewDto>();
         }
 
@@ -229,7 +230,7 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
                     _fileInfo.ProjectCode, _fileInfo.ObjectName, [_fileInfo.Discipline]))
                 .GetAwaiter().GetResult();
         } catch(Exception exception) when(exception is InvalidOperationException or TimeoutException) {
-            ServerText = "Решения согласующих не загружены: " + exception.Message;
+            ServerText = _localization.GetString("Navigator.ServerLoadErrorFormat", exception.Message);
             return new Dictionary<string, OpeningTaskViewDto>();
         }
 
@@ -240,9 +241,9 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
         // отдаёт наравне с живыми, поэтому одно число "заданий на сервере" всегда больше, чем
         // заданий в файле, и выглядит как расхождение, которого нет.
         int deleted = serverTasks.Count(task => task.Deleted);
-        ServerText = $"Решения с сервера: {_client.BaseUrl}. "
-            + $"Заданий этой дисциплины на сервере: {serverTasks.Length - deleted}"
-            + (deleted > 0 ? $" плюс {deleted} помеченных удалёнными (запись хранит решение и историю)." : ".");
+        ServerText = _localization.GetString("Navigator.ServerTextPrefixFormat", _client.BaseUrl)
+            + _localization.GetString("Navigator.ServerTaskCountFormat", serverTasks.Length - deleted)
+            + (deleted > 0 ? _localization.GetString("Navigator.ServerDeletedSuffixFormat", deleted) : ".");
 
         var byKey = new Dictionary<string, OpeningTaskViewDto>();
         foreach(var task in serverTasks) {
@@ -267,8 +268,8 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
         var mepElements = new MepElementsIndex(doc, _config);
         var updater = new OpeningTaskStatusUpdater(doc, _config, mepElements, links, tasks);
 
-        using var progress = new OperationProgress(uiApplication.MainWindowHandle);
-        progress.StartStage("Проверка заданий", tasks.Count);
+        using var progress = new OperationProgress(uiApplication.MainWindowHandle, _localization);
+        progress.StartStage(_localization.GetString("Navigator.ProgressStage"), tasks.Count);
 
         List<OpeningTask> processed = [];
         int done = 0;
@@ -289,13 +290,15 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
     /// <summary>
     /// Возвращает сводку: сколько заданий требуют внимания по геометрии и как идёт согласование.
     /// </summary>
-    private static string GetSummary(IReadOnlyCollection<OpeningTaskViewModel> tasks, bool serverChecked) {
+    private static string GetSummary(
+        IReadOnlyCollection<OpeningTaskViewModel> tasks, bool serverChecked, PluginLocalization localization) {
+
         if(tasks.Count == 0) {
-            return "Заданий на отверстия в файле нет.";
+            return localization.GetString("Navigator.NoTasksSummary");
         }
 
         int attention = tasks.Count(task => task.NeedsAttention);
-        string summary = $"Заданий: {tasks.Count}. Требуют внимания: {attention}.";
+        string summary = localization.GetString("Navigator.SummaryFormat", tasks.Count, attention);
         if(!serverChecked) {
             return summary;
         }
@@ -303,9 +306,9 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
         int approved = tasks.Count(task => task.IsApproved);
         int rejected = tasks.Count(task => task.IsRejected);
         int notSent = tasks.Count(task => task.Decision is null);
-        summary += $" Согласовано обеими: {approved}, отклонено: {rejected}.";
+        summary += localization.GetString("Navigator.SummaryDecisionsFormat", approved, rejected);
         if(notSent > 0) {
-            summary += $" Не отправлялось на сервер: {notSent}.";
+            summary += localization.GetString("Navigator.SummaryNotSentFormat", notSent);
         }
 
         return summary;
@@ -332,7 +335,7 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
             HostHighlighter.Apply(doc, view, _highlightedHost, next);
             _highlightedHost = next;
 
-            ZoomTo(uiDocument, view, task.Task.Instance, link: null);
+            ZoomTo(uiDocument, view, task.Task.Instance, link: null, _localization);
         });
     }
 
@@ -357,7 +360,7 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
             HostHighlighter.Apply(doc, view, _highlightedHost, next);
             _highlightedHost = next;
 
-            ZoomTo(uiDocument, view, host, next?.Link);
+            ZoomTo(uiDocument, view, host, next?.Link, _localization);
         });
     }
 
@@ -379,7 +382,8 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
     /// с которым уже боролись: "непонятно, куда пришла навигация". Зум должен быть одинаковым
     /// для обоих кликов, различие только в системе координат габарита.
     /// </remarks>
-    private static void ZoomTo(UIDocument uiDocument, View3D view, Element target, RevitLinkInstance? link) {
+    private static void ZoomTo(
+        UIDocument uiDocument, View3D view, Element target, RevitLinkInstance? link, PluginLocalization localization) {
         var box = target.get_BoundingBox(null);
         if(box is not null) {
             var transform = link?.GetTotalTransform() ?? Transform.Identity;
@@ -389,7 +393,8 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
 
             // SetSectionBox/IsSectionBoxActive меняют документ - без транзакции Revit падает
             // с "Attempt to modify the model outside of transaction".
-            using var transaction = new Transaction(uiDocument.Document, "Зум навигатора заданий на отверстия");
+            using var transaction = new Transaction(
+                uiDocument.Document, localization.GetString("Navigator.ZoomTransactionName"));
             transaction.Start();
             view.SetSectionBox(new BoundingBoxXYZ {
                 Min = new XYZ(
@@ -477,13 +482,13 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
     private void SendCore(UIApplication uiApplication) {
         var doc = uiApplication.ActiveUIDocument.Document;
         var sender = new OpeningTasksSender(doc, _config, _client!);
-        if(sender.NeedsCoordinateWarning && !ConfirmWithoutSharedCoordinates()) {
+        if(sender.NeedsCoordinateWarning && !ConfirmWithoutSharedCoordinates(_localization)) {
             return;
         }
 
         try {
             var outcome = sender.Send(_fileInfo!);
-            TaskDialog.Show("Отправка заданий", outcome.Report);
+            TaskDialog.Show(_localization.GetString("Navigator.SendDialogTitle"), outcome.Report);
         } catch(Exception exception) when(exception is InvalidOperationException or TimeoutException) {
             ServerText = exception.Message;
             return;
@@ -509,11 +514,13 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
         // окне: оно немодальное и живёт вне этого контекста.
         _runner.Run(uiApplication => {
             if(rows is null || rows.Count == 0) {
-                TaskDialog.Show("Удаление заданий", "Выделите в списке задания, которые нужно удалить.");
+                TaskDialog.Show(
+                    _localization.GetString("Navigator.DeleteDialogTitle"),
+                    _localization.GetString("Navigator.SelectToDeleteText"));
                 return;
             }
 
-            if(!Confirm(rows)) {
+            if(!Confirm(rows, _localization)) {
                 return;
             }
 
@@ -526,9 +533,9 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
 
             SelectedTask = Tasks.FirstOrDefault();
             _pendingDeletions += removed;
-            Summary = GetSummary(Tasks, serverChecked: !DecisionsUnknown) + GetPendingDeletionsText();
+            Summary = GetSummary(Tasks, serverChecked: !DecisionsUnknown, _localization) + GetPendingDeletionsText();
 
-            if(CanSend && ConfirmSendAfterDelete(removed)) {
+            if(CanSend && ConfirmSendAfterDelete(removed, _localization)) {
                 _config.Approvers = GetSelectedApprovers();
                 _config.SaveProjectConfig();
                 SendCore(uiApplication);
@@ -540,27 +547,24 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
     /// Спрашивает подтверждение, отдельно называя задания, которые уже согласованы: их удаление
     /// отменяет чужую работу - согласующий разбирал именно это отверстие.
     /// </summary>
-    private static bool Confirm(IReadOnlyCollection<OpeningTaskViewModel> rows) {
+    private static bool Confirm(IReadOnlyCollection<OpeningTaskViewModel> rows, PluginLocalization localization) {
         int approved = rows.Count(row => row.IsApproved);
-        string text = $"Удалить из модели заданий: {rows.Count}?";
+        string text = localization.GetString("Navigator.ConfirmDeleteFormat", rows.Count);
         if(approved > 0) {
-            text += $"\n\nИз них уже согласованы: {approved}. "
-                + "Согласующий увидит, что отверстие больше не требуется; его решение и переписка "
-                + "останутся в истории на сервере.";
+            text += localization.GetString("Navigator.ConfirmDeleteApprovedFormat", approved);
         }
 
-        text += "\n\nДо отправки на сервер удаление видно только в этом файле.";
+        text += localization.GetString("Navigator.ConfirmDeleteFooter");
 
-        var confirm = TaskDialog.Show("Удаление заданий", text,
+        var confirm = TaskDialog.Show(localization.GetString("Navigator.DeleteDialogTitle"), text,
             TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No, TaskDialogResult.No);
         return confirm == TaskDialogResult.Yes;
     }
 
-    private static bool ConfirmSendAfterDelete(int removed) {
-        var confirm = TaskDialog.Show("Удаление заданий",
-            $"Удалено заданий: {removed}.\n\n"
-            + "Отправить задания на сервер сейчас, чтобы АР и КР увидели, что удалённых заданий "
-            + "больше нет? Пока выгрузка не ушла, у них эти задания остаются живыми.",
+    private static bool ConfirmSendAfterDelete(int removed, PluginLocalization localization) {
+        var confirm = TaskDialog.Show(
+            localization.GetString("Navigator.DeleteDialogTitle"),
+            localization.GetString("Navigator.ConfirmSendAfterDeleteFormat", removed),
             TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No, TaskDialogResult.Yes);
         return confirm == TaskDialogResult.Yes;
     }
@@ -568,8 +572,7 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
     private string GetPendingDeletionsText() {
         return _pendingDeletions == 0
             ? string.Empty
-            : $" Удалено и не отправлено: {_pendingDeletions} - "
-                + "до отправки согласующие видят эти задания живыми.";
+            : _localization.GetString("Navigator.PendingDeletionsFormat", _pendingDeletions);
     }
 
     private List<Discipline> GetSelectedApprovers() {
@@ -585,13 +588,10 @@ public partial class OpeningsNavigatorViewModel : ObservableObject {
         return approvers;
     }
 
-    private static bool ConfirmWithoutSharedCoordinates() {
-        var confirm = TaskDialog.Show("Отправка заданий",
-            "В файле не настроены общие координаты (Acquire Coordinates): "
-            + "точка съёмки и базовая точка проекта совпадают с внутренними координатами.\n\n"
-            + "Задания уйдут на сервер относительно базовой точки проекта - если общие координаты "
-            + "не согласованы с файлом АР/КР, они встанут там со смещением.\n\n"
-            + "Отправить всё равно?",
+    private static bool ConfirmWithoutSharedCoordinates(PluginLocalization localization) {
+        var confirm = TaskDialog.Show(
+            localization.GetString("Navigator.SendDialogTitle"),
+            localization.GetString("Navigator.NoSharedCoordinatesText"),
             TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No, TaskDialogResult.No);
         return confirm == TaskDialogResult.Yes;
     }

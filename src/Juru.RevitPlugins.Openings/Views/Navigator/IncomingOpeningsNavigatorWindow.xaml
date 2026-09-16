@@ -6,9 +6,10 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vms="clr-namespace:Juru.RevitPlugins.Openings.ViewModels.Navigator"
     xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+    xmlns:loc="clr-namespace:Juru.RevitPlugins.Core.Localization;assembly=Juru.RevitPlugins.Core"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     mc:Ignorable="d"
-    Title="Согласование заданий на отверстия"
+    Title="{DynamicResource Approval.WindowTitle}"
     Width="1250"
     Height="680"
     MinWidth="820"
@@ -138,7 +139,7 @@
                 DockPanel.Dock="Right"
                 Width="220"
                 VerticalAlignment="Top"
-                PlaceholderText="Поиск"
+                PlaceholderText="{DynamicResource Navigator.SearchPlaceholder}"
                 TextChanged="SearchBox_TextChanged" />
             <StackPanel>
                 <TextBlock
@@ -146,7 +147,7 @@
                     Text="{Binding Summary}" />
                 <TextBlock
                     Style="{StaticResource Hint}"
-                    Text="Решения копятся в окне и уходят на сервер одной пачкой по кнопке &quot;Сохранить&quot;." />
+                    Text="{DynamicResource Approval.SaveHint}" />
                 <TextBlock
                     Foreground="OrangeRed"
                     Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}"
@@ -166,29 +167,29 @@
                         Margin="0 0 8 0"
                         VerticalAlignment="Center"
                         Style="{StaticResource Hint}"
-                        Text="Показывать:" />
+                        Text="{DynamicResource Approval.ShowLabel}" />
                     <CheckBox
                         x:Name="ShowPendingBox"
                         Margin="0 0 10 0"
-                        Content="Ожидают решения"
+                        Content="{DynamicResource Approval.ShowPending}"
                         IsChecked="True"
-                        ToolTip="Задания, по которым я ещё не решил"
+                        ToolTip="{DynamicResource Approval.ShowPendingTooltip}"
                         Checked="StatusFilter_Changed"
                         Unchecked="StatusFilter_Changed" />
                     <CheckBox
                         x:Name="ShowApprovedBox"
                         Margin="0 0 10 0"
-                        Content="Согласованные"
+                        Content="{DynamicResource Approval.ShowApproved}"
                         IsChecked="True"
-                        ToolTip="Задания, которые я согласовал"
+                        ToolTip="{DynamicResource Approval.ShowApprovedTooltip}"
                         Checked="StatusFilter_Changed"
                         Unchecked="StatusFilter_Changed" />
                     <CheckBox
                         x:Name="ShowRejectedBox"
                         Margin="0 0 16 0"
-                        Content="Отклонённые"
+                        Content="{DynamicResource Approval.ShowRejected}"
                         IsChecked="True"
-                        ToolTip="Задания, которые я отклонил"
+                        ToolTip="{DynamicResource Approval.ShowRejectedTooltip}"
                         Checked="StatusFilter_Changed"
                         Unchecked="StatusFilter_Changed" />
 
@@ -201,8 +202,8 @@
                     <ToggleButton
                         x:Name="ColumnsToggle"
                         ClickMode="Press"
-                        Content="Колонки"
-                        ToolTip="Какие колонки показывать" />
+                        Content="{DynamicResource Navigator.ColumnsToggle}"
+                        ToolTip="{DynamicResource Navigator.ColumnsToggleTooltip}" />
                     <Popup
                         AllowsTransparency="False"
                         IsOpen="{Binding IsChecked, ElementName=ColumnsToggle}"
@@ -282,64 +283,64 @@
                         Width="60"
                         IsReadOnly="True"
                         Binding="{Binding ElementIdText}"
-                        Header="Id" />
+                        loc:ColumnLocalization.Key="Navigator.Column.Id" />
                     <DataGridTextColumn
                         Width="150"
                         IsReadOnly="True"
                         Binding="{Binding HostName}"
-                        Header="Основа" />
+                        loc:ColumnLocalization.Key="Approval.Column.HostName" />
                     <DataGridTextColumn
                         Width="70"
                         IsReadOnly="True"
                         Binding="{Binding HostElementIdText}"
-                        Header="Id основы" />
+                        loc:ColumnLocalization.Key="Navigator.Column.HostId" />
                     <DataGridTextColumn
                         Width="120"
                         IsReadOnly="True"
                         Binding="{Binding OpeningTypeText}"
-                        Header="Тип" />
+                        loc:ColumnLocalization.Key="Approval.Column.OpeningType" />
                     <DataGridTextColumn
                         Width="100"
                         IsReadOnly="True"
                         Binding="{Binding SizeText}"
-                        Header="Габариты, мм" />
+                        loc:ColumnLocalization.Key="Navigator.Column.Size" />
                     <DataGridTextColumn
                         Width="90"
                         IsReadOnly="True"
                         Binding="{Binding LevelName}"
-                        Header="Уровень" />
+                        loc:ColumnLocalization.Key="Approval.Column.Level" />
                     <DataGridTextColumn
                         Width="110"
                         IsReadOnly="True"
                         Binding="{Binding MepSystem}"
-                        Header="Система" />
+                        loc:ColumnLocalization.Key="Navigator.Column.MepSystem" />
                     <DataGridTextColumn
                         Width="80"
                         IsReadOnly="True"
                         Binding="{Binding SenderDiscipline}"
-                        Header="Откуда" />
+                        loc:ColumnLocalization.Key="Approval.Column.From" />
                     <DataGridTextColumn
                         Width="130"
                         IsReadOnly="True"
                         Binding="{Binding SentByDisplayName}"
-                        Header="Кто выдал" />
+                        loc:ColumnLocalization.Key="Approval.Column.SentBy" />
                     <DataGridTextColumn
                         Width="120"
                         IsReadOnly="True"
                         Binding="{Binding SentAtText}"
-                        Header="Когда" />
+                        loc:ColumnLocalization.Key="Approval.Column.SentAt" />
                     <DataGridTextColumn
                         Width="150"
                         IsReadOnly="True"
                         Binding="{Binding OtherDisciplineText}"
-                        Header="Другая дисциплина" />
+                        loc:ColumnLocalization.Key="Approval.Column.OtherDiscipline" />
                     <!-- Пересчитано локально по конструкциям файла АР/КР, плюс "объединённое" -
                          факт с ВИС-стороны, переданный флагом. Не решение согласующего. -->
                     <DataGridTextColumn
                         Width="140"
                         IsReadOnly="True"
                         Binding="{Binding TechnicalStatusText}"
-                        Header="Конструкция">
+                        loc:ColumnLocalization.Key="Approval.Column.Technical">
                         <DataGridTextColumn.ElementStyle>
                             <Style
                                 TargetType="TextBlock">
@@ -358,7 +359,7 @@
 
                     <DataGridTemplateColumn
                         Width="160"
-                        Header="Моё решение">
+                        loc:ColumnLocalization.Key="Approval.Column.MyDecision">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel
@@ -367,14 +368,14 @@
                                         Margin="1"
                                         Padding="6 2"
                                         Content="✓"
-                                        ToolTip="Согласовать"
+                                        ToolTip="{DynamicResource Approval.ApproveTooltip}"
                                         IsEnabled="{Binding CanApprove}"
                                         Click="ApproveButton_Click" />
                                     <ui:Button
                                         Margin="1"
                                         Padding="6 2"
                                         Content="✕"
-                                        ToolTip="Отклонить - нужен комментарий"
+                                        ToolTip="{DynamicResource Approval.RejectTooltip}"
                                         IsEnabled="{Binding CanReject}"
                                         Click="RejectButton_Click" />
                                     <!-- Какое решение сейчас выбрано, показывает подпись, а не цвет
@@ -419,13 +420,13 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn
                         Width="90"
-                        Header="Показать">
+                        loc:ColumnLocalization.Key="Approval.Column.Show">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <ui:Button
                                     Margin="2"
                                     Padding="8 2"
-                                    Content="Показать"
+                                    Content="{DynamicResource Approval.Column.Show}"
                                     IsEnabled="{Binding CanShow}"
                                     Click="ShowButton_Click" />
                             </DataTemplate>
@@ -433,7 +434,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn
                         Width="90"
-                        Header="Вставить">
+                        loc:ColumnLocalization.Key="Approval.Column.Insert">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <!-- Прорезает вырезающим семейством одно согласованное задание -
@@ -446,7 +447,7 @@
                                     Margin="2"
                                     Padding="8 2"
                                     Appearance="Success"
-                                    Content="Вставить"
+                                    Content="{DynamicResource Approval.Column.Insert}"
                                     ToolTip="{Binding InsertHint}"
                                     IsEnabled="{Binding CanInsert}"
                                     Visibility="{Binding CanCut, Converter={StaticResource BoolToVisibility}}"
@@ -460,7 +461,7 @@
                     <DataGridTemplateColumn
                         x:Name="RemoveColumn"
                         Width="90"
-                        Header="Убрать">
+                        loc:ColumnLocalization.Key="Approval.Column.Remove">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <!-- Появляется только у заданий, которые инженер удалил, а
@@ -471,8 +472,8 @@
                                     Margin="2"
                                     Padding="8 2"
                                     Appearance="Danger"
-                                    Content="Убрать"
-                                    ToolTip="Инженер удалил задание - убрать прорезанное по нему отверстие"
+                                    Content="{DynamicResource Approval.Column.Remove}"
+                                    ToolTip="{DynamicResource Approval.RemoveButtonTooltip}"
                                     Visibility="{Binding CanRemove, Converter={StaticResource BoolToVisibility}}"
                                     Click="RemoveButton_Click" />
                             </DataTemplate>
@@ -480,7 +481,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn
                         Width="40"
-                        Header="Хост">
+                        loc:ColumnLocalization.Key="Navigator.Column.HostButton">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <!-- Отдельная кнопка на хост - стену/перекрытие, которое пробивает
@@ -489,7 +490,7 @@
                                 <ui:Button
                                     Margin="2"
                                     Padding="4 2"
-                                    ToolTip="Показать хост - стену или перекрытие"
+                                    ToolTip="{DynamicResource Navigator.ShowHostTooltip}"
                                     Content="&#128269;"
                                     IsEnabled="{Binding CanShowHost}"
                                     Click="ShowHostButton_Click" />
@@ -500,12 +501,12 @@
                         Width="200"
                         IsReadOnly="False"
                         Binding="{Binding Comment, UpdateSourceTrigger=PropertyChanged}"
-                        Header="Комментарий (обязателен для отклонения)" />
+                        loc:ColumnLocalization.Key="Approval.Column.Comment" />
                     <DataGridTextColumn
                         Width="*"
                         IsReadOnly="True"
                         Binding="{Binding Description}"
-                        Header="Описание" />
+                        loc:ColumnLocalization.Key="Navigator.Column.Description" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
@@ -518,14 +519,14 @@
             Orientation="Horizontal">
             <ui:Button
                 Width="110"
-                Content="◀ Назад"
-                ToolTip="Предыдущее задание в списке - с показом в модели"
+                Content="{DynamicResource Navigator.PreviousButton}"
+                ToolTip="{DynamicResource Navigator.PreviousTooltip}"
                 Click="PreviousButton_Click" />
             <ui:Button
                 Width="110"
                 Margin="8 0 0 0"
-                Content="Вперёд ▶"
-                ToolTip="Следующее задание в списке - с показом в модели"
+                Content="{DynamicResource Navigator.NextButton}"
+                ToolTip="{DynamicResource Navigator.NextTooltip}"
                 Click="NextButton_Click" />
             <TextBlock
                 x:Name="PositionText"
@@ -536,7 +537,7 @@
                 Margin="16 0 0 0"
                 VerticalAlignment="Center"
                 Style="{StaticResource Hint}"
-                Text="Звёздочка - решение изменено, но ещё не отправлено." />
+                Text="{DynamicResource Approval.DirtyHint}" />
         </StackPanel>
 
         <DockPanel
@@ -549,25 +550,25 @@
                     Width="215"
                     Margin="6 0"
                     Appearance="Success"
-                    Content="Вставить все согласованные"
-                    ToolTip="Прорезать вырезающим семейством все согласованные задания, которые ещё не прорезаны"
+                    Content="{DynamicResource Approval.InsertAllButton}"
+                    ToolTip="{DynamicResource Approval.InsertAllTooltip}"
                     Visibility="{Binding CanCut, Converter={StaticResource BoolToVisibility}}"
                     Command="{Binding InsertAllApprovedCommand}" />
                 <ui:Button
                     Width="120"
                     Margin="6 0"
-                    Content="Обновить"
+                    Content="{DynamicResource Common.Refresh}"
                     Command="{Binding RefreshCommand}" />
                 <ui:Button
                     Width="120"
                     Margin="6 0"
                     Appearance="Info"
-                    Content="Сохранить"
+                    Content="{DynamicResource Common.Save}"
                     Command="{Binding SaveCommand}" />
                 <ui:Button
                     Width="120"
                     Margin="6 0"
-                    Content="Закрыть"
+                    Content="{DynamicResource Common.Close}"
                     Click="ButtonClose_Click" />
             </StackPanel>
         </DockPanel>

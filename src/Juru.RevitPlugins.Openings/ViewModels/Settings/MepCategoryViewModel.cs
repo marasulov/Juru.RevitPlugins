@@ -4,6 +4,7 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ToolkitCommand = CommunityToolkit.Mvvm.Input.RelayCommand;
 
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.Openings.Models.Configs;
 
 namespace Juru.RevitPlugins.Openings.ViewModels.Settings;
@@ -13,6 +14,7 @@ namespace Juru.RevitPlugins.Openings.ViewModels.Settings;
 /// </summary>
 public partial class MepCategoryViewModel : ObservableObject {
     private readonly MepKind _kind;
+    private readonly PluginLocalization _localization;
 
     [ObservableProperty]
     private bool _isSelected;
@@ -44,8 +46,9 @@ public partial class MepCategoryViewModel : ObservableObject {
     [ObservableProperty]
     private OffsetRangeViewModel _selectedOffset;
 
-    public MepCategoryViewModel(MepCategorySettings settings) {
+    public MepCategoryViewModel(MepCategorySettings settings, PluginLocalization localization) {
         _kind = settings.Kind;
+        _localization = localization;
         _isSelected = settings.IsSelected;
         _minDiameterMm = settings.MinDiameterMm.ToString("0.##");
         _minWidthMm = settings.MinWidthMm.ToString("0.##");
@@ -57,7 +60,7 @@ public partial class MepCategoryViewModel : ObservableObject {
         _checkFloors = settings.Structures.Contains(StructureKind.Floor);
 
         Offsets = new ObservableCollection<OffsetRangeViewModel>(
-            settings.Offsets.Select(offset => new OffsetRangeViewModel(offset)));
+            settings.Offsets.Select(offset => new OffsetRangeViewModel(offset, localization)));
         _selectedOffset = Offsets.FirstOrDefault();
 
         AddOffsetCommand = new ToolkitCommand(AddOffset);
@@ -67,7 +70,7 @@ public partial class MepCategoryViewModel : ObservableObject {
     /// <summary>
     /// Название вида для списка.
     /// </summary>
-    public string Name => GetName(_kind);
+    public string Name => _localization.GetString(GetNameKey(_kind));
 
     /// <summary>
     /// Круглое ли сечение у элементов этого вида: от этого зависит, какие пороги показывать.
@@ -97,32 +100,33 @@ public partial class MepCategoryViewModel : ObservableObject {
         }
 
         if(!CheckWalls && !CheckFloors) {
-            return $"{Name}: не выбрана ни одна конструкция для проверки.";
+            return _localization.GetString("Settings.Error.NoStructure", Name);
         }
         if(!double.TryParse(MaxSizeMm, out double max) || max <= 0) {
-            return $"{Name}: наибольший габарит должен быть положительным числом.";
+            return _localization.GetString("Settings.Error.MaxSizePositive", Name);
         }
         if(!int.TryParse(SizeRoundingMm, out int sizeRounding) || sizeRounding <= 0) {
-            return $"{Name}: округление габаритов должно быть положительным числом.";
+            return _localization.GetString("Settings.Error.SizeRoundingPositive", Name);
         }
         if(!int.TryParse(ElevationRoundingMm, out int elevationRounding) || elevationRounding <= 0) {
-            return $"{Name}: округление отметок должно быть положительным числом.";
+            return _localization.GetString("Settings.Error.ElevationRoundingPositive", Name);
         }
 
         string minError = IsRound
-            ? Validate(MinDiameterMm, "наименьший диаметр")
-            : Validate(MinWidthMm, "наименьшая ширина") ?? Validate(MinHeightMm, "наименьшая высота");
+            ? Validate(MinDiameterMm, _localization.GetString("Settings.MinDiameterTitle"))
+            : Validate(MinWidthMm, _localization.GetString("Settings.MinWidthTitle"))
+                ?? Validate(MinHeightMm, _localization.GetString("Settings.MinHeightTitle"));
         if(minError is not null) {
             return minError;
         }
 
         if(Offsets.Count == 0) {
-            return $"{Name}: не задан ни один диапазон зазоров.";
+            return _localization.GetString("Settings.Error.NoOffsets", Name);
         }
         foreach(var offset in Offsets) {
             string error = offset.GetError();
             if(error is not null) {
-                return $"{Name}: {error}";
+                return _localization.GetString("Settings.Error.WithDetail", Name, error);
             }
         }
         return null;
@@ -153,7 +157,7 @@ public partial class MepCategoryViewModel : ObservableObject {
     private string Validate(string value, string title) {
         return double.TryParse(value, out double parsed) && parsed >= 0
             ? null
-            : $"{Name}: {title} должна быть неотрицательным числом.";
+            : _localization.GetString("Settings.Error.FieldNonNegative", Name, title);
     }
 
     private static double ParseOrZero(string value) {
@@ -167,7 +171,7 @@ public partial class MepCategoryViewModel : ObservableObject {
             ToMm = from + 100,
             OffsetMm = 50,
             Shape = OpeningShape.Rectangle
-        });
+        }, _localization);
         Offsets.Add(added);
         SelectedOffset = added;
     }
@@ -181,18 +185,18 @@ public partial class MepCategoryViewModel : ObservableObject {
         SelectedOffset = Offsets.FirstOrDefault();
     }
 
-    private static string GetName(MepKind kind) {
+    private static string GetNameKey(MepKind kind) {
         switch(kind) {
             case MepKind.Pipe:
-                return "Трубы";
+                return "Settings.MepKind.Pipe";
             case MepKind.RoundDuct:
-                return "Воздуховоды (круглое сечение)";
+                return "Settings.MepKind.RoundDuct";
             case MepKind.RectangleDuct:
-                return "Воздуховоды (прямоугольное сечение)";
+                return "Settings.MepKind.RectangleDuct";
             case MepKind.CableTray:
-                return "Лотки";
+                return "Settings.MepKind.CableTray";
             case MepKind.Conduit:
-                return "Короба";
+                return "Settings.MepKind.Conduit";
             default:
                 return kind.ToString();
         }

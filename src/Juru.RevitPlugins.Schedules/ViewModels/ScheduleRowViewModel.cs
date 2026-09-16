@@ -18,6 +18,14 @@ public sealed partial class ScheduleRowViewModel : ObservableObject, ISelectable
     [ObservableProperty]
     private bool isSelected;
 
+    /// <summary>Строка состояния считается по этому счёту, поэтому меняются они вместе.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Status))]
+    private int untranslatedCount;
+
+    /// <summary>Различные строки с русским текстом: по ним считается «Без перевода».</summary>
+    private readonly HashSet<string> translatable;
+
     public ScheduleRowViewModel(ReadSchedule read, IReadOnlyDictionary<string, string> glossary)
     {
         Read = read;
@@ -25,14 +33,28 @@ public sealed partial class ScheduleRowViewModel : ObservableObject, ISelectable
         var described = read.Described;
 
         ScheduleName = described.ScheduleName;
-        Sheets = string.Join(", ", described.SheetNumbers);
+        // Пусто в этой колонке читалось бы как «не прочитали», поэтому отсутствие листа названо
+        // словами: спецификация в списке есть, а на листах её нет.
+        Sheets = described.SheetNumbers.Count is 0
+            ? Text.NotOnSheet
+            : string.Join(", ", described.SheetNumbers);
         ColumnCount = described.VisibleColumnHeadings.Count;
         RowCount = described.RowCount;
         Error = described.Error;
 
-        var translatable = CollectTranslatable(read);
+        translatable = CollectTranslatable(read);
 
         TranslatableCount = translatable.Count;
+        untranslatedCount = translatable.Count(text => !glossary.ContainsKey(text));
+    }
+
+    /// <summary>
+    ///     Пересчитывает «Без перевода» по изменившемуся словарю. Строки таблицы при этом не
+    ///     пересоздаются: галочки и выделение остались бы позади, а перечитывать модель незачем -
+    ///     поменялся словарь, а не модель.
+    /// </summary>
+    public void RefreshAgainst(IReadOnlyDictionary<string, string> glossary)
+    {
         UntranslatedCount = translatable.Count(text => !glossary.ContainsKey(text));
     }
 
@@ -45,9 +67,6 @@ public sealed partial class ScheduleRowViewModel : ObservableObject, ISelectable
 
     /// <summary>Различных строк с русским текстом в таблице.</summary>
     public int TranslatableCount { get; }
-
-    /// <summary>Из них тех, которых ещё нет в глоссарии.</summary>
-    public int UntranslatedCount { get; }
 
     public string? Error { get; }
 

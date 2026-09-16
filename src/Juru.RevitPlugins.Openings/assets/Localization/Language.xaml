@@ -1,0 +1,14 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Базовый словарь, путь до которого передаётся в PluginLocalization.Load. Своих строк здесь
+         нет - только русский словарь, который служит запасным для остальных культур: ключ,
+         забытый в переводе, показывает русский текст, а не пустоту. -->
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary
+            Source="/Juru.RevitPlugins.Openings;component/assets/Localization/Language.ru-RU.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

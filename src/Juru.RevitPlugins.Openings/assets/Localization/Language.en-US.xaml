@@ -1,0 +1,311 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Keys missing here fall back to the Russian dictionary merged by Language.xaml - see
+         PluginLocalization.Load. Only keys that actually have an English translation belong here. -->
+
+    <sys:String x:Key="Common.Add">Add</sys:String>
+    <sys:String x:Key="Common.Remove">Remove</sys:String>
+    <sys:String x:Key="Common.Save">Save</sys:String>
+    <sys:String x:Key="Common.Cancel">Cancel</sys:String>
+
+    <sys:String x:Key="Progress.WindowTitle">Opening tasks</sys:String>
+    <sys:String x:Key="Progress.InitialStage">Calculating</sys:String>
+    <sys:String x:Key="Progress.CancelButton">Cancel</sys:String>
+    <sys:String x:Key="Progress.Cancelling">Cancelling...</sys:String>
+
+    <sys:String x:Key="Placement.NoCategoriesSelected">No element kind is selected in the settings.</sys:String>
+    <sys:String x:Key="Placement.NoLinksFormat">No structural link was found.
+
+Links are picked by the discipline in the file name: ARC or STR. {0}</sys:String>
+    <sys:String x:Key="Placement.NoMepElements">There are no MEP elements in the file matching the settings: check the selected kinds and size ranges.</sys:String>
+    <sys:String x:Key="Placement.Stage.FindIntersections">Finding intersections</sys:String>
+    <sys:String x:Key="Placement.Stage.CalculateSizes">Calculating sizes</sys:String>
+    <sys:String x:Key="Placement.Stage.PlaceTasks">Placing tasks</sys:String>
+    <sys:String x:Key="Placement.Cancelled">Calculation cancelled, no tasks were placed.</sys:String>
+    <sys:String x:Key="Placement.WrongDisciplineErrorFormat">The file's discipline is {0}. Opening tasks are issued from WSS, ELE and HVC files.</sys:String>
+    <sys:String x:Key="Placement.UnrecognizedLinksFormat">Links with a non-standard name (not used in the search): {0}</sys:String>
+    <sys:String x:Key="Report.DisciplineFormat">File discipline: {0}{1}</sys:String>
+    <sys:String x:Key="Report.DisciplineNotByStandard"> (by a rule from the settings, the name isn't standard)</sys:String>
+    <sys:String x:Key="Report.OrphansRemovedFormat">Tasks removed with no source element: {0}</sys:String>
+    <sys:String x:Key="Report.LinksFormat">Structural links: {0}</sys:String>
+    <sys:String x:Key="Report.MepCheckedFormat">MEP elements checked: {0}</sys:String>
+    <sys:String x:Key="Report.IntersectionsFoundFormat">Intersections found: {0}</sys:String>
+    <sys:String x:Key="Report.UnitedFormat">Merged tasks: {0} (passes merged: {1})</sys:String>
+    <sys:String x:Key="Report.PlacedFormat">Tasks placed: {0}</sys:String>
+    <sys:String x:Key="Report.MovedFormat">  of which moved in place (the element shifted): {0}</sys:String>
+    <sys:String x:Key="Report.SkippedDuplicateFormat">Skipped, task already exists: {0}</sys:String>
+    <sys:String x:Key="Report.RejectedFormat">Intersections rejected: {0}</sys:String>
+    <sys:String x:Key="Report.ReasonFormat">  {0} - {1}</sys:String>
+    <sys:String x:Key="Report.FailedFormat">Could not place: {0}</sys:String>
+    <sys:String x:Key="Report.LoadedFamiliesFormat">Loaded from the reference family folder (not in the project before): {0}</sys:String>
+    <sys:String x:Key="Report.UpdatedFamiliesFormat">Updated from the reference (the project had an outdated version): {0}</sys:String>
+    <sys:String x:Key="Report.MissingParametersHeader">Parameters missing in the families, nowhere to write the values:</sys:String>
+    <sys:String x:Key="Report.MissingParametersFormat">  {0}</sys:String>
+    <sys:String x:Key="Report.MissingFamiliesFormat">Families not loaded into the project: {0}</sys:String>
+
+    <sys:String x:Key="Loading.DialogTitle">Loading tasks</sys:String>
+    <sys:String x:Key="Loading.WrongDisciplineErrorFormat">The file's discipline is {0}. Opening tasks are received in ARC and STR files.</sys:String>
+    <sys:String x:Key="Loading.TransactionName">Loading opening tasks</sys:String>
+    <sys:String x:Key="Loading.Report.TotalFormat">Tasks on the server: {0}</sys:String>
+    <sys:String x:Key="Loading.Report.AddedFormat">New tasks placed: {0}</sys:String>
+    <sys:String x:Key="Loading.Report.UpdatedFormat">Updated: {0}</sys:String>
+    <sys:String x:Key="Loading.Report.RemovedFormat">Removed (marked deleted): {0}</sys:String>
+    <sys:String x:Key="Loading.Report.CutDeletedFormat">{0} deleted tasks already have their opening cut - the structures stay open. Open "Task approval": it shows which openings these are, and they can be removed there.</sys:String>
+
+    <sys:String x:Key="Send.DialogTitle">Sending tasks</sys:String>
+    <sys:String x:Key="Send.WrongDisciplineErrorFormat">The file's discipline is {0}. Opening tasks are sent from WSS, ELE and HVC files.</sys:String>
+
+    <sys:String x:Key="Unite.DialogTitle">Merging tasks</sys:String>
+    <sys:String x:Key="Unite.NotMepFileError">Opening tasks are merged only in MEP files (WSS, ELE, HVC).</sys:String>
+    <sys:String x:Key="Unite.SelectHint">Select the opening tasks to merge (at least two) and press Finish</sys:String>
+    <sys:String x:Key="Unite.SelectAtLeastTwo">Select at least two tasks.</sys:String>
+    <sys:String x:Key="Unite.MixedSelectionError">The selection has either a non-standard family, or a mix of tasks in a wall and in a floor - that can't be merged.</sys:String>
+    <sys:String x:Key="Unite.MissingSourceElementsError">Could not find the source MEP elements for the selected tasks - they appear to have been deleted from the model.</sys:String>
+    <sys:String x:Key="Unite.NoLinksError">No structural link was found.</sys:String>
+    <sys:String x:Key="Unite.RecalculateFailedError">Could not recompute the geometry of the selected tasks against the current model.</sys:String>
+    <sys:String x:Key="Unite.PlaceFailedFormat">Could not place the merged task.{0}</sys:String>
+    <sys:String x:Key="Unite.RemoveSourcesTransactionName">Removing the source tasks</sys:String>
+    <sys:String x:Key="Unite.SuccessFormat">Merged {0} tasks into one.</sys:String>
+
+    <sys:String x:Key="Settings.Title">Opening task settings</sys:String>
+    <sys:String x:Key="Settings.CategoriesTitle">Element kinds</sys:String>
+    <sys:String x:Key="Settings.CategoriesHint">Settings are set per kind. Kinds shown in gray don't get opening tasks issued.</sys:String>
+    <sys:String x:Key="Settings.IssueForCategory">Issue tasks for this kind</sys:String>
+    <sys:String x:Key="Settings.IssueForCategoryHint">Turn off if this kind doesn't need opening tasks: such elements aren't checked at all.</sys:String>
+    <sys:String x:Key="Settings.CheckWhichTitle">Which elements to check</sys:String>
+    <sys:String x:Key="Settings.CheckWhichHint">Elements smaller than the smallest size aren't checked: no opening is issued for them. Larger than the largest are skipped as a drafting error.</sys:String>
+    <sys:String x:Key="Settings.MinDiameter">Smallest diameter, mm</sys:String>
+    <sys:String x:Key="Settings.MinWidth">Smallest width, mm</sys:String>
+    <sys:String x:Key="Settings.MinHeight">Smallest height, mm</sys:String>
+    <sys:String x:Key="Settings.MaxSize">Largest size, mm</sys:String>
+    <sys:String x:Key="Settings.InWhichStructures">In which structures</sys:String>
+    <sys:String x:Key="Settings.Walls">Walls</sys:String>
+    <sys:String x:Key="Settings.Floors">Floors</sys:String>
+    <sys:String x:Key="Settings.OpeningSizeTitle">Opening size</sys:String>
+    <sys:String x:Key="Settings.OpeningSizeHint">Offset - how much wider the opening is than the element on each side. Each size range has its own offset and opening shape: small ducts are usually round, large ones rectangular.</sys:String>
+    <sys:String x:Key="Settings.SizeRounding">Size rounding, mm</sys:String>
+    <sys:String x:Key="Settings.ElevationRounding">Elevation rounding, mm</sys:String>
+    <sys:String x:Key="Settings.OffsetsTitle">Offsets by size range</sys:String>
+    <sys:String x:Key="Settings.Column.From">Size from, mm</sys:String>
+    <sys:String x:Key="Settings.Column.To">to, mm</sys:String>
+    <sys:String x:Key="Settings.Column.Offset">Offset, mm</sys:String>
+    <sys:String x:Key="Settings.Column.Shape">Opening shape</sys:String>
+    <sys:String x:Key="Settings.CommonTitle">Common to all kinds</sys:String>
+    <sys:String x:Key="Settings.CommonHint">Touching openings are merged into one by the plugin: a pipe through plaster, masonry and plaster again is one opening, not three.</sys:String>
+    <sys:String x:Key="Settings.UnitedRounding">United opening rounding, mm</sys:String>
+    <sys:String x:Key="Settings.UnitedRoundingTooltip">The united opening's size is rounded to this step.</sys:String>
+    <sys:String x:Key="Settings.UnitedMaxGap">Largest gap between layers, mm</sys:String>
+    <sys:String x:Key="Settings.UnitedMaxGapTooltip">Structure layers can have an air gap between them. If it's no larger than this value, the openings are merged.</sys:String>
+    <sys:String x:Key="Settings.TouchTolerance">Touch tolerance, mm</sys:String>
+    <sys:String x:Key="Settings.TouchToleranceTooltip">How far apart openings can be along the structure and still count as touching. A large value will merge a whole chain of neighboring openings into one huge one.</sys:String>
+    <sys:String x:Key="Settings.MinPassDepth">Smallest pass depth, mm</sys:String>
+    <sys:String x:Key="Settings.MinPassDepthTooltip">An element that only grazes the structure at a corner doesn't need an opening. Zero - issue tasks for grazing hits too.</sys:String>
+    <sys:String x:Key="Settings.ShowPlacingErrors">Show the placement error report</sys:String>
+    <sys:String x:Key="Settings.ServerTitle">Approval server</sys:String>
+    <sys:String x:Key="Settings.ServerHint">Where issued tasks and approval decisions go. Empty - the address from ClashServer.json next to the plugin assembly is used (same server as ClashNavigator).</sys:String>
+    <sys:String x:Key="Settings.ServerUrl">Server address</sys:String>
+
+    <sys:String x:Key="Settings.MepKind.Pipe">Pipes</sys:String>
+    <sys:String x:Key="Settings.MepKind.RoundDuct">Ducts (round)</sys:String>
+    <sys:String x:Key="Settings.MepKind.RectangleDuct">Ducts (rectangular)</sys:String>
+    <sys:String x:Key="Settings.MepKind.CableTray">Cable trays</sys:String>
+    <sys:String x:Key="Settings.MepKind.Conduit">Conduits</sys:String>
+
+    <sys:String x:Key="Settings.Error.NoCategorySelected">No element kind is selected.</sys:String>
+    <sys:String x:Key="Settings.Error.UnitedRoundingPositive">United task rounding must be a positive number.</sys:String>
+    <sys:String x:Key="Settings.Error.UnitedGapNonNegative">The merge gap by thickness must be a non-negative number.</sys:String>
+    <sys:String x:Key="Settings.Error.TouchToleranceNonNegative">The touch tolerance must be a non-negative number.</sys:String>
+    <sys:String x:Key="Settings.Error.MinPassDepthNonNegative">The smallest pass depth must be a non-negative number.</sys:String>
+
+    <sys:String x:Key="Settings.Error.NoStructure">{0}: no structure is selected to check against.</sys:String>
+    <sys:String x:Key="Settings.Error.MaxSizePositive">{0}: the largest size must be a positive number.</sys:String>
+    <sys:String x:Key="Settings.Error.SizeRoundingPositive">{0}: size rounding must be a positive number.</sys:String>
+    <sys:String x:Key="Settings.Error.ElevationRoundingPositive">{0}: elevation rounding must be a positive number.</sys:String>
+    <sys:String x:Key="Settings.Error.NoOffsets">{0}: no size range is set.</sys:String>
+    <sys:String x:Key="Settings.Error.WithDetail">{0}: {1}</sys:String>
+    <sys:String x:Key="Settings.Error.FieldNonNegative">{0}: {1} must be a non-negative number.</sys:String>
+    <sys:String x:Key="Settings.MinDiameterTitle">the smallest diameter</sys:String>
+    <sys:String x:Key="Settings.MinWidthTitle">the smallest width</sys:String>
+    <sys:String x:Key="Settings.MinHeightTitle">the smallest height</sys:String>
+
+    <sys:String x:Key="Settings.Error.RangeStartNonNegative">The range start must be a non-negative number.</sys:String>
+    <sys:String x:Key="Settings.Error.RangeEndGreaterThanStart">The range end must be greater than the start.</sys:String>
+    <sys:String x:Key="Settings.Error.OffsetNonNegative">The offset must be a non-negative number.</sys:String>
+
+    <sys:String x:Key="Common.Close">Close</sys:String>
+    <sys:String x:Key="Common.Refresh">Refresh</sys:String>
+    <sys:String x:Key="Navigator.SearchPlaceholder">Search</sys:String>
+    <sys:String x:Key="Navigator.ColumnsToggle">Columns</sys:String>
+    <sys:String x:Key="Navigator.ColumnsToggleTooltip">Which columns to show</sys:String>
+    <sys:String x:Key="Navigator.RowHint">Double-click a row to show the task in the model, Delete removes the selected ones.</sys:String>
+    <sys:String x:Key="Navigator.PreviousButton">◀ Back</sys:String>
+    <sys:String x:Key="Navigator.NextButton">Next ▶</sys:String>
+    <sys:String x:Key="Navigator.PreviousTooltip">Previous task in the list - shown in the model</sys:String>
+    <sys:String x:Key="Navigator.NextTooltip">Next task in the list - shown in the model</sys:String>
+
+    <sys:String x:Key="Navigator.Decision.NotSent">not sent</sys:String>
+    <sys:String x:Key="Navigator.Decision.Approved">approved</sys:String>
+    <sys:String x:Key="Navigator.Decision.Rejected">rejected</sys:String>
+    <sys:String x:Key="Navigator.Decision.ResetChanged">reset: geometry changed</sys:String>
+    <sys:String x:Key="Navigator.Decision.Pending">pending</sys:String>
+    <sys:String x:Key="Navigator.DateGroupFormat">Date: {0}</sys:String>
+
+    <sys:String x:Key="Navigator.Title">Opening task navigator</sys:String>
+    <sys:String x:Key="Navigator.ConfigHintPrefix">Statuses are determined by settings:</sys:String>
+    <sys:String x:Key="Navigator.ConfigHintSuffix">and recalculated on every refresh - they aren't stored in the model.</sys:String>
+    <sys:String x:Key="Navigator.Column.HostButton">Host</sys:String>
+    <sys:String x:Key="Navigator.ShowHostTooltip">Show the host - the wall or floor it cuts through</sys:String>
+    <sys:String x:Key="Navigator.Column.Id">Id</sys:String>
+    <sys:String x:Key="Navigator.Column.MepSystem">System</sys:String>
+    <sys:String x:Key="Navigator.Column.Size">Size, mm</sys:String>
+    <sys:String x:Key="Navigator.Column.Elevation">Elevation</sys:String>
+    <sys:String x:Key="Navigator.Column.CenterElevation">Center elevation</sys:String>
+    <sys:String x:Key="Navigator.Column.ArcDecision">ARC decision</sys:String>
+    <sys:String x:Key="Navigator.Column.StrDecision">STR decision</sys:String>
+    <sys:String x:Key="Navigator.Column.DecisionComment">Rejection reason</sys:String>
+    <sys:String x:Key="Navigator.Column.Structure">Structure</sys:String>
+    <sys:String x:Key="Navigator.Column.HostId">Host id</sys:String>
+    <sys:String x:Key="Navigator.Column.Description">Description</sys:String>
+    <sys:String x:Key="Navigator.Column.Author">Author</sys:String>
+    <sys:String x:Key="Navigator.ApproveWithLabel">Approve with:</sys:String>
+    <sys:String x:Key="Navigator.ApproveArcTooltip">Approve with architects</sys:String>
+    <sys:String x:Key="Navigator.ApproveStrTooltip">Approve with structural engineers</sys:String>
+    <sys:String x:Key="Navigator.DeleteTooltip">Remove the selected tasks from the model. Approvers will learn about it on the next send</sys:String>
+    <sys:String x:Key="Navigator.SendButton">Send to server</sys:String>
+    <sys:String x:Key="Navigator.SendTooltip">Send all of this file's tasks for approval to the checked disciplines</sys:String>
+    <sys:String x:Key="Navigator.PositionFormat">Task {0} of {1}</sys:String>
+
+    <sys:String x:Key="Navigator.NoLinksHint">No structural links found: statuses are determined only from MEP elements, the unacceptable/different structures check doesn't work. Load the ARC and STR links.</sys:String>
+    <sys:String x:Key="Navigator.LinksTextFormat">Structural links: {0}</sys:String>
+    <sys:String x:Key="Navigator.NoLinksDialogTitle">Opening tasks</sys:String>
+    <sys:String x:Key="Navigator.NoLinksDialogText">No structural link (ARC, STR) was found. Task statuses cannot be computed correctly without links - load the links and refresh the navigator.</sys:String>
+    <sys:String x:Key="Navigator.ColorWarningFormat"> The navigator view isn't colored: {0}</sys:String>
+    <sys:String x:Key="Navigator.NoTasksSummary">There are no opening tasks in the file.</sys:String>
+    <sys:String x:Key="Navigator.SummaryFormat">Tasks: {0}. Need attention: {1}.</sys:String>
+    <sys:String x:Key="Navigator.SummaryDecisionsFormat"> Approved by both: {0}, rejected: {1}.</sys:String>
+    <sys:String x:Key="Navigator.SummaryNotSentFormat"> Not sent to server: {0}.</sys:String>
+    <sys:String x:Key="Navigator.NoFileNameServerText">Approval decisions aren't shown: the file name doesn't follow the standard (Project-Object-Discipline-vNN), so the server can't tell which object the tasks belong to.</sys:String>
+    <sys:String x:Key="Navigator.NoServerUrlText">Approval decisions aren't shown: no server address is set, either in the plugin settings or in ClashServer.json next to the assembly.</sys:String>
+    <sys:String x:Key="Navigator.ServerLoadErrorFormat">Approval decisions weren't loaded: {0}</sys:String>
+    <sys:String x:Key="Navigator.ServerTextPrefixFormat">Decisions from the server: {0}. </sys:String>
+    <sys:String x:Key="Navigator.ServerTaskCountFormat">Tasks of this discipline on the server: {0}</sys:String>
+    <sys:String x:Key="Navigator.ServerDeletedSuffixFormat"> plus {0} marked deleted (the record keeps the decision and history).</sys:String>
+    <sys:String x:Key="Navigator.ProgressStage">Checking tasks</sys:String>
+    <sys:String x:Key="Navigator.SendDialogTitle">Sending tasks</sys:String>
+    <sys:String x:Key="Navigator.DeleteDialogTitle">Deleting tasks</sys:String>
+    <sys:String x:Key="Navigator.SelectToDeleteText">Select the tasks to delete in the list.</sys:String>
+    <sys:String x:Key="Navigator.ConfirmDeleteFormat">Delete tasks from the model: {0}?</sys:String>
+    <sys:String x:Key="Navigator.ConfirmDeleteApprovedFormat">
+
+Of these, already approved: {0}. The approver will see that the opening is no longer needed; their decision and comments stay in the server history.</sys:String>
+    <sys:String x:Key="Navigator.ConfirmDeleteFooter">
+
+Until sent to the server, the deletion is only visible in this file.</sys:String>
+    <sys:String x:Key="Navigator.ConfirmSendAfterDeleteFormat">Tasks deleted: {0}.
+
+Send tasks to the server now, so ARC and STR see the deleted tasks are gone? Until the upload goes out, they still see these tasks as live.</sys:String>
+    <sys:String x:Key="Navigator.PendingDeletionsFormat"> Deleted and not sent: {0} - approvers still see these tasks as live until sent.</sys:String>
+    <sys:String x:Key="Navigator.NoSharedCoordinatesText">Shared coordinates aren't set up in this file (Acquire Coordinates): the survey point and project base point coincide with internal coordinates.
+
+Tasks will be sent to the server relative to the project base point - if shared coordinates aren't aligned with the ARC/STR file, they'll land there offset.
+
+Send anyway?</sys:String>
+    <sys:String x:Key="Navigator.ZoomTransactionName">Opening task navigator zoom</sys:String>
+    <sys:String x:Key="Navigator.DialogTitle">Opening task navigator</sys:String>
+    <sys:String x:Key="Navigator.WrongFileNameError">Could not determine the file's discipline: the name doesn't follow the standard (Project-Object-Discipline-vNN) and doesn't match any rule from the settings.</sys:String>
+    <sys:String x:Key="Navigator.WrongDisciplineErrorFormat">The file's discipline is {0}. The navigator shows outgoing tasks and works in WSS, ELE and HVC files. Tasks received in ARC and STR files are viewed in the approval window.</sys:String>
+
+    <sys:String x:Key="Navigator.Status.Correct">Correct</sys:String>
+    <sys:String x:Key="Navigator.Status.TooSmall">Task too small</sys:String>
+    <sys:String x:Key="Navigator.Status.TooBig">Task too large</sys:String>
+    <sys:String x:Key="Navigator.Status.NotActual">Outdated task</sys:String>
+    <sys:String x:Key="Navigator.Status.Intersects">Overlapping task</sys:String>
+    <sys:String x:Key="Navigator.Status.United">Merged</sys:String>
+    <sys:String x:Key="Navigator.Status.ManuallyPlaced">Placed manually</sys:String>
+    <sys:String x:Key="Navigator.Status.UnacceptableConstructions">Unacceptable structures</sys:String>
+    <sys:String x:Key="Navigator.Status.DifferentConstructions">In different structures</sys:String>
+    <sys:String x:Key="Navigator.Status.Unique">Non-standard</sys:String>
+    <sys:String x:Key="Navigator.Status.Invalid">Geometry processing error</sys:String>
+
+    <sys:String x:Key="Approval.TaskDeletedByEngineer">Task deleted by the engineer</sys:String>
+    <sys:String x:Key="Approval.Status.Sent">Awaiting approval</sys:String>
+    <sys:String x:Key="Approval.Status.PartiallyApproved">Partially approved</sys:String>
+    <sys:String x:Key="Approval.Status.Approved">Approved</sys:String>
+    <sys:String x:Key="Approval.Status.Rejected">Rejected</sys:String>
+    <sys:String x:Key="Approval.NoData">No data</sys:String>
+    <sys:String x:Key="Approval.OtherDisciplineFormat">{0}: {1}</sys:String>
+    <sys:String x:Key="Approval.InsertHint.Deleted">The engineer deleted this task - nothing to cut</sys:String>
+    <sys:String x:Key="Approval.InsertHint.AlreadyCut">Already cut</sys:String>
+    <sys:String x:Key="Approval.InsertHint.ReadyToCut">Cut with the cutting family instead of the task</sys:String>
+    <sys:String x:Key="Approval.InsertHint.WillSendAndCut">Will send my decision to the server, reload statuses, and cut if the task is approved by everyone it's addressed to</sys:String>
+    <sys:String x:Key="Approval.InsertHint.RejectedByOther">The other discipline rejected the task - it can't be cut</sys:String>
+    <sys:String x:Key="Approval.InsertHint.NoApproversFormat">Tasks approved by everyone they're addressed to get cut. Now: {0}</sys:String>
+    <sys:String x:Key="Approval.InsertHint.ApproversFormat">The task is addressed to: {0}. Tasks approved by all of them get cut. Now: {1}</sys:String>
+    <sys:String x:Key="Approval.TechnicalGroupFormat">Structure: {0}</sys:String>
+    <sys:String x:Key="Approval.SenderGroupFormat">From: {0}</sys:String>
+    <sys:String x:Key="Approval.StatusGroupFormat">Status: {0}</sys:String>
+    <sys:String x:Key="Approval.DateGroupFormat">Date: {0}</sys:String>
+
+    <sys:String x:Key="Approval.CoordinatesChangedFormat">Shared coordinates changed at the sender since the last send: {0}. Geometry for this discipline's tasks may have shifted - check against the model.</sys:String>
+    <sys:String x:Key="Approval.NothingCutFormat">No tasks were cut. {0}</sys:String>
+    <sys:String x:Key="Approval.CutButNotSavedFormat">Tasks cut: {0}, but the file wasn't saved: {1} Save the file yourself - otherwise the task stays approved on the server while the file has no cutting family.</sys:String>
+    <sys:String x:Key="Approval.SkipReason.MissingFamiliesFormat">Cutting families aren't loaded: {0}.</sys:String>
+    <sys:String x:Key="Approval.SkipReason.NoHostFormat">{0} approved tasks have no wall or floor at the insertion point: the cutting family is host-based, there's nothing to insert it into. Check whether shared coordinates match the sender's file.</sys:String>
+    <sys:String x:Key="Approval.SkipReason.NoInstanceFormat">{0} approved tasks have no instance in the model - they couldn't be placed on load. Refresh the window and check the summary.</sys:String>
+    <sys:String x:Key="Approval.SkipReason.AllCut">Everything is already cut.</sys:String>
+    <sys:String x:Key="Approval.SkipReason.WaitingOtherFormat">Waiting on the other discipline's decision or rejected: {0}. Only tasks approved by both ARC and STR get cut; the server computes the overall status. My decisions are already sent and statuses reloaded - it's up to the other discipline now.</sys:String>
+    <sys:String x:Key="Approval.Summary.TasksFormat">Tasks: {0}. </sys:String>
+    <sys:String x:Key="Approval.Summary.WaitingMineFormat">Awaiting my decision: {0}.</sys:String>
+    <sys:String x:Key="Approval.Summary.ApprovedNotCutFormat"> Approved but not cut: {0} - the "Insert"/"Insert all approved" button.</sys:String>
+    <sys:String x:Key="Approval.Summary.CutRevertedFormat"> Cut: {0}, reverted to task: {1}.</sys:String>
+    <sys:String x:Key="Approval.Summary.SaveNoteSynced"> Changes synchronized.</sys:String>
+    <sys:String x:Key="Approval.Summary.SaveNoteSaved"> File saved.</sys:String>
+    <sys:String x:Key="Approval.Summary.DeletedFormat"> The engineer deleted tasks whose openings are already cut: {0} - check them and remove with the "Remove" button in the row.</sys:String>
+    <sys:String x:Key="Approval.Summary.MissingFamiliesFormat"> Families aren't loaded: {0}.</sys:String>
+    <sys:String x:Key="Approval.Summary.MissingRealFamiliesFormat"> Cutting families aren't loaded: {0}.</sys:String>
+    <sys:String x:Key="Approval.RemoveDialogTitle">Deleted task</sys:String>
+    <sys:String x:Key="Approval.RemoveConfirmFormat">Remove the {0} mm ({1}) opening from the model on level {2}?
+
+The engineer ({3}, {4}) deleted the task it was cut from. The structure will close back up.</sys:String>
+    <sys:String x:Key="Approval.RemoveTransactionName">Removing an opening for a deleted task</sys:String>
+    <sys:String x:Key="Approval.SendFailedFormat">Not sent: {0}</sys:String>
+    <sys:String x:Key="Approval.SendFailedItemFormat">{0} - {1}</sys:String>
+
+    <sys:String x:Key="Approval.DialogTitle">Task approval</sys:String>
+    <sys:String x:Key="Approval.WrongFileNameError">The file name doesn't follow the naming standard (Project-Object-Discipline-vNN): without it the project and object for the server can't be determined.</sys:String>
+    <sys:String x:Key="Approval.WrongDisciplineErrorFormat">The file's discipline is {0}. Approval works in ARC and STR files.</sys:String>
+    <sys:String x:Key="Approval.NoServerUrlError">No server address is set, either in the plugin settings or in ClashServer.json next to the assembly.</sys:String>
+
+    <sys:String x:Key="Approval.WindowTitle">Opening task approval</sys:String>
+    <sys:String x:Key="Approval.SaveHint">Decisions collect in the window and go to the server in one batch via the "Save" button.</sys:String>
+    <sys:String x:Key="Approval.ShowLabel">Show:</sys:String>
+    <sys:String x:Key="Approval.ShowPending">Awaiting decision</sys:String>
+    <sys:String x:Key="Approval.ShowPendingTooltip">Tasks I haven't decided on yet</sys:String>
+    <sys:String x:Key="Approval.ShowApproved">Approved</sys:String>
+    <sys:String x:Key="Approval.ShowApprovedTooltip">Tasks I approved</sys:String>
+    <sys:String x:Key="Approval.ShowRejected">Rejected</sys:String>
+    <sys:String x:Key="Approval.ShowRejectedTooltip">Tasks I rejected</sys:String>
+    <sys:String x:Key="Approval.Column.HostName">Host</sys:String>
+    <sys:String x:Key="Approval.Column.OpeningType">Type</sys:String>
+    <sys:String x:Key="Approval.Column.Level">Level</sys:String>
+    <sys:String x:Key="Approval.Column.From">From</sys:String>
+    <sys:String x:Key="Approval.Column.SentBy">Sent by</sys:String>
+    <sys:String x:Key="Approval.Column.SentAt">When</sys:String>
+    <sys:String x:Key="Approval.Column.OtherDiscipline">Other discipline</sys:String>
+    <sys:String x:Key="Approval.Column.Technical">Structure</sys:String>
+    <sys:String x:Key="Approval.Column.MyDecision">My decision</sys:String>
+    <sys:String x:Key="Approval.Column.Show">Show</sys:String>
+    <sys:String x:Key="Approval.Column.Insert">Insert</sys:String>
+    <sys:String x:Key="Approval.Column.Remove">Remove</sys:String>
+    <sys:String x:Key="Approval.Column.Comment">Comment (required to reject)</sys:String>
+    <sys:String x:Key="Approval.ApproveTooltip">Approve</sys:String>
+    <sys:String x:Key="Approval.RejectTooltip">Reject - a comment is required</sys:String>
+    <sys:String x:Key="Approval.RemoveButtonTooltip">The engineer deleted the task - remove the opening cut for it</sys:String>
+    <sys:String x:Key="Approval.DirtyHint">The asterisk means the decision changed but hasn't been sent yet.</sys:String>
+    <sys:String x:Key="Approval.InsertAllButton">Insert all approved</sys:String>
+    <sys:String x:Key="Approval.InsertAllTooltip">Cut with the cutting family every approved task that isn't cut yet</sys:String>
+
+</ResourceDictionary>

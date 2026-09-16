@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows.Data;
@@ -25,11 +24,15 @@ namespace Juru.RevitPlugins.Schedules.ViewModels;
 public sealed partial class SchedulesWindowViewModel : ObservableObject
 {
     private readonly ICollectionView scheduleView;
-    private readonly ICollectionView translationView;
     private readonly ISchedulesHost? host;
     private readonly Dictionary<string, CategoryViewModel> categoriesByKey;
 
     private SchedulesConfig config;
+
+    /// <summary>Сколько прошло с прошлой прокрутки очереди: чаще перерисовывать окно незачем.</summary>
+    private readonly System.Diagnostics.Stopwatch pumped = new();
+
+    private const int PumpIntervalMilliseconds = 100;
 
     /// <summary>
     ///     Ключ активной вкладки. Кнопки выбора, перевода и показа одни на окно и работают по ней -
@@ -45,7 +48,42 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
     ///     листа обычно и нужен один вид.
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ScanWholeModel))]
     private bool scanActiveViewOnly;
+
+    /// <summary>
+    ///     Обратное к <see cref="ScanActiveViewOnly" />, своё у второго переключателя области.
+    /// </summary>
+    /// <remarks>
+    ///     Два переключателя на одном свойстве не работают: группа снимает отметку со второго сама,
+    ///     и это <c>false</c> уходит обратно по привязке. Через обратный преобразователь он
+    ///     превращался во «включить только активный вид» - область перескакивала при открытии окна,
+    ///     и заодно дёргалось лишнее чтение модели. Поэтому у каждого переключателя своё свойство, а
+    ///     снятие отметки (<c>false</c>) здесь просто игнорируется: выбор делает тот, кого включили.
+    /// </remarks>
+    public bool ScanWholeModel
+    {
+        get { return !ScanActiveViewOnly; }
+        set
+        {
+            if (value)
+            {
+                ScanActiveViewOnly = false;
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Показывать все спецификации модели, а не только размещённые на листах.
+    /// </summary>
+    /// <remarks>
+    ///     По умолчанию окно показывает выпускаемый комплект - то, что стоит на листах. Переводят,
+    ///     однако, и неразмещённые: заготовку под будущий лист или спецификацию, которую печатают из
+    ///     вида. Отбор до листа сильнее: с областью «активный вид» на листе речь идёт именно про этот
+    ///     лист, и неразмещённые в него не попадают.
+    /// </remarks>
+    [ObservableProperty]
+    private bool allSchedules;
 
     /// <summary>Сколько прочитано и сколько всего: полоса показывает это, а не бежит вслепую.</summary>
     [ObservableProperty]
@@ -81,13 +119,9 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
         this.config = config ?? throw new ArgumentNullException(nameof(config));
 
         Rows = [];
-        Translations = [];
 
         scheduleView = new CollectionViewSource { Source = Rows }.View;
         scheduleView.Filter = MatchesSchedule;
-
-        translationView = new CollectionViewSource { Source = Translations }.View;
-        translationView.Filter = MatchesTranslation;
 
         // Служба перевода берётся у окна при каждом запросе: пользователь меняет её в выпадающем списке
         // уже после того, как вкладка построена.
@@ -138,7 +172,6 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
     /// </summary>
     public void Fill(
         IReadOnlyList<ScheduleRowViewModel> rows,
-        IReadOnlyList<TranslationRowViewModel> translations,
         IReadOnlyDictionary<string, IReadOnlyList<ElementTextRowViewModel>> categories)
     {
         if (rows is null)
@@ -146,27 +179,21 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
             throw new ArgumentNullException(nameof(rows));
         }
 
-        if (translations is null)
+        foreach (var row in Rows)
         {
-            throw new ArgumentNullException(nameof(translations));
+            row.PropertyChanged -= OnRowChanged;
         }
-
-        Rows.Clear();
 
         foreach (var row in rows)
         {
             // Счётчик внизу считается по галочкам, а галочку переключают и мимо команд окна - прямо
             // в таблице. Подписка на строки - единственное место, где видно любое такое переключение.
             row.PropertyChanged += OnRowChanged;
-            Rows.Add(row);
         }
 
-        Translations.Clear();
-
-        foreach (var translation in translations)
-        {
-            Translations.Add(translation);
-        }
+        // Целиком, а не построчно: иначе таблица заводит контейнер под каждую строку и применяет
+        // к нему шаблоны, тогда как при одном Reset контейнеры заводятся только под видимые.
+        Rows.Reset(rows);
 
         foreach (var category in Categories)
         {
@@ -174,18 +201,14 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
         }
 
         scheduleView.Refresh();
-        translationView.Refresh();
 
         IsLoading = false;
         StatusNote = string.Empty;
 
         OnPropertyChanged(nameof(Summary));
-        OnPropertyChanged(nameof(TranslationsSummary));
     }
 
-    public ObservableCollection<ScheduleRowViewModel> Rows { get; }
-
-    public ObservableCollection<TranslationRowViewModel> Translations { get; }
+    public RowCollection<ScheduleRowViewModel> Rows { get; }
 
     /// <summary>Вкладки категорий модели в порядке реестра.</summary>
     public IReadOnlyList<CategoryViewModel> Categories { get; }
@@ -252,42 +275,46 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    ///     Перерисовывать отмеченные спецификации в чертёжные виды линиями и текстом.
+    ///     Что сделать с отмеченными спецификациями: копия линиями, копия спецификацией или перевод в
+    ///     самих спецификациях.
     /// </summary>
-    /// <remarks>
-    ///     Снятая галочка означает второй способ: перевод в самой спецификации — имя, заголовки
-    ///     колонок и строковые значения фильтров. Значения ячеек так не переводятся, тело обычной
-    ///     спецификации через API не переопределяется; зато копия остаётся живой и обновляется вместе
-    ///     с моделью, а ячейки становятся английскими по мере перевода самих объектов на вкладках.
-    /// </remarks>
     [ObservableProperty]
-    private bool redrawAsLines = true;
+    [NotifyPropertyChangedFor(nameof(RedrawAsLines))]
+    [NotifyPropertyChangedFor(nameof(CopyAsSchedule))]
+    private ScheduleCopyMode copyMode = ScheduleCopyMode.RedrawAsLines;
+
+    /// <summary>
+    ///     Переключатели способа: у каждого своё свойство, а снятие отметки игнорируется - выбор делает
+    ///     тот, кого включили. То же правило, что у области сканирования, и по той же причине: общее
+    ///     свойство на группу переворачивалось бы её собственным <c>false</c>.
+    /// </summary>
+    public bool RedrawAsLines
+    {
+        get { return CopyMode is ScheduleCopyMode.RedrawAsLines; }
+        set { Select(value, ScheduleCopyMode.RedrawAsLines); }
+    }
+
+    public bool CopyAsSchedule
+    {
+        get { return CopyMode is ScheduleCopyMode.CopyAsSchedule; }
+        set { Select(value, ScheduleCopyMode.CopyAsSchedule); }
+    }
+
+    private void Select(bool isChecked, ScheduleCopyMode mode)
+    {
+        if (isChecked)
+        {
+            CopyMode = mode;
+        }
+    }
 
     public ICollectionView View
     {
         get { return scheduleView; }
     }
 
-    public ICollectionView TranslationsView
-    {
-        get { return translationView; }
-    }
-
-    public string TranslationsSummary
-    {
-        get
-        {
-            var untranslated = Translations.Count(row => !row.HasTranslation);
-
-            return string.Format(Text.SummaryTranslations, Translations.Count, untranslated);
-        }
-    }
-
     /// <summary>Вкладка выбора спецификаций.</summary>
     public const string SchedulesSurface = "Schedules";
-
-    /// <summary>Вкладка вычитки строк на перевод.</summary>
-    public const string TranslationsSurface = "Translations";
 
     /// <summary>
     ///     Запоминает открытую вкладку. Зовётся из окна: какая вкладка открыта, знает разметка.
@@ -432,16 +459,11 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
     {
         get
         {
-            var fromSchedules = Translations.Select(row => Entry(row.SourceText, row.Readable, row.Translation));
-
-            // Отмеченное в категориях идёт тем же путём: перевод у них берётся из глоссария, и без
-            // этих строк машинный проход их не увидит, а «Построить» окажется нечего записывать.
-            var fromCategories = Categories
+            // Строки спецификаций сюда не входят: их собирает сама сборка из перечитанных
+            // спецификаций, а правят их в окне словаря.
+            return Categories
                 .SelectMany(category => category.SelectedRows)
-                .Select(row => Entry(row.SourceText, row.SourceText, row.Translation));
-
-            return fromSchedules
-                .Concat(fromCategories)
+                .Select(row => Entry(row.SourceText, row.SourceText, row.Translation))
                 .GroupBy(entry => entry.Key, StringComparer.CurrentCulture)
                 .Select(group => group.FirstOrDefault(entry => entry.Suggestion.Length > 0) ?? group.First())
                 .ToList();
@@ -546,7 +568,29 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
         ReadDone++;
         StatusNote = $"{Text.StatusReadingSchedules} {name}";
 
+        Pump();
+    }
+
+    /// <summary>
+    ///     Прокручивает очередь окна, но не чаще, чем нужно глазу.
+    /// </summary>
+    /// <remarks>
+    ///     Прокрутка на приоритете <c>Render</c> — это полный проход разметки и отрисовки окна с
+    ///     тринадцатью таблицами. На спецификацию такой проход стоит больше, чем само чтение
+    ///     спецификации: на модели с семью десятками спецификаций чтение занимало миллисекунды, а
+    ///     окно перерисовывалось семьдесят раз. Глазу этого не нужно — полоса, которая двигается
+    ///     десять раз в секунду, выглядит так же плавно, как двигающаяся семьдесят.
+    /// </remarks>
+    private void Pump()
+    {
+        if (pumped.IsRunning && pumped.ElapsedMilliseconds < PumpIntervalMilliseconds)
+        {
+            return;
+        }
+
         Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
+
+        pumped.Restart();
     }
 
     /// <summary>
@@ -564,7 +608,8 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
         IsLoading = true;
         StatusNote = ScanActiveViewOnly ? Text.StatusReadingScope : Text.StatusReadingSchedules;
 
-        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
+        pumped.Reset();
+        Pump();
     }
 
     /// <summary>
@@ -595,11 +640,6 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
             if (Category(surface) is { } category)
             {
                 return category.Summary;
-            }
-
-            if (surface is TranslationsSurface)
-            {
-                return TranslationsSummary;
             }
 
             var selected = Rows.Count(row => row.IsSelected);
@@ -645,9 +685,7 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
             return;
         }
 
-        var view = surface is TranslationsSurface ? translationView : scheduleView;
-
-        foreach (var row in view.Cast<ISelectableRow>().ToList())
+        foreach (var row in scheduleView.Cast<ISelectableRow>().ToList())
         {
             row.IsSelected = isSelected;
         }
@@ -664,23 +702,6 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
             category.ShowSelectedCommand.Execute(null);
             StatusNote = category.Note;
 
-            return;
-        }
-
-        if (surface is TranslationsSurface)
-        {
-            // Строка тут - текст, а не объект модели, но у неё есть спецификация, где он встретился:
-            // её и открываем - иначе непонятно, о каком месте речь.
-            if (translationView.CurrentItem is TranslationRowViewModel row
-                && row.ScheduleId != ElementId.InvalidElementId)
-            {
-                StatusNote = string.Empty;
-                host?.ShowView(row.ScheduleId);
-
-                return;
-            }
-
-            StatusNote = Text.StatusPickScheduleRow;
             return;
         }
 
@@ -701,92 +722,11 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
             return;
         }
 
-        if (surface is SchedulesSurface)
-        {
-            // Спецификации переводятся при сборке: там строки идут через глоссарий целиком.
-            StatusNote = Text.NoteNotOnThisTab;
-            return;
-        }
+        // Спецификации переводятся при сборке: их строки идут через словарь целиком, а правят
+        // словарь в своём окне.
+        StatusNote = Text.NoteNotOnThisTab;
 
-        StatusNote = await TranslateTranslationsAsync().ConfigureAwait(true);
-
-        OnPropertyChanged(nameof(TranslationsSummary));
-    }
-
-    /// <summary>
-    ///     Переводит пустые строки вкладки вычитки. Уникальные тексты переводятся по одному разу:
-    ///     служба тарифицируется по символам.
-    /// </summary>
-    private async Task<string> TranslateTranslationsAsync()
-    {
-        var pending = translationView
-            .Cast<TranslationRowViewModel>()
-            .Where(row => !row.HasTranslation)
-            .ToList();
-
-        if (pending.Count is 0)
-        {
-            return Text.NoteNothingToTranslate;
-        }
-
-        var settings = config.Translation;
-        var translator = TranslatorFactory.TryCreate(settings, out var reason);
-
-        if (translator is null)
-        {
-            return reason ?? Text.NoteServiceNotConfigured;
-        }
-
-        var texts = pending
-            .Select(row => row.Readable)
-            .Distinct(StringComparer.CurrentCulture)
-            .ToList();
-
-        var translations = new Dictionary<string, string>(StringComparer.CurrentCulture);
-        var failures = new List<string>();
-
-        foreach (var batch in Batch(texts, Math.Max(1, settings.BatchSize)))
-        {
-            try
-            {
-                var translated = await translator
-                    .TranslateAsync(batch, CancellationToken.None)
-                    .ConfigureAwait(true);
-
-                for (var index = 0; index < batch.Count; index++)
-                {
-                    translations[batch[index]] = translated[index].Trim();
-                }
-            }
-            catch (TranslationException exception)
-            {
-                failures.Add(exception.Message);
-            }
-        }
-
-        foreach (var row in pending)
-        {
-            if (translations.TryGetValue(row.Readable, out var translation) && translation.Length > 0)
-            {
-                row.Translation = translation;
-            }
-
-            row.IsSelected = true;
-        }
-
-        var done = pending.Count(row => row.HasTranslation);
-
-        return failures.Count is 0
-            ? string.Format(Text.NoteTranslated, done, pending.Count, translator.Name)
-            : string.Format(Text.NoteTranslatedWithErrors, done, pending.Count, failures.Count, failures[0]);
-    }
-
-    private static IEnumerable<IReadOnlyList<string>> Batch(IReadOnlyList<string> texts, int size)
-    {
-        for (var start = 0; start < texts.Count; start += size)
-        {
-            yield return texts.Skip(start).Take(size).ToList();
-        }
+        await Task.CompletedTask.ConfigureAwait(true);
     }
 
     private void OnRowChanged(object? sender, PropertyChangedEventArgs eventArgs)
@@ -812,21 +752,6 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
         return Contains(row.ScheduleName) || Contains(row.Sheets);
     }
 
-    private bool MatchesTranslation(object item)
-    {
-        if (SearchText.Length is 0)
-        {
-            return true;
-        }
-
-        if (item is not TranslationRowViewModel row)
-        {
-            return false;
-        }
-
-        return Contains(row.Readable) || Contains(row.Translation) || Contains(row.Schedules);
-    }
-
     private bool Contains(string text)
     {
         return text.IndexOf(SearchText, StringComparison.CurrentCultureIgnoreCase) >= 0;
@@ -840,11 +765,22 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
         {
             category.RefreshResults();
         }
+    }
 
-        foreach (var row in Translations)
+    /// <summary>
+    ///     Пересчитывает «Без перевода» по словарю: его правят в отдельном окне, и после правки
+    ///     колонка иначе показывала бы то, что было до неё.
+    /// </summary>
+    public void RefreshAgainstGlossary()
+    {
+        var glossary = GlossaryFile.Read(config.ResolveGlossaryPath());
+
+        foreach (var row in Rows)
         {
-            row.RefreshResult();
+            row.RefreshAgainst(glossary);
         }
+
+        OnPropertyChanged(nameof(Summary));
     }
 
     /// <summary>Смена области сканирования - это новое чтение: список текста будет другой.</summary>
@@ -853,10 +789,16 @@ public sealed partial class SchedulesWindowViewModel : ObservableObject
         host?.Load();
     }
 
+    /// <summary>Смена набора спецификаций - тоже новое чтение: список строк будет другой.</summary>
+    partial void OnAllSchedulesChanged(bool value)
+    {
+        host?.Load();
+    }
+
     partial void OnSearchTextChanged(string value)
     {
         scheduleView.Refresh();
-        translationView.Refresh();
+
         foreach (var category in Categories)
         {
             category.ApplyFilter(text => SearchText.Length is 0 || Contains(text));

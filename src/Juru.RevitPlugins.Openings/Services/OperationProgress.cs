@@ -3,6 +3,7 @@ using System.Threading;
 using System.Windows.Interop;
 using System.Windows.Threading;
 
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.Core.Theming;
 using Juru.RevitPlugins.Openings.Views;
 
@@ -22,13 +23,15 @@ public sealed class OperationProgress : IProgress<int>, IDisposable {
 
     private readonly ProgressWindow _window;
     private readonly CancellationTokenSource _cancellation = new CancellationTokenSource();
-    private string _stage = "Идёт расчёт";
+    private string _stage;
     private int _lastReported;
 
     /// <param name="ownerHandle">Дескриптор главного окна Revit, чтобы окно не уходило за него.</param>
-    public OperationProgress(IntPtr ownerHandle) {
+    /// <param name="localization">Локализация плагина, вызвавшего расчёт.</param>
+    public OperationProgress(IntPtr ownerHandle, PluginLocalization localization) {
         JuruTheme.Apply();
-        _window = new ProgressWindow();
+        _stage = localization.GetString("Progress.InitialStage");
+        _window = new ProgressWindow(localization);
         new WindowInteropHelper(_window) { Owner = ownerHandle };
         _window.Show();
         Pump();

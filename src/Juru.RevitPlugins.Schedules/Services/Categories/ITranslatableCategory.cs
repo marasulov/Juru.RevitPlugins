@@ -55,6 +55,19 @@ public sealed record CollectScope(Document Document, ElementId? ViewId)
         return Collector().OfClass(type).WhereElementIsNotElementType();
     }
 
+    /// <summary>
+    ///     Все экземпляры в области сканирования, без отбора по классу.
+    /// </summary>
+    /// <remarks>
+    ///     Именно без <c>OfClass</c>: на <c>typeof(Element)</c> Ревит бросает ArgumentException
+    ///     «The input type is not a subclass of Element» - проверено на живой модели. Вызов такого
+    ///     отбора молча съедался обработчиком в BuildCategories, и вкладка оставалась пустой.
+    /// </remarks>
+    public FilteredElementCollector AllInstances()
+    {
+        return Collector().WhereElementIsNotElementType();
+    }
+
     /// <summary>Всё по классу, включая типы: у видов и листов экземпляров как таковых нет.</summary>
     public FilteredElementCollector OfClass(System.Type type)
     {

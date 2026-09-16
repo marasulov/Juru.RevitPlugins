@@ -8,6 +8,7 @@ using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 
 using Juru.RevitPlugins.Core.FileNaming;
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.Models.Intersections;
 using Juru.RevitPlugins.Openings.Models.Placement;
@@ -35,11 +36,14 @@ public class UniteOpeningTasksCommand : IExternalCommand {
         var uiDocument = commandData.Application.ActiveUIDocument;
         var doc = uiDocument.Document;
         var config = OpeningsConfig.GetOpeningsConfig();
+        var culture = PluginCulture.Resolve(config, commandData.Application.Application.Language);
+        var localization = PluginLocalization.Load(typeof(UniteOpeningTasksCommand), culture);
 
         if(!new DisciplineResolver(config).TryResolve(doc.PathName, out var discipline, out _)
             || !discipline.IssuesOpeningTasks()) {
-            TaskDialog.Show("Объединение заданий",
-                "Задания на отверстия объединяются только в файлах ВИС (WSS, ELE, HVC).");
+            TaskDialog.Show(
+                localization.GetString("Unite.DialogTitle"),
+                localization.GetString("Unite.NotMepFileError"));
             return Result.Cancelled;
         }
 
@@ -52,7 +56,7 @@ public class UniteOpeningTasksCommand : IExternalCommand {
             picked = uiDocument.Selection.PickObjects(
                 ObjectType.Element,
                 new OpeningTaskSelectionFilter(familyNames),
-                "Выберите задания на отверстия для объединения (минимум два) и нажмите Готово");
+                localization.GetString("Unite.SelectHint"));
         } catch(Autodesk.Revit.Exceptions.OperationCanceledException) {
             return Result.Cancelled;
         }
@@ -63,29 +67,33 @@ public class UniteOpeningTasksCommand : IExternalCommand {
             .ToList();
 
         if(instances.Count < 2) {
-            TaskDialog.Show("Объединение заданий", "Выберите минимум два задания.");
+            TaskDialog.Show(
+                localization.GetString("Unite.DialogTitle"),
+                localization.GetString("Unite.SelectAtLeastTwo"));
             return Result.Cancelled;
         }
 
         if(!TryGetSingleStructureKind(instances, config, out var structureKind)) {
-            TaskDialog.Show("Объединение заданий",
-                "Среди выбранного либо нестандартное семейство, либо вперемешку задания "
-                + "и в стене, и в перекрытии - такое объединить нельзя.");
+            TaskDialog.Show(
+                localization.GetString("Unite.DialogTitle"),
+                localization.GetString("Unite.MixedSelectionError"));
             return Result.Cancelled;
         }
 
         var mepIds = GetSourceMepIds(doc, instances, config);
         if(mepIds.Count == 0) {
-            TaskDialog.Show("Объединение заданий",
-                "Не удалось найти исходные инженерные элементы выбранных заданий - "
-                + "похоже, они удалены из модели.");
+            TaskDialog.Show(
+                localization.GetString("Unite.DialogTitle"),
+                localization.GetString("Unite.MissingSourceElementsError"));
             return Result.Cancelled;
         }
 
         var linksProvider = new StructureLinksProvider(doc, config);
         var structureProviders = linksProvider.GetProviders();
         if(structureProviders.Count == 0) {
-            TaskDialog.Show("Объединение заданий", "Не найдено ни одной связи с конструкциями.");
+            TaskDialog.Show(
+                localization.GetString("Unite.DialogTitle"),
+                localization.GetString("Unite.NoLinksError"));
             return Result.Cancelled;
         }
 
@@ -100,8 +108,9 @@ public class UniteOpeningTasksCommand : IExternalCommand {
             .ToList();
 
         if(planned.Count == 0) {
-            TaskDialog.Show("Объединение заданий",
-                "Не удалось пересчитать геометрию выбранных заданий по текущей модели.");
+            TaskDialog.Show(
+                localization.GetString("Unite.DialogTitle"),
+                localization.GetString("Unite.RecalculateFailedError"));
             return Result.Cancelled;
         }
 
@@ -112,8 +121,9 @@ public class UniteOpeningTasksCommand : IExternalCommand {
         var placement = new OpeningTaskPlacer(doc, config).Place([merged]);
         if(placement.Placed.Count == 0) {
             string reasons = string.Join("\n", placement.Failed.Select(failure => failure.Reason));
-            TaskDialog.Show("Объединение заданий",
-                "Не удалось разместить объединённое задание." + (reasons.Length > 0 ? "\n" + reasons : ""));
+            TaskDialog.Show(
+                localization.GetString("Unite.DialogTitle"),
+                localization.GetString("Unite.PlaceFailedFormat", reasons.Length > 0 ? "\n" + reasons : ""));
             return Result.Failed;
         }
 
@@ -123,7 +133,7 @@ public class UniteOpeningTasksCommand : IExternalCommand {
         // исходник удалять нельзя - иначе после удаления результат остаётся невалидным объектом.
         var placedIds = new HashSet<ElementId>(placement.Placed.Select(item => item.Id));
 
-        using(var transaction = new Transaction(doc, "Удаление исходных заданий")) {
+        using(var transaction = new Transaction(doc, localization.GetString("Unite.RemoveSourcesTransactionName"))) {
             transaction.Start();
             foreach(var instance in instances) {
                 if(!placedIds.Contains(instance.Id) && doc.GetElement(instance.Id) is not null) {
@@ -134,7 +144,9 @@ public class UniteOpeningTasksCommand : IExternalCommand {
         }
 
         uiDocument.Selection.SetElementIds(placedIds.ToList());
-        TaskDialog.Show("Объединение заданий", $"Объединено {instances.Count} заданий в одно.");
+        TaskDialog.Show(
+            localization.GetString("Unite.DialogTitle"),
+            localization.GetString("Unite.SuccessFormat", instances.Count));
         return Result.Succeeded;
     }
 

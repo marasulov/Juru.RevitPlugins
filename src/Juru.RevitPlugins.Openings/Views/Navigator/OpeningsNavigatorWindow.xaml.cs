@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.ViewModels.Navigator;
 
@@ -26,6 +27,7 @@ public partial class OpeningsNavigatorWindow : Window {
     /// Скрытые колонки, запомненные с прошлого раза.
     /// </summary>
     private readonly OpeningsNavigatorLayout _layout = OpeningsNavigatorLayout.Load();
+    private readonly PluginLocalization _localization;
 
     /// <summary>
     /// Окно собрано целиком.
@@ -39,8 +41,13 @@ public partial class OpeningsNavigatorWindow : Window {
     /// </remarks>
     private bool _initialized;
 
-    public OpeningsNavigatorWindow() {
+    public OpeningsNavigatorWindow(PluginLocalization localization) {
+        _localization = localization;
         InitializeComponent();
+        localization.ApplyTo(this);
+        // Заголовки колонок раздаются здесь, до сборки флажков: та читает Header, а заголовки
+        // грида не входят в визуальное дерево и {DynamicResource} сами по себе не подхватывают.
+        ColumnLocalization.Apply(TasksGrid, localization);
         BuildColumnToggles();
 
         _initialized = true;
@@ -59,8 +66,11 @@ public partial class OpeningsNavigatorWindow : Window {
 
         foreach(var column in TasksGrid.Columns) {
             var target = column;
+            // Ключ локализации, а не заголовок: тот меняется с языком, и сохранённая видимость
+            // колонок иначе слетала бы при каждом переключении языка плагина.
+            string key = ColumnLocalization.GetKey(column) ?? column.Header?.ToString() ?? string.Empty;
             string header = column.Header?.ToString() ?? string.Empty;
-            bool visible = !_layout.HiddenColumns.Contains(header);
+            bool visible = !_layout.HiddenColumns.Contains(key);
             target.Visibility = visible ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 
             var toggle = new CheckBox {
@@ -72,13 +82,13 @@ public partial class OpeningsNavigatorWindow : Window {
                 toggle.Style = style;
             }
 
-            toggle.Checked += (_, _) => SetColumnVisible(target, header, visible: true);
-            toggle.Unchecked += (_, _) => SetColumnVisible(target, header, visible: false);
+            toggle.Checked += (_, _) => SetColumnVisible(target, key, visible: true);
+            toggle.Unchecked += (_, _) => SetColumnVisible(target, key, visible: false);
             ColumnsPanel.Children.Add(toggle);
         }
     }
 
-    private void SetColumnVisible(DataGridColumn column, string header, bool visible) {
+    private void SetColumnVisible(DataGridColumn column, string key, bool visible) {
         column.Visibility = visible ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 
         if(!_initialized) {
@@ -86,9 +96,9 @@ public partial class OpeningsNavigatorWindow : Window {
         }
 
         if(visible) {
-            _layout.HiddenColumns.Remove(header);
-        } else if(!_layout.HiddenColumns.Contains(header)) {
-            _layout.HiddenColumns.Add(header);
+            _layout.HiddenColumns.Remove(key);
+        } else if(!_layout.HiddenColumns.Contains(key)) {
+            _layout.HiddenColumns.Add(key);
         }
 
         _layout.Save();
@@ -140,7 +150,7 @@ public partial class OpeningsNavigatorWindow : Window {
         int index = TasksGrid.Items.IndexOf(TasksGrid.SelectedItem);
         PositionText.Text = index < 0
             ? string.Empty
-            : $"Задание {index + 1} из {TasksGrid.Items.Count}";
+            : _localization.GetString("Navigator.PositionFormat", index + 1, TasksGrid.Items.Count);
     }
 
     private void DeleteButton_Click(object sender, RoutedEventArgs e) {

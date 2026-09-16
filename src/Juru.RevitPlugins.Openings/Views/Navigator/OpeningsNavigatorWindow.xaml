@@ -6,9 +6,10 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vms="clr-namespace:Juru.RevitPlugins.Openings.ViewModels.Navigator"
     xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+    xmlns:loc="clr-namespace:Juru.RevitPlugins.Core.Localization;assembly=Juru.RevitPlugins.Core"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     mc:Ignorable="d"
-    Title="Навигатор по заданиям на отверстия"
+    Title="{DynamicResource Navigator.Title}"
     Width="1100"
     Height="640"
     MinWidth="720"
@@ -127,7 +128,7 @@
                 DockPanel.Dock="Right"
                 Width="220"
                 VerticalAlignment="Top"
-                PlaceholderText="Поиск"
+                PlaceholderText="{DynamicResource Navigator.SearchPlaceholder}"
                 TextChanged="SearchBox_TextChanged" />
             <StackPanel>
                 <TextBlock
@@ -186,11 +187,11 @@
                 <TextBlock
                     Style="{StaticResource Hint}">
                     <Run
-                        Text="Состояния определены по настройкам:" />
+                        Text="{DynamicResource Navigator.ConfigHintPrefix}" />
                     <Run
                         Text="{Binding ConfigName, Mode=OneWay}" />
                     <Run
-                        Text="и пересчитываются при каждом обновлении - в модели они не хранятся." />
+                        Text="{DynamicResource Navigator.ConfigHintSuffix}" />
                 </TextBlock>
 
                 <!-- Список флажков собирается по самому гриду - см. code-behind, чтобы
@@ -204,8 +205,8 @@
                     <ToggleButton
                         x:Name="ColumnsToggle"
                         ClickMode="Press"
-                        Content="Колонки"
-                        ToolTip="Какие колонки показывать" />
+                        Content="{DynamicResource Navigator.ColumnsToggle}"
+                        ToolTip="{DynamicResource Navigator.ColumnsToggleTooltip}" />
                     <Popup
                         AllowsTransparency="False"
                         IsOpen="{Binding IsChecked, ElementName=ColumnsToggle}"
@@ -290,7 +291,7 @@
                 <DataGrid.Columns>
                     <DataGridTemplateColumn
                         Width="40"
-                        Header="Хост">
+                        loc:ColumnLocalization.Key="Navigator.Column.HostButton">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <!-- Отдельная кнопка на хост - стену/перекрытие, которое пробивает
@@ -299,7 +300,7 @@
                                 <ui:Button
                                     Margin="2"
                                     Padding="4 2"
-                                    ToolTip="Показать хост - стену или перекрытие"
+                                    ToolTip="{DynamicResource Navigator.ShowHostTooltip}"
                                     Content="&#128269;"
                                     IsEnabled="{Binding CanShowHost}"
                                     Click="ShowHostButton_Click" />
@@ -309,43 +310,43 @@
                     <DataGridTextColumn
                         Width="70"
                         Binding="{Binding Id}"
-                        Header="Id" />
+                        loc:ColumnLocalization.Key="Navigator.Column.Id" />
                     <DataGridTextColumn
                         Width="130"
                         Binding="{Binding MepSystem}"
-                        Header="Система" />
+                        loc:ColumnLocalization.Key="Navigator.Column.MepSystem" />
                     <DataGridTextColumn
                         Width="110"
                         Binding="{Binding Size}"
-                        Header="Габариты, мм" />
+                        loc:ColumnLocalization.Key="Navigator.Column.Size" />
                     <DataGridTextColumn
                         Width="90"
                         Binding="{Binding Elevation}"
-                        Header="Отметка" />
+                        loc:ColumnLocalization.Key="Navigator.Column.Elevation" />
                     <DataGridTextColumn
                         Width="90"
                         Binding="{Binding CenterElevation}"
-                        Header="Отм. оси" />
+                        loc:ColumnLocalization.Key="Navigator.Column.CenterElevation" />
                     <!-- Два решения отдельными колонками, а не один общий статус: инженеру нужно
                          видеть, кто именно ещё не ответил. -->
                     <DataGridTextColumn
                         Width="120"
                         Binding="{Binding ArcDecisionText}"
-                        Header="Решение ARC">
+                        loc:ColumnLocalization.Key="Navigator.Column.ArcDecision">
                         <DataGridTextColumn.ElementStyle>
                             <Style
                                 TargetType="TextBlock">
                                 <Style.Triggers>
-                                    <Trigger
-                                        Property="Text"
-                                        Value="отклонено">
+                                    <DataTrigger
+                                        Binding="{Binding IsArcRejected}"
+                                        Value="True">
                                         <Setter
                                             Property="Foreground"
                                             Value="OrangeRed" />
                                         <Setter
                                             Property="FontWeight"
                                             Value="SemiBold" />
-                                    </Trigger>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </DataGridTextColumn.ElementStyle>
@@ -353,21 +354,21 @@
                     <DataGridTextColumn
                         Width="120"
                         Binding="{Binding StrDecisionText}"
-                        Header="Решение STR">
+                        loc:ColumnLocalization.Key="Navigator.Column.StrDecision">
                         <DataGridTextColumn.ElementStyle>
                             <Style
                                 TargetType="TextBlock">
                                 <Style.Triggers>
-                                    <Trigger
-                                        Property="Text"
-                                        Value="отклонено">
+                                    <DataTrigger
+                                        Binding="{Binding IsStrRejected}"
+                                        Value="True">
                                         <Setter
                                             Property="Foreground"
                                             Value="OrangeRed" />
                                         <Setter
                                             Property="FontWeight"
                                             Value="SemiBold" />
-                                    </Trigger>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </DataGridTextColumn.ElementStyle>
@@ -375,23 +376,23 @@
                     <DataGridTextColumn
                         Width="200"
                         Binding="{Binding DecisionComment}"
-                        Header="Причина отклонения" />
+                        loc:ColumnLocalization.Key="Navigator.Column.DecisionComment" />
                     <DataGridTextColumn
                         Width="180"
                         Binding="{Binding Host}"
-                        Header="Конструкция" />
+                        loc:ColumnLocalization.Key="Navigator.Column.Structure" />
                     <DataGridTextColumn
                         Width="70"
                         Binding="{Binding HostId}"
-                        Header="Id основы" />
+                        loc:ColumnLocalization.Key="Navigator.Column.HostId" />
                     <DataGridTextColumn
                         Width="*"
                         Binding="{Binding Description}"
-                        Header="Описание" />
+                        loc:ColumnLocalization.Key="Navigator.Column.Description" />
                     <DataGridTextColumn
                         Width="130"
                         Binding="{Binding Author}"
-                        Header="Автор" />
+                        loc:ColumnLocalization.Key="Navigator.Column.Author" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
@@ -405,14 +406,14 @@
             Orientation="Horizontal">
             <ui:Button
                 Width="110"
-                Content="&#9664; Назад"
-                ToolTip="Предыдущее задание в списке - с показом в модели"
+                Content="{DynamicResource Navigator.PreviousButton}"
+                ToolTip="{DynamicResource Navigator.PreviousTooltip}"
                 Click="PreviousButton_Click" />
             <ui:Button
                 Width="110"
                 Margin="8 0 0 0"
-                Content="Вперёд &#9654;"
-                ToolTip="Следующее задание в списке - с показом в модели"
+                Content="{DynamicResource Navigator.NextButton}"
+                ToolTip="{DynamicResource Navigator.NextTooltip}"
                 Click="NextButton_Click" />
             <TextBlock
                 x:Name="PositionText"
@@ -423,7 +424,7 @@
                 Margin="16 0 0 0"
                 VerticalAlignment="Center"
                 Style="{StaticResource Hint}"
-                Text="Двойной щелчок по строке показывает задание в модели, Delete удаляет выделенные." />
+                Text="{DynamicResource Navigator.RowHint}" />
         </StackPanel>
 
         <!-- WrapPanel, а не StackPanel в DockPanel: подсказка рядом забирала себе ширину,
@@ -440,18 +441,18 @@
             <TextBlock
                 Margin="0 0 8 0"
                 VerticalAlignment="Center"
-                Text="Согласовать с:" />
+                Text="{DynamicResource Navigator.ApproveWithLabel}" />
             <CheckBox
                 Margin="0 0 8 0"
                 VerticalAlignment="Center"
                 Content="ARC"
-                ToolTip="Согласовать с архитекторами"
+                ToolTip="{DynamicResource Navigator.ApproveArcTooltip}"
                 IsChecked="{Binding ApproveWithArc}" />
             <CheckBox
                 Margin="0 0 12 0"
                 VerticalAlignment="Center"
                 Content="STR"
-                ToolTip="Согласовать с конструкторами"
+                ToolTip="{DynamicResource Navigator.ApproveStrTooltip}"
                 IsChecked="{Binding ApproveWithStr}" />
             <!-- Удаление стоит до отправки, потому что в таком порядке им и пользуются: убрал лишние
                  задания - отправил остаток. Работает по выделению в гриде, а не по строке-кнопке:
@@ -460,27 +461,27 @@
                 Width="120"
                 Margin="6 0"
                 Appearance="Danger"
-                Content="Удалить"
-                ToolTip="Удалить выделенные задания из модели. Согласующие узнают об этом со следующей отправки"
+                Content="{DynamicResource Common.Remove}"
+                ToolTip="{DynamicResource Navigator.DeleteTooltip}"
                 Click="DeleteButton_Click" />
             <ui:Button
                 Width="180"
                 Margin="6 0"
                 Appearance="Success"
-                Content="Отправить на сервер"
-                ToolTip="Отправить все задания этого файла на согласование отмеченным дисциплинам"
+                Content="{DynamicResource Navigator.SendButton}"
+                ToolTip="{DynamicResource Navigator.SendTooltip}"
                 IsEnabled="{Binding CanSend}"
                 Command="{Binding SendCommand}" />
             <ui:Button
                 Width="120"
                 Margin="6 0"
                 Appearance="Info"
-                Content="Обновить"
+                Content="{DynamicResource Common.Refresh}"
                 Command="{Binding RefreshCommand}" />
             <ui:Button
                 Width="120"
                 Margin="6 0"
-                Content="Закрыть"
+                Content="{DynamicResource Common.Close}"
                 Click="ButtonClose_Click" />
         </WrapPanel>
     </Grid>

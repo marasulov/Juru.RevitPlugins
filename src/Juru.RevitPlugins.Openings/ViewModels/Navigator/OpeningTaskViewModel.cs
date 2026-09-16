@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using Autodesk.Revit.DB;
 
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.Openings.Models.Navigator;
 using Juru.RevitPlugins.Openings.Models.Server.Dto;
 
@@ -26,6 +27,7 @@ public class OpeningTaskViewModel {
     /// </param>
     public OpeningTaskViewModel(
         OpeningTask task,
+        PluginLocalization localization,
         OpeningTaskViewDto? decision = null,
         bool serverChecked = false) {
 
@@ -33,18 +35,21 @@ public class OpeningTaskViewModel {
 
         Task = task;
         Decision = decision;
-        ArcDecisionText = GetDecisionText(decision?.ArcDecision, decision, serverChecked);
-        StrDecisionText = GetDecisionText(decision?.StrDecision, decision, serverChecked);
+        ArcDecisionText = GetDecisionText(decision?.ArcDecision, decision, serverChecked, localization);
+        StrDecisionText = GetDecisionText(decision?.StrDecision, decision, serverChecked, localization);
         DecisionComment = GetDecisionComment(decision);
-        IsRejected = decision?.ArcDecision?.Status == "rejected" || decision?.StrDecision?.Status == "rejected";
+        IsArcRejected = decision?.ArcDecision?.Status == "rejected";
+        IsStrRejected = decision?.StrDecision?.Status == "rejected";
+        IsRejected = IsArcRejected || IsStrRejected;
         IsApproved = decision?.Status == "approved";
-        Status = task.Status.GetDescription();
+        Status = task.Status.GetDescription(localization);
         NeedsAttention = task.Status.NeedsAttention();
         SortOrder = NeedsAttention ? 0 : 1;
         Id = task.Id.ToString();
         Date = task.Date;
         MepSystem = task.MepSystem;
         Description = task.Description;
+        DateGroupText = localization.GetString("Navigator.DateGroupFormat", Date);
         Author = task.Author;
         Size = GetSizeText(task);
         Elevation = ToMillimeters(task.GetElevation());
@@ -84,7 +89,7 @@ public class OpeningTaskViewModel {
     /// Дата с зашитым префиксом - вторая, вложенная группировка в навигаторе, как в Bim4Everyone:
     /// внутри каждого статуса задания разбиты по дате выдачи.
     /// </summary>
-    public string DateGroupText => $"Дата: {Date}";
+    public string DateGroupText { get; }
 
     /// <summary>
     /// Имя инженерной системы, для которой выдано задание.
@@ -155,6 +160,16 @@ public class OpeningTaskViewModel {
     public string DecisionComment { get; }
 
     /// <summary>
+    /// Задание отклонила архитектура - подсвечивает колонку <see cref="ArcDecisionText" />.
+    /// </summary>
+    public bool IsArcRejected { get; }
+
+    /// <summary>
+    /// Задание отклонили конструкции - подсвечивает колонку <see cref="StrDecisionText" />.
+    /// </summary>
+    public bool IsStrRejected { get; }
+
+    /// <summary>
     /// Задание отклонила хотя бы одна дисциплина.
     /// </summary>
     public bool IsRejected { get; }
@@ -181,22 +196,23 @@ public class OpeningTaskViewModel {
     private static string GetDecisionText(
         OpeningDecisionDto? decision,
         OpeningTaskViewDto? task,
-        bool serverChecked) {
+        bool serverChecked,
+        PluginLocalization localization) {
 
         if(!serverChecked) {
             return "—";
         }
 
         if(task is null) {
-            return "не отправлялось";
+            return localization.GetString("Navigator.Decision.NotSent");
         }
 
         return decision?.Status switch {
-            "approved" => "согласовано",
-            "rejected" => "отклонено",
-            "sent" when decision.ChangedAfterApproval => "сброшено: геометрия изменилась",
-            "sent" => "ожидает",
-            _ => "ожидает"
+            "approved" => localization.GetString("Navigator.Decision.Approved"),
+            "rejected" => localization.GetString("Navigator.Decision.Rejected"),
+            "sent" when decision.ChangedAfterApproval => localization.GetString("Navigator.Decision.ResetChanged"),
+            "sent" => localization.GetString("Navigator.Decision.Pending"),
+            _ => localization.GetString("Navigator.Decision.Pending")
         };
     }
 

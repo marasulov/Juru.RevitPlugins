@@ -15,7 +15,16 @@
          рефлексией в тип строки, доходит до объектов Revit и бросает исключение прямо в проходе
          отрисовки: вкладка не открывается, а окно остаётся частично незакрашенным. -->
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Тот же словарь, что у окна. Подключён и здесь, чтобы флажок колонки мог
+                     сослаться на свой стиль сам, не полагаясь на ресурсы окна: стиль, найденный
+                     по дереву, пропадает вместе с деревом. -->
+                <ResourceDictionary Source="/Juru.RevitPlugins.Schedules;component/Resources/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid>
@@ -54,7 +63,11 @@
                             <!-- Растянут на всю ячейку и Focusable=False: иначе первый щелчок
                                  попадает в ячейку и уходит на выделение строки и фокус, а галочка
                                  переключается только со второго. Кликабельна вся колонка. -->
+                            <!-- Стиль назначен явно: неявный ищется по дереву и пропадает, когда
+                                 Rows.Clear отключает строку от таблицы, а смена стиля рвёт шаблон
+                                 под живыми часами анимации WPF-UI. Подробнее - в SchedulesWindow.xaml. -->
                             <CheckBox
+                                Style="{StaticResource DefaultCheckBoxStyle}"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
                                 HorizontalContentAlignment="Center"

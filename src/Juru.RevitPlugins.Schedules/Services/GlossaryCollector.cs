@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -63,6 +63,14 @@ public static class GlossaryCollector
     {
         var key = text.Trim();
 
+        // Строка уже двуязычная - в модели лежит «исходник — перевод». Ключом идёт исходная
+        // половина: иначе в словаре появился бы ключ с русским и английским разом, и с каждым
+        // прогоном такие ключи множились бы.
+        if (RussianText.TrySplitBilingual(key, out var written, out _))
+        {
+            key = written;
+        }
+
         if (!RussianText.ContainsCyrillic(key) || RussianText.IsSpacerLabel(key))
         {
             return;
@@ -100,7 +108,7 @@ public static class GlossaryCollector
         IReadOnlyDictionary<string, string> baseTerms)
     {
         var readable = RussianText.Normalize(key);
-        var translation = ResolveTranslation(key, readable, existing, baseTerms);
+        var translation = Resolve(key, readable, existing, baseTerms);
 
         return new GlossaryEntry
         {
@@ -115,10 +123,14 @@ public static class GlossaryCollector
 
     /// <summary>
     ///     Заполняет перевод там, где он известен: сделанный ранее перевод, выверенный термин, обозначение
-    ///     стандарта, марка изделия или английская половина двуязычной строки. Марки и обозначения в
-    ///     переводе остаются собой.
+    ///     стандарта, марка изделия, однобуквенное обозначение системы или английская половина двуязычной
+    ///     строки. Марки и обозначения в переводе остаются собой.
     /// </summary>
-    private static GlossaryTranslation ResolveTranslation(
+    /// <remarks>
+    ///     Открыт наружу, потому что перевод в самих спецификациях собирает строки не из таблицы, а из
+    ///     имени, заголовков и фильтров: строки другие, а правило подбора перевода для них то же.
+    /// </remarks>
+    public static GlossaryTranslation Resolve(
         string key,
         string readable,
         IReadOnlyDictionary<string, GlossaryTranslation> existing,
@@ -134,7 +146,9 @@ public static class GlossaryCollector
             return new GlossaryTranslation(term, TranslationSource.Base);
         }
 
-        if (RussianText.IsStandardDesignation(key) || RussianText.IsProductMark(key))
+        if (RussianText.IsStandardDesignation(key)
+            || RussianText.IsProductMark(key)
+            || RussianText.IsSingleLetterMark(key))
         {
             return new GlossaryTranslation(key, TranslationSource.Derived);
         }

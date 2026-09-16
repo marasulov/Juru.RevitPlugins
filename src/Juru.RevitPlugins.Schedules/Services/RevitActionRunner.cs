@@ -51,7 +51,11 @@ public sealed class RevitActionRunner : IExternalEventHandler
         {
             // Исключение всплывает вне стека команды: без своего сообщения Ревит покажет только
             // собственную ошибку без причины.
+#if DEBUG
+            TaskDialog.Show(Localization.Text.WindowTitle, $"{exception.Message}\n\n{CrashLog.Write(exception)}");
+#else
             TaskDialog.Show(Localization.Text.WindowTitle, exception.Message);
+#endif
         }
     }
 

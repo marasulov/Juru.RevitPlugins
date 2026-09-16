@@ -4,6 +4,7 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.Core.Theming;
 using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.ViewModels.Settings;
@@ -21,9 +22,14 @@ public class SetOpeningsSettingsCommand : IExternalCommand {
         JuruTheme.Apply();
 
         var config = OpeningsConfig.GetOpeningsConfig();
+        var culture = PluginCulture.Resolve(config, commandData.Application.Application.Language);
+        var localization = PluginLocalization.Load(typeof(SetOpeningsSettingsCommand), culture);
+
         var window = new OpeningsSettingsWindow {
-            DataContext = new OpeningsSettingsViewModel(config)
+            DataContext = new OpeningsSettingsViewModel(config, localization)
         };
+        localization.ApplyTo(window);
+        ColumnLocalization.Apply(window.OffsetsGrid, localization);
         new WindowInteropHelper(window) { Owner = commandData.Application.MainWindowHandle };
 
         return window.ShowDialog() == true ? Result.Succeeded : Result.Cancelled;

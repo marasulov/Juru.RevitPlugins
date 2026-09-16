@@ -21,9 +21,12 @@ namespace Juru.RevitPlugins.Schedules.Services;
 ///         поле означало бы, что второй перевод затирает исходник первого без возможности откатить.
 ///     </para>
 ///     <para>
-///         Запись ограничена вендором, а чтение открыто: иначе любой другой плагин может затереть
-///         сохранённый русский текст, и откат перестанет работать. Vendor id обязателен именно из-за
-///         ограниченного уровня доступа — при <c>AccessLevel.Public</c> он не нужен.
+///         Доступ открыт и на чтение, и на запись. Ограничение записи вендором выглядит правильнее -
+///         чужой плагин не затрёт сохранённый русский текст, - но Ревит сверяет вендора не схемы, а
+///         того add-in, под которым идёт команда: у нашего манифеста это «Development», под
+///         AddinManager - его собственный, и запись отклонялась всегда с «Writing of Entities of this
+///         Schema is not allowed to the current add-in». Схему отличает её GUID, а не уровень доступа,
+///         поэтому цена открытой записи невелика, а откат без неё не работает вовсе.
 ///     </para>
 /// </remarks>
 public static class SourceTextStore
@@ -162,7 +165,7 @@ public static class SourceTextStore
         builder.SetSchemaName(SchemaName);
         builder.SetVendorId(VendorId);
         builder.SetReadAccessLevel(AccessLevel.Public);
-        builder.SetWriteAccessLevel(AccessLevel.Vendor);
+        builder.SetWriteAccessLevel(AccessLevel.Public);
         builder.AddSimpleField(FieldName, typeof(string));
 
         return builder.Finish();

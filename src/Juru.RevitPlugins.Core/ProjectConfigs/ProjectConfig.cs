@@ -25,6 +25,12 @@ public abstract class ProjectConfig {
     public abstract IConfigSerializer Serializer { get; set; }
 
     /// <summary>
+    /// Язык интерфейса плагина, выбранный пользователем в настройках. Пустая строка - следовать
+    /// за языком Ревита, см. <see cref="Juru.RevitPlugins.Core.Localization.PluginCulture" />.
+    /// </summary>
+    public string Language { get; set; } = string.Empty;
+
+    /// <summary>
     /// Записывает конфигурацию в <see cref="ProjectConfigPath" />.
     /// Недостающие каталоги создаются.
     /// </summary>

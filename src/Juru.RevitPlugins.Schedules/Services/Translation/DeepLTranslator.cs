@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -42,12 +43,32 @@ public sealed class DeepLTranslator(HttpClient httpClient, string apiKey, Transl
 
         message.Headers.TryAddWithoutValidation("Authorization", $"DeepL-Auth-Key {apiKey}");
 
-        using var response = await httpClient.SendAsync(message, cancellationToken).ConfigureAwait(false);
-        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        // Сеть, прокси и таймаут бросают свои исключения, а не наш TranslationException. Наружу их
+        // выпускать нельзя: сбой перевода - ожидаемый исход, о котором окно сообщает строкой, тогда
+        // как чужое исключение из асинхронной команды роняет само окно.
+        HttpResponseMessage response;
+        string body;
 
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            throw new TranslationException($"DeepL ответил {(int)response.StatusCode}: {Shorten(body)}");
+            response = await httpClient.SendAsync(message, cancellationToken).ConfigureAwait(false);
+            body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        }
+        catch (HttpRequestException exception)
+        {
+            throw new TranslationException($"DeepL недоступен: {TranslationFailure.Describe(exception)}");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TranslationException($"DeepL не ответил за {httpClient.Timeout.TotalSeconds:0} с.");
+        }
+
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new TranslationException($"DeepL ответил {(int)response.StatusCode}: {Shorten(body)}");
+            }
         }
 
         return ParseTranslations(body, texts.Count);
@@ -60,7 +81,9 @@ public sealed class DeepLTranslator(HttpClient httpClient, string apiKey, Transl
 
     private static IReadOnlyList<string> ParseTranslations(string body, int expectedCount)
     {
-        using var document = JsonDocument.Parse(body);
+        // Вместо ответа службы приходит и страница прокси, и сообщение шлюза: разбор такого текста
+        // падает, и падение это тоже про недоступность службы, а не про ошибку в коде.
+        using var document = TranslationFailure.Parse(body, "DeepL");
 
         if (!document.RootElement.TryGetProperty("translations", out var translations))
         {

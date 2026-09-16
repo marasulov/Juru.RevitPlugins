@@ -7,7 +7,8 @@ using Autodesk.Revit.DB;
 namespace Juru.RevitPlugins.Schedules.Services;
 
 /// <summary>
-///     Находит спецификации, размещённые на листах: именно они составляют выпускаемый комплект.
+///     Находит спецификации модели. По умолчанию только размещённые на листах: именно они составляют
+///     выпускаемый комплект.
 /// </summary>
 public sealed class SheetScheduleFinder(Document document)
 {
@@ -16,7 +17,11 @@ public sealed class SheetScheduleFinder(Document document)
     ///     результат, только если у неё есть размещение на этом листе - остальные её размещения тоже
     ///     показаны, чтобы отчёт был честным о том, где ещё она встречается.
     /// </param>
-    public IReadOnlyList<SheetSchedule> Find(ElementId? sheetId = null)
+    /// <param name="includeUnplaced">
+    ///     Добавить спецификации без размещения. С сужением до листа не действует: там спрашивают
+    ///     именно про лист, а неразмещённая спецификация не стоит ни на одном.
+    /// </param>
+    public IReadOnlyList<SheetSchedule> Find(ElementId? sheetId = null, bool includeUnplaced = false)
     {
         var placementsBySchedule = new Dictionary<ElementId, List<SheetPlacement>>();
         var scheduleIdsOnSheet = new HashSet<ElementId>();
@@ -68,9 +73,29 @@ public sealed class SheetScheduleFinder(Document document)
             found.Add(new SheetSchedule(schedule, ordered));
         }
 
+        if (includeUnplaced && sheetId is null)
+        {
+            found.AddRange(FindUnplaced(placementsBySchedule.Keys));
+        }
+
         return found
             .OrderBy(entry => entry.Schedule.Name, StringComparer.CurrentCulture)
             .ToList();
+    }
+
+    /// <summary>
+    ///     Спецификации, которых нет ни на одном листе. Служебные отсеиваются так же, как у размещённых:
+    ///     штамп и ключевые примечания Ревит ведёт сам, и переводить их нечего.
+    /// </summary>
+    private IEnumerable<SheetSchedule> FindUnplaced(ICollection<ElementId> placed)
+    {
+        return new FilteredElementCollector(document)
+            .OfClass(typeof(ViewSchedule))
+            .Cast<ViewSchedule>()
+            .Where(schedule => !placed.Contains(schedule.Id))
+            .Where(schedule => !schedule.IsTitleblockRevisionSchedule && !schedule.IsInternalKeynoteSchedule)
+            .Where(schedule => !schedule.IsTemplate)
+            .Select(schedule => new SheetSchedule(schedule, []));
     }
 }
 

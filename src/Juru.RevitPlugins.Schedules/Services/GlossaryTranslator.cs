@@ -26,8 +26,11 @@ public sealed class GlossaryTranslator(ITextTranslator translator, int batchSize
             throw new ArgumentNullException(nameof(entries));
         }
 
+        // Однобуквенные обозначения машине не отдаются ни при каких условиях: «П», «В» и «К» - это
+        // марки систем, и перевод делает из них «In», «To» и «A». Они остаются собой.
         var pending = entries
             .Where(entry => entry.Suggestion.Length is 0 && entry.Readable.Length > 0)
+            .Where(entry => !RussianText.IsSingleLetterMark(entry.Readable))
             .ToList();
 
         if (pending.Count is 0)
@@ -181,8 +184,19 @@ public sealed class GlossaryTranslator(ITextTranslator translator, int batchSize
         return entries
             .Select(entry => translations.TryGetValue(entry.Key, out var translation) && translation.Length > 0
                 ? entry with { Suggestion = translation, Source = TranslationSource.Machine }
-                : entry)
+                : Keep(entry))
             .ToList();
+    }
+
+    /// <summary>
+    ///     Строка, которую не переводили. Однобуквенное обозначение остаётся собой: пустой перевод означал
+    ///     бы, что его ещё предстоит сделать, и следующий прогон снова отправил бы его машине.
+    /// </summary>
+    private static GlossaryEntry Keep(GlossaryEntry entry)
+    {
+        return entry.Suggestion.Length is 0 && RussianText.IsSingleLetterMark(entry.Readable)
+            ? entry with { Suggestion = entry.Key, Source = TranslationSource.Derived }
+            : entry;
     }
 
     private static IEnumerable<List<GlossaryEntry>> Batch(IReadOnlyList<GlossaryEntry> entries, int size)

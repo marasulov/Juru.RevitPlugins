@@ -13,6 +13,7 @@ using CommunityToolkit.Mvvm.Input;
 using ToolkitCommand = CommunityToolkit.Mvvm.Input.RelayCommand;
 
 using Juru.RevitPlugins.Core.FileNaming;
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.Openings.Models.Configs;
 using Juru.RevitPlugins.Openings.Models.Navigator;
 using Juru.RevitPlugins.Openings.Models.Server;
@@ -31,6 +32,7 @@ namespace Juru.RevitPlugins.Openings.ViewModels.Navigator;
 /// </remarks>
 public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
     private readonly OpeningsConfig _config;
+    private readonly PluginLocalization _localization;
     private readonly RevitActionRunner _runner;
     private readonly Discipline _discipline;
     private readonly RevitFileNameInfo _fileInfo;
@@ -80,12 +82,14 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
 
     public IncomingOpeningsNavigatorViewModel(
         OpeningsConfig config,
+        PluginLocalization localization,
         RevitActionRunner runner,
         Discipline discipline,
         RevitFileNameInfo fileInfo,
         OpeningsServerClient client) {
 
         _config = config ?? throw new ArgumentNullException(nameof(config));
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         _runner = runner ?? throw new ArgumentNullException(nameof(runner));
         _discipline = discipline;
         _fileInfo = fileInfo ?? throw new ArgumentNullException(nameof(fileInfo));
@@ -156,9 +160,7 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
             .ToList();
         CoordinateWarning = changedDisciplines.Count == 0
             ? string.Empty
-            : "Общие координаты изменились у отправителя после прошлой отправки: "
-                + string.Join(", ", changedDisciplines)
-                + ". Геометрия заданий этой дисциплины могла сместиться - сверьтесь с моделью.";
+            : _localization.GetString("Approval.CoordinatesChangedFormat", string.Join(", ", changedDisciplines));
 
         var result = new IncomingOpeningPlacer(doc, _config).Place(serverTasks);
 
@@ -267,7 +269,9 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         // согласованное задание он больше не разбирает.
         string saveError = placeResult.Placed > 0 ? SaveModel(doc) : null;
         _saveNote = placeResult.Placed > 0 && saveError is null
-            ? doc.IsWorkshared ? " Изменения синхронизированы." : " Файл сохранён."
+            ? doc.IsWorkshared
+                ? _localization.GetString("Approval.Summary.SaveNoteSynced")
+                : _localization.GetString("Approval.Summary.SaveNoteSaved")
             : string.Empty;
 
         BuildRows(doc, [], reverted: 0, placeResult.Placed, placeResult.MissingFamilies);
@@ -276,11 +280,9 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         // дисциплинами: сводка в шапке об этом не говорит, а пользователь видит нажатую кнопку
         // и неизменившуюся модель. Поэтому причина пишется прямо в строку ошибки.
         if(placeResult.Placed == 0) {
-            ErrorText = "Не прорезано ни одного задания. " + GetSkipReason(placeResult, tasks);
+            ErrorText = _localization.GetString("Approval.NothingCutFormat", GetSkipReason(placeResult, tasks));
         } else if(saveError is not null) {
-            ErrorText = $"Прорезано заданий: {placeResult.Placed}, но файл не сохранён: {saveError} "
-                + "Сохраните файл сами - иначе на сервере задание останется согласованным, "
-                + "а вырезающего семейства в файле не будет.";
+            ErrorText = _localization.GetString("Approval.CutButNotSavedFormat", placeResult.Placed, saveError);
         } else {
             ErrorText = string.Empty;
         }
@@ -312,28 +314,24 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
     /// </remarks>
     private string GetSkipReason(RealOpeningResult result, IReadOnlyCollection<OpeningTaskViewDto> tasks) {
         if(result.MissingFamilies.Count > 0) {
-            return "Не загружены вырезающие семейства: " + string.Join(", ", result.MissingFamilies) + ".";
+            return _localization.GetString(
+                "Approval.SkipReason.MissingFamiliesFormat", string.Join(", ", result.MissingFamilies));
         }
 
         if(result.SkippedNoHost > 0) {
-            return $"У {result.SkippedNoHost} согласованных заданий под точкой вставки нет стены "
-                + "или перекрытия: вырезающее семейство хостовое, вставлять его не во что. "
-                + "Проверьте, совпадают ли общие координаты с файлом отправителя.";
+            return _localization.GetString("Approval.SkipReason.NoHostFormat", result.SkippedNoHost);
         }
 
         if(result.SkippedNoTaskInstance > 0) {
-            return $"У {result.SkippedNoTaskInstance} согласованных заданий нет экземпляра в модели - "
-                + "их не удалось поставить при загрузке. Обновите окно и посмотрите, что в сводке.";
+            return _localization.GetString("Approval.SkipReason.NoInstanceFormat", result.SkippedNoTaskInstance);
         }
 
         int cut = tasks.Count(task => _realElements.ContainsKey(task.TaskKey));
         if(cut == tasks.Count && tasks.Count > 0) {
-            return "Всё уже прорезано.";
+            return _localization.GetString("Approval.SkipReason.AllCut");
         }
 
-        return $"Ждут решения второй дисциплины или отклонены: {result.SkippedNotApproved}. "
-            + "Прорезают только задания, согласованные и ARC, и STR; общий статус считает сервер. "
-            + "Свои решения уже отправлены и статусы перечитаны - значит, дело за второй дисциплиной.";
+        return _localization.GetString("Approval.SkipReason.WaitingOtherFormat", result.SkippedNotApproved);
     }
 
     /// <summary>
@@ -371,7 +369,7 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
             var host = GetHost(doc, instance, task.OpeningType);
             var technicalStatus = IncomingTaskTechnicalCheck.Evaluate(doc, instance);
             var row = new IncomingOpeningTaskViewModel(
-                task, _discipline, elementId, host, technicalStatus, isCut, task.Deleted);
+                task, _localization, _discipline, elementId, host, technicalStatus, isCut, task.Deleted);
             if(unsaved.TryGetValue(task.TaskKey, out var pending)) {
                 row.Status = pending.Status;
                 row.Comment = pending.Comment;
@@ -397,26 +395,28 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         IReadOnlyCollection<string> missingRealFamilies) {
 
         var summary = new StringBuilder();
-        summary.Append($"Заданий: {Tasks.Count}. ");
-        summary.Append($"Ожидают моего решения: {Tasks.Count(task => OpeningDecisionStatus.IsSent(task.Status))}.");
+        summary.Append(_localization.GetString("Approval.Summary.TasksFormat", Tasks.Count));
+        summary.Append(_localization.GetString(
+            "Approval.Summary.WaitingMineFormat", Tasks.Count(task => OpeningDecisionStatus.IsSent(task.Status))));
         int approvedNotCut = Tasks.Count(task => task.CanInsert);
         if(approvedNotCut > 0) {
-            summary.Append($" Согласовано, но не прорезано: {approvedNotCut} - кнопка \"Вставить\"/\"Вставить все согласованные\".");
+            summary.Append(_localization.GetString("Approval.Summary.ApprovedNotCutFormat", approvedNotCut));
         }
         if(placed > 0 || reverted > 0) {
-            summary.Append($" Прорезано: {placed}, возвращено в задание: {reverted}.");
+            summary.Append(_localization.GetString("Approval.Summary.CutRevertedFormat", placed, reverted));
             summary.Append(_saveNote);
         }
         int deleted = Tasks.Count(task => task.CanRemove);
         if(deleted > 0) {
-            summary.Append($" Инженер удалил заданий, по которым отверстия уже прорезаны: {deleted}"
-                + " - проверьте их и уберите кнопкой \"Убрать\" в строке.");
+            summary.Append(_localization.GetString("Approval.Summary.DeletedFormat", deleted));
         }
         if(missingFamilies.Count > 0) {
-            summary.Append($" Семейства не загружены: {string.Join(", ", missingFamilies)}.");
+            summary.Append(_localization.GetString(
+                "Approval.Summary.MissingFamiliesFormat", string.Join(", ", missingFamilies)));
         }
         if(missingRealFamilies.Count > 0) {
-            summary.Append($" Вырезающие семейства не загружены: {string.Join(", ", missingRealFamilies)}.");
+            summary.Append(_localization.GetString(
+                "Approval.Summary.MissingRealFamiliesFormat", string.Join(", ", missingRealFamilies)));
         }
 
         return summary.ToString();
@@ -443,12 +443,13 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
                 return;
             }
 
-            if(!ConfirmRemove(task)) {
+            if(!ConfirmRemove(task, _localization)) {
                 return;
             }
 
             if(doc.GetElement(realId) is not null) {
-                using var transaction = new Transaction(doc, "Удаление отверстия по удалённому заданию");
+                using var transaction = new Transaction(
+                    doc, _localization.GetString("Approval.RemoveTransactionName"));
                 transaction.Start();
                 doc.Delete(realId);
                 transaction.Commit();
@@ -459,12 +460,12 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
         });
     }
 
-    private static bool ConfirmRemove(IncomingOpeningTaskViewModel task) {
-        var confirm = TaskDialog.Show("Удалённое задание",
-            $"Убрать из модели отверстие {task.SizeText} мм ({task.OpeningTypeText}) на уровне "
-            + $"{task.LevelName}?\n\n"
-            + $"Инженер ({task.SenderDiscipline}, {task.SentByDisplayName}) удалил задание, "
-            + "по которому оно прорезано. Конструкция закроется обратно.",
+    private static bool ConfirmRemove(IncomingOpeningTaskViewModel task, PluginLocalization localization) {
+        var confirm = TaskDialog.Show(
+            localization.GetString("Approval.RemoveDialogTitle"),
+            localization.GetString(
+                "Approval.RemoveConfirmFormat",
+                task.SizeText, task.OpeningTypeText, task.LevelName, task.SenderDiscipline, task.SentByDisplayName),
             TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No, TaskDialogResult.No);
         return confirm == TaskDialogResult.Yes;
     }
@@ -514,7 +515,8 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
 
                 // SetSectionBox/IsSectionBoxActive меняют документ - без транзакции Revit падает
                 // с "Attempt to modify the model outside of transaction".
-                using var transaction = new Transaction(doc, "Зум навигатора заданий на отверстия");
+                using var transaction = new Transaction(
+                    doc, _localization.GetString("Navigator.ZoomTransactionName"));
                 transaction.Start();
                 view.SetSectionBox(new BoundingBoxXYZ {
                     Min = box.Min - new XYZ(margin, margin, margin),
@@ -627,7 +629,8 @@ public partial class IncomingOpeningsNavigatorViewModel : ObservableObject {
 
         string error = result.Failed.Count == 0
             ? null
-            : "Не отправлено: " + string.Join("; ", result.Failed.Select(failure => $"{failure.TaskKey} - {failure.Message}"));
+            : _localization.GetString("Approval.SendFailedFormat", string.Join("; ", result.Failed.Select(
+                failure => _localization.GetString("Approval.SendFailedItemFormat", failure.TaskKey, failure.Message))));
 
         return (dirty.Count - result.Failed.Count, error);
     }
