@@ -14,7 +14,7 @@ namespace Juru.RevitPlugins.ProjectSetup.Services;
 /// </summary>
 internal sealed class StageBExecutor(RevitFiles files)
 {
-    public JobOutcome Execute(StageBPayload plan)
+    public JobOutcome Execute(StageBPayload plan, IJobProgress progress)
     {
         var outcome = new JobOutcome();
         string Full(string relative) => JobPaths.Full(plan.UncRoot, relative);
@@ -28,6 +28,8 @@ internal sealed class StageBExecutor(RevitFiles files)
             return outcome;
         }
 
+        int total = plan.Objects.Sum(o => o.Files.Count);
+        int done = 0;
         foreach (var item in plan.Objects)
         {
             var report = new ObjectResult { ObjectId = item.ObjectId };
@@ -43,12 +45,14 @@ internal sealed class StageBExecutor(RevitFiles files)
             {
                 report.Error = ex.Message;
                 outcome.Log.Add($"{item.BasePath}: ОШИБКА {ex.Message}");
+                done += item.Files.Count;
                 continue;
             }
 
             foreach (var file in item.Files)
             {
                 string path = Full(file.Path);
+                progress.Step(done++, total, Path.GetFileName(file.Path));
                 if (File.Exists(path))
                 {
                     // Пропуск — решение человека на странице: файл уже есть, значит дисциплина готова

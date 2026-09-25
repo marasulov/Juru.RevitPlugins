@@ -15,7 +15,7 @@ namespace Juru.RevitPlugins.ProjectSetup.Services;
 /// </summary>
 internal sealed class StageAExecutor(RevitFiles files)
 {
-    public JobOutcome Execute(StageAPayload plan)
+    public JobOutcome Execute(StageAPayload plan, IJobProgress progress)
     {
         var outcome = new JobOutcome();
         string Full(string relative) => JobPaths.Full(plan.UncRoot, relative);
@@ -32,9 +32,12 @@ internal sealed class StageAExecutor(RevitFiles files)
         }
 
         var ready = new List<BaseFileDto>();
-        foreach (var baseFile in plan.Bases)
+        int total = plan.Bases.Count + 1;
+        for (int i = 0; i < plan.Bases.Count; i++)
         {
+            var baseFile = plan.Bases[i];
             string path = Full(baseFile.Path);
+            progress.Step(i, total, "базовый файл " + Path.GetFileName(baseFile.Path));
             var report = new ObjectResult { ObjectId = baseFile.ObjectId };
             outcome.Result.Objects.Add(report);
 
@@ -66,6 +69,7 @@ internal sealed class StageAExecutor(RevitFiles files)
         // Генплан. Существующий — не конфликт: объект добавили в готовый проект, и в генплан
         // нужно только подгрузить новую связь
         string? genplanError = null;
+        progress.Step(total - 1, total, "генплан " + Path.GetFileName(plan.Genplan.Path) + ": связи базовых файлов");
         try
         {
             LinkIntoGenplan(plan, ready.Select(b => Full(b.Path)).ToList(), outcome);

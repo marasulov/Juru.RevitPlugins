@@ -22,6 +22,22 @@ internal sealed class SetupJobRunner(SetupJobsClient client, RevitFiles files)
     public List<string> RunAll()
     {
         var log = new List<string>();
+        var window = new ProgressWindow();
+        try
+        {
+            RunAll(log, window);
+        }
+        finally
+        {
+            window.Close();
+        }
+
+        return log;
+    }
+
+    private void RunAll(List<string> log, ProgressWindow window)
+    {
+        window.Show("Подготовка проекта", "Проверка очереди заданий…", 0, 1);
 
         for (int i = 0; i < MaxJobsPerRun; i++)
         {
@@ -33,17 +49,18 @@ internal sealed class SetupJobRunner(SetupJobsClient client, RevitFiles files)
             }
 
             log.Add($"Задание #{job.Id} ({job.Kind})");
-            var outcome = Execute(job);
+            string title = job.Kind == JobKinds.StageB
+                ? $"Задание #{job.Id}: файлы дисциплин"
+                : $"Задание #{job.Id}: генплан и базовые файлы";
+            var outcome = Execute(job, new JobProgress(window, client, job, title));
             foreach (string line in outcome.Log) log.Add("  " + line);
 
             Task.Run(() => client.CompleteAsync(job, outcome)).GetAwaiter().GetResult();
             log.Add($"Задание #{job.Id}: {Describe(outcome.Status)}");
         }
-
-        return log;
     }
 
-    private JobOutcome Execute(ClaimedJob job)
+    private JobOutcome Execute(ClaimedJob job, IJobProgress progress)
     {
         try
         {
@@ -53,8 +70,8 @@ internal sealed class SetupJobRunner(SetupJobsClient client, RevitFiles files)
             {
                 return job.Kind switch
                 {
-                    JobKinds.StageA => new StageAExecutor(files).Execute(SetupJobsClient.ReadPayload<StageAPayload>(job)),
-                    JobKinds.StageB => new StageBExecutor(files).Execute(SetupJobsClient.ReadPayload<StageBPayload>(job)),
+                    JobKinds.StageA => new StageAExecutor(files).Execute(SetupJobsClient.ReadPayload<StageAPayload>(job), progress),
+                    JobKinds.StageB => new StageBExecutor(files).Execute(SetupJobsClient.ReadPayload<StageBPayload>(job), progress),
                     _ => Failed($"Неизвестный вид задания {job.Kind}")
                 };
             }

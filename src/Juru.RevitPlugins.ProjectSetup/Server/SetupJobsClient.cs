@@ -82,6 +82,25 @@ public sealed class SetupJobsClient : IDisposable
         return JsonSerializer.Deserialize<ClaimedJob>(text, JsonOptions);
     }
 
+    /// <summary>
+    /// Сообщение о ходе работы для страницы проекта. Без этого задание на десяток файлов минутами
+    /// висит в running, и не отличить работу от зависшего Revit. Ошибка связи работу не прерывает:
+    /// отчёт о результате важнее сообщения о ходе.
+    /// </summary>
+    public async Task TryReportProgressAsync(ClaimedJob job, string message)
+    {
+        try
+        {
+            string body = JsonSerializer.Serialize(new { claimToken = job.ClaimToken, message }, JsonOptions);
+            using var response = await _http.PostAsync($"api/setup/agent/jobs/{job.Id}/progress",
+                new StringContent(body, Encoding.UTF8, "application/json")).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            // сервер недоступен — продолжаем, отчёт о результате всё равно будет отправлен
+        }
+    }
+
     public async Task CompleteAsync(ClaimedJob job, JobOutcome outcome)
     {
         string body = JsonSerializer.Serialize(new
