@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -34,6 +35,14 @@ internal sealed class RevitFiles(Application application)
 
         return application.NewProjectDocument(template);
     }
+
+    /// <summary>
+    /// Шаблоны, которых нет на диске, среди нужных заданию. Проверяются все до первого файла:
+    /// шаблоны лежат на общем диске и переезжают при переименовании папок, и узнать об этом на
+    /// середине очереди — значит получить проект, собранный наполовину.
+    /// </summary>
+    public static List<string> MissingTemplates(IEnumerable<string> templates) =>
+        templates.Distinct(StringComparer.OrdinalIgnoreCase).Where(t => !File.Exists(t)).ToList();
 
     /// <summary>Первое сохранение нового файла. Существующий файл не перезаписывается никогда.</summary>
     public static void SaveNew(Document document, string path, bool asCentral = false)

@@ -31,6 +31,17 @@ internal sealed class StageAExecutor(RevitFiles files)
             return outcome;
         }
 
+        var templates = plan.Bases.Where(b => !File.Exists(Full(b.Path))).Select(b => b.Template).ToList();
+        if (!File.Exists(Full(plan.Genplan.Path))) templates.Add(plan.Genplan.Template);
+        var missing = RevitFiles.MissingTemplates(templates);
+        if (missing.Count > 0)
+        {
+            outcome.Status = "failed";
+            outcome.Log.Add("Не найдены шаблоны — ничего не создано. Поправьте пути на странице проекта и запустите этап А снова:");
+            outcome.Log.AddRange(missing.Select(t => "  " + t));
+            return outcome;
+        }
+
         var ready = new List<BaseFileDto>();
         int total = plan.Bases.Count + 1;
         for (int i = 0; i < plan.Bases.Count; i++)

@@ -28,6 +28,16 @@ internal sealed class StageBExecutor(RevitFiles files)
             return outcome;
         }
 
+        var missing = RevitFiles.MissingTemplates(plan.Objects.SelectMany(o => o.Files)
+            .Where(f => !File.Exists(Full(f.Path))).Select(f => f.Template));
+        if (missing.Count > 0)
+        {
+            outcome.Status = "failed";
+            outcome.Log.Add("Не найдены шаблоны — ничего не создано. Поправьте пути на странице проекта и запустите этап Б снова:");
+            outcome.Log.AddRange(missing.Select(t => "  " + t));
+            return outcome;
+        }
+
         int total = plan.Objects.Sum(o => o.Files.Count);
         int done = 0;
         foreach (var item in plan.Objects)
@@ -83,7 +93,9 @@ internal sealed class StageBExecutor(RevitFiles files)
             report.Ok = report.Error == null;
         }
 
-        if (outcome.Result.Objects.All(o => !o.Ok))
+        // Упало целиком, только если не создано ничего: созданные файлы должны попасть в отчёт
+        // как готовые, иначе повтор предложил бы создать их заново
+        if (outcome.Result.Objects.All(o => o.Created.Count == 0))
             outcome.Status = "failed";
         return outcome;
     }
