@@ -21,5 +21,9 @@ public sealed class ProjectSetupCommand : ExternalCommand
         var window = new ProjectSetupWindow(Application.Application);
         new WindowInteropHelper(window).Owner = Application.MainWindowHandle;
         window.ShowDialog();
+
+        // «Открыть генплан»: пока было открыто модальное окно, Revit не дал бы активировать документ
+        if (window.DocumentToOpen != null)
+            Application.OpenAndActivateDocument(window.DocumentToOpen);
     }
 }

@@ -120,6 +120,7 @@ public partial class ProjectSetupWindow : Window
         FolderBox.IsEnabled = CodeBox.IsEnabled = true;
         _objects.Clear();
         BuildTemplates(null);
+        ShowNextStep(null);
         Editor.IsEnabled = true;
     }
 
@@ -139,7 +140,46 @@ public partial class ProjectSetupWindow : Window
             _objects.Add(ObjectRow.Existing(o.Id, o.FolderName, o.Code, o.Stage, o.Disciplines, o.CreatedDisciplines));
 
         BuildTemplates(project);
+        ShowNextStep(project);
         Editor.IsEnabled = true;
+    }
+
+    /// <summary>
+    /// Генплан, который открыть в Revit после закрытия окна. Пока открыто модальное окно, Revit
+    /// не даёт активировать другой документ, поэтому открывает его команда, когда окно закрыто.
+    /// </summary>
+    public string? DocumentToOpen { get; private set; }
+
+    /// <summary>Подсказка о ручном шаге между этапами: какие площадки создать при Publish.</summary>
+    private void ShowNextStep(ProjectDto? project)
+    {
+        var waiting = project?.Objects.Where(o => o.Stage == "awaiting_coordination").ToList() ?? [];
+        if (project == null || waiting.Count == 0)
+        {
+            NextStepPanel.Visibility = System.Windows.Visibility.Collapsed;
+            return;
+        }
+
+        string sites = string.Join(", ", waiting.Select(o => $"«{o.Code}»"));
+        NextStepText.Text =
+            "Этап А выполнен. Дальше — координаты: откройте генплан, расставьте связи базовых файлов по местам " +
+            $"и для каждой сделайте Publish Coordinates с площадкой {sites} — имя площадки должно совпадать с кодом объекта. " +
+            "Сохраните генплан вместе с положением связей и нажмите «Этап Б» (генплан можно не закрывать).";
+
+        string genplan = GenplanFullPath(project);
+        OpenGenplanButton.IsEnabled = File.Exists(genplan);
+        OpenGenplanButton.ToolTip = genplan;
+        NextStepPanel.Visibility = System.Windows.Visibility.Visible;
+    }
+
+    private string GenplanFullPath(ProjectDto project) =>
+        Path.Combine(new[] { _config.UncRoot.TrimEnd('\\', '/') }.Concat(project.GenplanPath.Split('\\', '/')).ToArray());
+
+    private void OnOpenGenplan(object sender, RoutedEventArgs e)
+    {
+        if (_project == null) return;
+        DocumentToOpen = GenplanFullPath(_project);
+        Close();
     }
 
     // ---------- Таблица объектов ----------

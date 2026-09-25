@@ -120,6 +120,16 @@
                     </WrapPanel>
                     <TextBlock Style="{StaticResource Hint}"
                                Text="Этап Б — после того, как базовые файлы расставлены в генплане и координаты опубликованы (Publish) с площадкой, названной кодом объекта." />
+
+                    <!-- Что делать дальше: между этапами А и Б работа ручная, и её легко не заметить -->
+                    <Border x:Name="NextStepPanel" Visibility="Collapsed" Margin="0,12,0,0" Padding="12,10"
+                            Background="#FFF8E6" BorderBrush="#F5A623" BorderThickness="1" CornerRadius="4">
+                        <DockPanel>
+                            <Button x:Name="OpenGenplanButton" DockPanel.Dock="Right" Content="Открыть генплан"
+                                    Margin="12,0,0,0" VerticalAlignment="Center" Click="OnOpenGenplan" />
+                            <TextBlock x:Name="NextStepText" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
         </Grid>
