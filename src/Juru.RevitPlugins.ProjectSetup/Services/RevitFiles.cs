@@ -77,6 +77,17 @@ internal sealed class RevitFiles(Application application)
             .Where(p => p != null)
             .Any(p => string.Equals(ModelPathUtils.ConvertModelPathToUserVisiblePath(p), linkPath, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>
+    /// Revit при повторном сохранении кладёт рядом копию <c>имя.0001.rvt</c>. У файла, созданного
+    /// в этом же прогоне, это копия пустого шаблона без связи — она только путает. Копии файлов,
+    /// существовавших до прогона, не трогаются: это обычная защита Revit от ошибок пользователя.
+    /// </summary>
+    public static void DeleteFirstBackup(string path)
+    {
+        string backup = Path.Combine(Path.GetDirectoryName(path) ?? "", Path.GetFileNameWithoutExtension(path) + ".0001.rvt");
+        try { if (File.Exists(backup)) File.Delete(backup); } catch { /* лишняя копия — не повод ронять задание */ }
+    }
+
     /// <summary>Файл, созданный в этом прогоне и не доделанный, удаляется: иначе повтор счёл бы его готовым.</summary>
     public static void DiscardNew(Document? document, string path)
     {

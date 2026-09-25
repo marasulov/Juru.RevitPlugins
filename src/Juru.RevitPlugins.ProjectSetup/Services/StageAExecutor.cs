@@ -128,6 +128,7 @@ internal sealed class StageAExecutor(RevitFiles files)
                 }
 
                 document.Save();
+                if (created) RevitFiles.DeleteFirstBackup(path);
                 outcome.Log.Add($"{plan.Genplan.Path}: подгружено связей {missing.Count}" +
                                 (openedHere ? "" : " (файл был открыт — сохранён вместе с вашими правками)"));
             }

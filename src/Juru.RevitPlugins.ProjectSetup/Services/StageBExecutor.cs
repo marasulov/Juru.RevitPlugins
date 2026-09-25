@@ -107,6 +107,7 @@ internal sealed class StageBExecutor(RevitFiles files)
         RevitFiles.SaveNew(document, path);
         AddBaseLink(document, basePath);
         document.Save();
+        RevitFiles.DeleteFirstBackup(path);
     }
 
     private void AddBaseLink(Document document, string basePath)
