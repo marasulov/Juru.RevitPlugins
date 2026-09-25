@@ -30,6 +30,12 @@
     <ItemGroup Condition="'$(RevitVersion)' &lt; '2025'">
         <!-- На net48 HttpClient живёт в отдельной сборке платформы. -->
         <Reference Include="System.Net.Http" />
+        <!-- DPAPI (ProtectedData) для пароля сервера -->
+        <Reference Include="System.Security" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(RevitVersion)' &gt;= '2025'">
+        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
     </ItemGroup>
 
     <ItemGroup>
