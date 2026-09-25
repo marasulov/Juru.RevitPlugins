@@ -80,6 +80,8 @@
         <ProjectReference Include="..\Juru.RevitPlugins.ClashNavigator\Juru.RevitPlugins.ClashNavigator.csproj"/>
         <ProjectReference Include="..\Juru.RevitPlugins.Openings\Juru.RevitPlugins.Openings.csproj"/>
         <ProjectReference Include="..\Juru.RevitPlugins.Schedules\Juru.RevitPlugins.Schedules.csproj"/>
+        <!-- Подготовка проекта в СОД: команда без кнопки на ленте, запускается через Add-in Manager -->
+        <ProjectReference Include="..\Juru.RevitPlugins.ProjectSetup\Juru.RevitPlugins.ProjectSetup.csproj"/>
     </ItemGroup>
 
 </Project>
