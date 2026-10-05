@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Reflection;
 using System.Windows;
 
 using Autodesk.Revit.UI;
@@ -9,6 +8,7 @@ using dosymep.SimpleServices;
 using dosymep.WpfCore.Ninject;
 using dosymep.WpfUI.Core.Ninject;
 
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.ClashNavigator.Models;
 using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
 using Juru.RevitPlugins.ClashNavigator.Models.GraphicView;
@@ -80,9 +80,8 @@ internal static class SearchSetsWindowFactory {
         // уже привязаны, иначе молча берёт пустой - а тот не подключает
         // WpfLocalizationBehavior, и культура окну не задаётся: надписи из словаря
         // пропадают целиком.
-        string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
         kernel.UseWpfLocalization(
-            $"/{assemblyName};component/assets/Localization/Language.xaml",
+            PluginResourceUri.Get(typeof(SearchSetsWindowFactory), "assets/Localization/Language.xaml"),
             CultureInfo.GetCultureInfo("ru-RU"));
         kernel.UseWpfUIThemeUpdater();
 

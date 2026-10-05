@@ -63,8 +63,7 @@ public sealed class PluginLocalization {
     /// такому же, как у <see cref="Theming.JuruTheme" />, привязанному к теме, а не к языку.
     /// </remarks>
     public static PluginLocalization Load(System.Type anchorType, CultureInfo culture) {
-        string assemblyName = anchorType.Assembly.GetName().Name;
-        return Load($"/{assemblyName};component/assets/Localization/Language.xaml", culture);
+        return Load(PluginResourceUri.Get(anchorType, "assets/Localization/Language.xaml"), culture);
     }
 
     /// <summary>

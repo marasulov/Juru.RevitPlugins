@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Reflection;
 using System.Windows;
 
 using Autodesk.Revit.Attributes;
@@ -11,6 +10,7 @@ using dosymep.SimpleServices;
 using dosymep.WpfCore.Ninject;
 using dosymep.WpfUI.Core.Ninject;
 
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.ClashNavigator.Models;
 using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
 using Juru.RevitPlugins.ClashNavigator.Models.GraphicView;
@@ -92,9 +92,8 @@ public class FindClashesCommand : BasePluginCommand {
         // WpfLocalizationBehavior, и культура окну не задаётся: надписи из словаря
         // пропадают целиком. Привязка окна ещё и InSingletonScope, поэтому такой
         // экземпляр запоминается навсегда.
-        string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
         kernel.UseWpfLocalization(
-            $"/{assemblyName};component/assets/Localization/Language.xaml",
+            PluginResourceUri.Get(GetType(), "assets/Localization/Language.xaml"),
             CultureInfo.GetCultureInfo("ru-RU"));
         kernel.UseWpfUIThemeUpdater();
 

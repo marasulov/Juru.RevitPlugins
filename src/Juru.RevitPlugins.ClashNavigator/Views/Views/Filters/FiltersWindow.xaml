@@ -158,7 +158,21 @@
         </ResourceDictionary>
     </Window.Resources>
 
+    <!-- FluentWindow убирает системную строку заголовка: без ui:TitleBar окно нечем
+         перетащить и нечем закрыть. -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar
+            Grid.Row="0"
+            Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}"
+            ShowMinimize="True" ShowMaximize="True" ShowClose="True" />
+
     <Grid
+        Grid.Row="1"
         Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -339,5 +353,6 @@
                 IsCancel="True"
                 Click="ButtonCancel_Click" />
         </StackPanel>
+    </Grid>
     </Grid>
 </platform:WpfUIPlatformWindow>

@@ -3,6 +3,7 @@ using Autodesk.Revit.UI;
 using dosymep.Bim4Everyone;
 using dosymep.WpfCore.Ninject;
 using dosymep.WpfUI.Core.Ninject;
+using Juru.RevitPlugins.Core.Localization;
 using Juru.RevitPlugins.ClashNavigator.Models;
 using Juru.RevitPlugins.ClashNavigator.Services;
 using Juru.RevitPlugins.ClashNavigator.Models.GraphicView;
@@ -11,7 +12,6 @@ using Juru.RevitPlugins.ClashNavigator.ViewModels.Settings;
 using Juru.RevitPlugins.ClashNavigator.Views.Settings;
 using Ninject;
 using System.Globalization;
-using System.Reflection;
 
 namespace Juru.RevitPlugins.ClashNavigator.Commands;
 
@@ -49,10 +49,8 @@ public class SetSettingsCommand : BasePluginCommand {
         // уже привязаны, иначе молча берёт пустой - а тот не подключает
         // WpfLocalizationBehavior, и культура окну не задаётся: надписи из словаря
         // пропадают целиком.
-        string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
-
         kernel.UseWpfLocalization(
-            $"/{assemblyName};component/assets/Localization/Language.xaml",
+            PluginResourceUri.Get(GetType(), "assets/Localization/Language.xaml"),
             CultureInfo.GetCultureInfo("ru-RU"));
         kernel.UseWpfUIThemeUpdater();
 

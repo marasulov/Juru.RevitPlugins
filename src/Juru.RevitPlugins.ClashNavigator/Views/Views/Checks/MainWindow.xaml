@@ -47,7 +47,20 @@
             AttachableService="{Binding MessageBoxService}" />
     </i:Interaction.Behaviors>
 
-    <Grid Margin="10">
+    <!-- FluentWindow убирает системную строку заголовка: без ui:TitleBar окно нечем
+         перетащить и нечем закрыть. -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar
+            Grid.Row="0"
+            Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}"
+            ShowMinimize="True" ShowMaximize="True" ShowClose="True" />
+
+    <Grid Grid.Row="1" Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -164,5 +177,6 @@
             <ui:Button Width="80" Margin="8,0" IsDefault="True" Content="{me:LocalizationSource Common.Ok}" Command="{Binding FindClashesCommand}" />
             <ui:Button Width="80" IsCancel="true" Click="ButtonCancel_Click" Content="{me:LocalizationSource Common.Cancel}" />
         </StackPanel>
+    </Grid>
     </Grid>
 </platform:WpfUIPlatformWindow>
