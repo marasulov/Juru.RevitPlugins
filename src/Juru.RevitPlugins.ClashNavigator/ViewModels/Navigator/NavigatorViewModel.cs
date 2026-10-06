@@ -228,16 +228,20 @@ internal class NavigatorViewModel : BaseViewModel {
             return;
         }
 
-        ICollection<ReportViewModel> reports;
-        if(reportName != null) {
-            reports = GetReports(Path.Combine(reportsDir, reportName + ".json"));
-        } else {
-            reports = Directory.GetFiles(reportsDir, "*.json")
-                .SelectMany(GetReports)
-                .ToArray();
-        }
+        // Список - все отчёты объекта с коллизиями, а не только отчёт проверки, из которой
+        // открыли навигатор: переходить между проверками удобнее здесь, чем возвращаться в окно
+        // проверок. Пустые отчёты не показываются - смотреть в них нечего.
+        var reports = Directory.GetFiles(reportsDir, "*.json")
+            .SelectMany(path => GetReports(path, skipEmpty: true))
+            .ToArray();
 
-        SetReports(reports);
+        string selectedName = reportName is null ? null : ReportFileName.From(reportName);
+        var selected = selectedName is null
+            ? null
+            : reports.FirstOrDefault(report =>
+                string.Equals(report.Name, selectedName, StringComparison.CurrentCultureIgnoreCase)
+                || string.Equals(report.Name, reportName, StringComparison.CurrentCultureIgnoreCase));
+        SetReports(reports, selected);
     }
 
     private void OpenClashDetector() {
@@ -314,8 +318,10 @@ internal class NavigatorViewModel : BaseViewModel {
     /// </summary>
     /// <param name="reportPath">Путь к файлу отчета. Например, xml из нэвиса или json из ревита.</param>
     /// <returns>Коллекция отчетов из заданного файла.</returns>
-    private IList<ReportViewModel> GetReports(string reportPath) {
+    /// <param name="skipEmpty">Не создавать модели для отчётов без коллизий.</param>
+    private IList<ReportViewModel> GetReports(string reportPath, bool skipEmpty = false) {
         return ReportLoader.GetReports(_revitRepository, reportPath)
+            .Where(r => !skipEmpty || r.Clashes?.Count > 0)
             .Select(r => new ReportViewModel(
                 _revitRepository,
                 r.Name,

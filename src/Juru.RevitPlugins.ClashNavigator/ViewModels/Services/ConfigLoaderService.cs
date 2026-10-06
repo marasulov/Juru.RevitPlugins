@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 using Juru.RevitPlugins.Core.ProjectConfigs;
 
@@ -27,19 +28,28 @@ internal class ConfigLoaderService {
 
 
     public T Load<T>() where T : ProjectConfig, new() {
-        OpenFileDialogService.Filter = "ClashConfig |*.json";
+        return LoadFrom<T>(PickFile("ClashConfig |*.json"));
+    }
 
-
+    /// <summary>
+    /// Спрашивает файл и запоминает его папку для следующего диалога.
+    /// </summary>
+    /// <exception cref="OperationCanceledException">Пользователь закрыл диалог.</exception>
+    public FileInfo PickFile(string filter) {
+        OpenFileDialogService.Filter = filter;
         if(!OpenFileDialogService.ShowDialog(_revitRepository.GetFileDialogPath())) {
             throw new OperationCanceledException();
         }
 
         _revitRepository.CommonConfig.LastRunPath = OpenFileDialogService.File.DirectoryName;
         _revitRepository.CommonConfig.SaveProjectConfig();
+        return OpenFileDialogService.File;
+    }
 
+    public T LoadFrom<T>(FileInfo file) where T : ProjectConfig, new() {
         try {
             var configLoader = new ConfigLoader(_revitRepository.Doc);
-            return configLoader.Load<T>(OpenFileDialogService.File.FullName);
+            return configLoader.Load<T>(file.FullName);
         } catch(Exception) {
             ShowError();
             throw new OperationCanceledException();

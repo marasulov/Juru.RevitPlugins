@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
@@ -19,6 +20,8 @@ using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
 using Juru.RevitPlugins.ClashNavigator.Services;
 using Juru.RevitPlugins.ClashNavigator.ViewModels.Services;
 
+using Newtonsoft.Json;
+
 using Wpf.Ui;
 
 namespace Juru.RevitPlugins.ClashNavigator.ViewModels.ClashDetective;
@@ -34,6 +37,7 @@ internal class MainViewModel : BaseViewModel {
     private bool _canCancel = true;
     private string _messageText;
     private ObservableCollection<CheckViewModel> _allChecks;
+    private string _savedState;
     private CheckViewModel _selectedCheck;
     private CollectionViewSource _checks;
     private string _checksFilter;
@@ -74,6 +78,7 @@ internal class MainViewModel : BaseViewModel {
         AskForSaveCommand = RelayCommand.Create(AskForSave);
 
         PropertyChanged += ChecksFilterPropertyChanged;
+        RememberSavedState();
     }
 
     public bool CanCancel {
@@ -144,6 +149,7 @@ internal class MainViewModel : BaseViewModel {
     private void ChecksFilterPropertyChanged(object sender, PropertyChangedEventArgs e) {
         if(e.PropertyName == nameof(ChecksFilter)) {
             Checks?.View.Refresh();
+            RaisePropertyChanged(nameof(AllChecksSelected));
         }
     }
 
@@ -159,9 +165,84 @@ internal class MainViewModel : BaseViewModel {
             _contentDialogService)]);
     }
 
+    /// <summary>
+    /// Окну пора закрыться: по кнопке "Коллизии" открыт навигатор, и работа идёт уже в нём.
+    /// </summary>
+    public event EventHandler CloseRequested;
+
     private void SetAllChecks(IEnumerable<CheckViewModel> checks) {
+        if(AllChecks is not null) {
+            AllChecks.CollectionChanged -= AllChecksCollectionChanged;
+            foreach(var check in AllChecks) {
+                Unsubscribe(check);
+            }
+        }
+
         AllChecks = [..checks];
+        AllChecks.CollectionChanged += AllChecksCollectionChanged;
+        foreach(var check in AllChecks) {
+            Subscribe(check);
+        }
         SetChecks(AllChecks);
+        RaisePropertyChanged(nameof(AllChecksSelected));
+    }
+
+    /// <summary>
+    /// Флажок в заголовке таблицы: отмечены все видимые проверки, ни одной или часть
+    /// (<see langword="null" />).
+    /// </summary>
+    /// <remarks>
+    /// Действует на проверки, видимые при текущем поиске: "найти HVC и отметить все" должно
+    /// отметить проверки HVC, а не скрытые. Щелчок по флажку в промежуточном состоянии отмечает
+    /// все - WPF при этом присылает false, поэтому частичное состояние разбирается здесь.
+    /// </remarks>
+    public bool? AllChecksSelected {
+        get {
+            var visible = GetVisibleChecks();
+            int selected = visible.Count(item => item.IsSelected);
+            return selected == 0 ? false : selected == visible.Count ? true : null;
+        }
+        set {
+            bool select = AllChecksSelected is null || value == true;
+            foreach(var check in GetVisibleChecks()) {
+                check.IsSelected = select;
+            }
+            RaisePropertyChanged(nameof(AllChecksSelected));
+        }
+    }
+
+    private List<CheckViewModel> GetVisibleChecks() {
+        return Checks?.View?.Cast<CheckViewModel>().ToList() ?? AllChecks?.ToList() ?? [];
+    }
+
+    private void AllChecksCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
+        foreach(var check in e.OldItems?.OfType<CheckViewModel>() ?? []) {
+            Unsubscribe(check);
+        }
+        foreach(var check in e.NewItems?.OfType<CheckViewModel>() ?? []) {
+            Subscribe(check);
+        }
+        RaisePropertyChanged(nameof(AllChecksSelected));
+    }
+
+    private void Subscribe(CheckViewModel check) {
+        check.PropertyChanged += CheckPropertyChanged;
+        check.NavigatorOpened += CheckNavigatorOpened;
+    }
+
+    private void Unsubscribe(CheckViewModel check) {
+        check.PropertyChanged -= CheckPropertyChanged;
+        check.NavigatorOpened -= CheckNavigatorOpened;
+    }
+
+    private void CheckNavigatorOpened(object sender, EventArgs e) {
+        CloseRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void CheckPropertyChanged(object sender, PropertyChangedEventArgs e) {
+        if(e.PropertyName == nameof(CheckViewModel.IsSelected)) {
+            RaisePropertyChanged(nameof(AllChecksSelected));
+        }
     }
 
     /// <summary>
@@ -223,6 +304,7 @@ internal class MainViewModel : BaseViewModel {
         CanCancel = false;
         RenewConfig();
         _checksConfig.SaveProjectConfig();
+        RememberSavedState();
 
         List<CheckSearchResult> results = [];
         string message = _localization.GetLocalizedString("ChecksWindow.SearchCompleted");
@@ -299,6 +381,7 @@ internal class MainViewModel : BaseViewModel {
     private void SaveConfig() {
         RenewConfig();
         _checksConfig.SaveProjectConfig();
+        RememberSavedState();
         MessageText = _localization.GetLocalizedString("ChecksWindow.ChecksSaved");
         Wait(() => { MessageText = null; });
     }
@@ -368,7 +451,31 @@ internal class MainViewModel : BaseViewModel {
     /// на Closing и запирал само окно. Ошибка диалога гашится по той же причине: потерять вопрос
     /// лучше, чем не дать закрыть окно.
     /// </remarks>
+    /// <summary>
+    /// Состояние проверок, как оно записано в файл проекта: имена, файлы и наборы выборок.
+    /// </summary>
+    /// <remarks>
+    /// По нему решается, спрашивать ли о сохранении при закрытии: раньше вопрос задавался
+    /// всегда, даже если в окне ничего не меняли. Отметки "запустить" и найденные коллизии
+    /// в состояние не входят - их кнопка "Сохранить" и не сохраняет.
+    /// </remarks>
+    private string GetChecksState() {
+        return JsonConvert.SerializeObject(AllChecks.Select(check => new {
+            check.Name,
+            First = check.FirstSelection.GetCheckSettings(),
+            Second = check.SecondSelection.GetCheckSettings()
+        }));
+    }
+
+    private void RememberSavedState() {
+        _savedState = GetChecksState();
+    }
+
     private void AskForSave() {
+        if(GetChecksState() == _savedState) {
+            return;
+        }
+
         try {
             if(Views.MessageWindow.AskYesNo(
                    _localization.GetLocalizedString("ChecksWindow.SavePrompt"),

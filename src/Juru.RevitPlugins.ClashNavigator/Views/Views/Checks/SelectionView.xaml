@@ -46,10 +46,11 @@
     </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition />
-            <ColumnDefinition />
+            <ColumnDefinition x:Name="FilesColumn" />
+            <ColumnDefinition x:Name="SearchSetsColumn" />
         </Grid.ColumnDefinitions>
         <Border
+            x:Name="FilesPart"
             Grid.Column="0"
             Margin="0 0 4 0"
             Style="{StaticResource CustomBorder}">
@@ -87,6 +88,7 @@
             </DockPanel>
         </Border>
         <Border
+            x:Name="SearchSetsPart"
             Style="{StaticResource CustomBorder}"
             Grid.Column="1">
             <DockPanel

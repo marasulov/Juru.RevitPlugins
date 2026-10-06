@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Windows.Input;
 
@@ -28,7 +29,7 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
     private readonly IContentDialogService _contentDialogService;
     private string _name;
     private string _errorText;
-    private bool _hasReport;
+    private int? _clashCount;
     private bool _isSelected;
     private SelectionViewModel _firstSelection;
     private SelectionViewModel _secondSelection;
@@ -55,7 +56,6 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
 
         if(check == null) {
             InitializeSelections();
-            HasReport = false;
         } else {
             InitializeFilterProviders(check);
         }
@@ -65,6 +65,11 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
 
     public ICommand SelectMainProviderCommand { get; }
     public ICommand ShowClashesCommand { get; }
+
+    /// <summary>
+    /// Навигатор по отчёту проверки открыт - окно проверок может закрыться.
+    /// </summary>
+    public event EventHandler NavigatorOpened;
     public bool IsFilterSelected => FirstSelection.SelectedProviders.Any() && SecondSelection.SelectedProviders.Any();
     public bool IsFilesSelected => FirstSelection.SelectedFiles.Any() && SecondSelection.SelectedFiles.Any();
 
@@ -73,10 +78,23 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
         set => RaiseAndSetIfChanged(ref _isSelected, value);
     }
 
-    public bool HasReport {
-        get => _hasReport;
-        set => RaiseAndSetIfChanged(ref _hasReport, value);
+    /// <summary>
+    /// Сколько коллизий в отчёте проверки; <see langword="null" />, пока поиск не запускали.
+    /// </summary>
+    public int? ClashCount {
+        get => _clashCount;
+        private set {
+            RaiseAndSetIfChanged(ref _clashCount, value);
+            RaisePropertyChanged(nameof(HasReport));
+            // Кнопка "Коллизии" включается по CanExecute, а WPF кеширует его до явного запроса.
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
+
+    /// <summary>
+    /// Есть что открыть в навигаторе: отчёт с хотя бы одной коллизией.
+    /// </summary>
+    public bool HasReport => ClashCount > 0;
 
     public string Name {
         get => _name;
@@ -156,7 +174,7 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
 
         config.Clashes = ClashesMarker.MarkSolvedClashes(newClashes, oldClashes).ToList();
         config.SaveProjectConfig();
-        HasReport = true;
+        ClashCount = config.Clashes.Count;
 
         return new CheckSearchResult(Name, newClashes.Count, added, gone, oldClashes.Count > 0);
     }
@@ -201,9 +219,9 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
                 + Environment.NewLine;
         }
 
-        if(ClashesConfig.GetClashesConfig(_revitRepository.GetObjectName(), ReportName).Clashes.Count > 0) {
-            HasReport = true;
-        }
+        // Пустой конфиг без файла - поиск ещё не запускали; файл с нулём коллизий - запускали.
+        var report = ClashesConfig.GetClashesConfig(_revitRepository.GetObjectName(), ReportName);
+        ClashCount = File.Exists(report.ProjectConfigPath) ? report.Clashes.Count : null;
     }
 
     /// <remarks>
@@ -216,6 +234,7 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
             var window = NavigatorWindowFactory.Create(
                 _revitRepository.UiApplication, _revitRepository, ReportName);
             window.Show(_revitRepository.UiApplication.MainWindowHandle);
+            NavigatorOpened?.Invoke(this, EventArgs.Empty);
         } catch(Exception exception) {
             MessageWindow.ShowError(
                 exception.ToString(),

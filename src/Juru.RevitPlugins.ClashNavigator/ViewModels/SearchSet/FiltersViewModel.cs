@@ -3,10 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Xml;
+using System.Xml.Linq;
 
 using dosymep.Bim4Everyone;
 using dosymep.SimpleServices;
@@ -15,6 +19,7 @@ using dosymep.WPF.ViewModels;
 
 using Juru.RevitPlugins.ClashNavigator.Models;
 using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
+using Juru.RevitPlugins.ClashNavigator.Services.NavisworksImport;
 using Juru.RevitPlugins.ClashNavigator.ViewModels.Services;
 
 namespace Juru.RevitPlugins.ClashNavigator.ViewModels.SearchSet;
@@ -157,16 +162,132 @@ internal class FiltersViewModel : BaseViewModel {
         ShowMessage(LocalizationService.GetLocalizedString("SearchSets.SetsSaved"));
     }
 
+    /// <summary>
+    /// Загружает наборы из файла плагина (.json) или из выгрузки Navisworks (.xml).
+    /// </summary>
     private void LoadConfig() {
         var loader = new ConfigLoaderService(
             _revitRepository, LocalizationService, OpenFileDialogService, MessageBoxService);
-        var config = loader.Load<FiltersConfig>();
-        loader.CheckConfig(config);
+        var file = loader.PickFile(
+            "ClashConfig, Navisworks (*.json; *.xml)|*.json;*.xml|ClashConfig (*.json)|*.json|Navisworks (*.xml)|*.xml");
 
-        var nameResolver = new NameResolver<FilterViewModel>(AllFilters, [.. InitializeFilters(config)]);
+        if(string.Equals(file.Extension, ".xml", StringComparison.OrdinalIgnoreCase)) {
+            ImportNavisworks(file);
+            return;
+        }
+
+        var config = loader.LoadFrom<FiltersConfig>(file);
+        loader.CheckConfig(config);
+        AddFilters(InitializeFilters(config));
+        ShowMessage(LocalizationService.GetLocalizedString("SearchSets.SetsLoaded"));
+    }
+
+    private void AddFilters(IEnumerable<FilterViewModel> filters) {
+        var nameResolver = new NameResolver<FilterViewModel>(AllFilters, [.. filters]);
         SetAllFilters(nameResolver.GetCollection());
         SelectedFilter = AllFilters.FirstOrDefault();
-        ShowMessage(LocalizationService.GetLocalizedString("SearchSets.SetsLoaded"));
+    }
+
+    /// <summary>
+    /// Импорт выгрузки Navisworks: поисковые наборы становятся наборами плагина, тесты
+    /// Clash Detective - проверками по наборам этого окна.
+    /// </summary>
+    /// <remarks>
+    /// Результат сохраняется сразу: проверки ссылаются на наборы по имени и читаются окном
+    /// проверок из файла, поэтому наборы, оставшиеся только в этом окне, проверки бы не нашли.
+    /// </remarks>
+    private void ImportNavisworks(FileInfo file) {
+        NavisExchange exchange;
+        try {
+            var document = XDocument.Load(file.FullName);
+            if(!NavisExchange.IsNavisworksExchange(document)) {
+                throw new FormatException();
+            }
+            exchange = NavisExchange.Parse(document);
+        } catch(Exception exception) when(exception is XmlException or FormatException or IOException) {
+            Views.MessageWindow.ShowError(
+                LocalizationService.GetLocalizedString("Import.NotNavisworks", file.Name),
+                LocalizationService.GetLocalizedString("Import.Title"),
+                LocalizationService);
+            return;
+        }
+
+        var report = new NavisworksImportReport();
+        var importer = new NavisworksImporter(_revitRepository, LocalizationService);
+        StringBuilder summary = new();
+
+        if(exchange.SearchSets.Count > 0) {
+            var filters = importer.ImportSearchSets(exchange, report);
+            foreach(var filter in filters) {
+                filter.Set?.SetRevitRepository(_revitRepository);
+            }
+            AddFilters(filters.Select(filter => new FilterViewModel(_revitRepository, LocalizationService, filter)));
+            summary.AppendLine(LocalizationService.GetLocalizedString(
+                "Import.SetsSummary", filters.Count, exchange.SearchSets.Count));
+        }
+
+        bool setsSaved = CanSave();
+        if(setsSaved) {
+            RenewConfig();
+            _filtersConfig.SaveProjectConfig();
+        } else {
+            summary.AppendLine(LocalizationService.GetLocalizedString("Import.SetsNotSaved", ErrorText));
+        }
+
+        if(exchange.ClashTests.Count > 0) {
+            var checks = importer.ImportClashTests(exchange, [.. AllFilters.Select(item => item.GetFilter())], report);
+            int added = AddChecks(checks);
+            summary.AppendLine(LocalizationService.GetLocalizedString(
+                "Import.ChecksSummary", added, exchange.ClashTests.Count));
+        }
+
+        if(exchange.SearchSets.Count == 0 && exchange.ClashTests.Count == 0) {
+            summary.AppendLine(LocalizationService.GetLocalizedString("Import.Nothing"));
+        }
+
+        AppendList(summary, "Import.SkippedHeader", report.Skipped);
+        AppendList(summary, "Import.NotesHeader", report.Notes);
+        Views.MessageWindow.ShowInfo(
+            summary.ToString().TrimEnd(),
+            LocalizationService.GetLocalizedString("Import.Title"),
+            LocalizationService);
+    }
+
+    /// <summary>
+    /// Дописывает проверки в конфиг проверок открытого файла. Совпавшее имя получает суффикс,
+    /// существующие проверки не трогаются.
+    /// </summary>
+    /// <returns>Сколько проверок добавлено.</returns>
+    private int AddChecks(IReadOnlyCollection<Check> checks) {
+        if(checks.Count == 0) {
+            return 0;
+        }
+
+        var config = ChecksConfig.GetChecksConfig(_revitRepository.GetConfigRelativePath(), _revitRepository.Doc);
+        var names = new HashSet<string>(config.Checks.Select(item => item.Name), StringComparer.CurrentCultureIgnoreCase);
+        foreach(var check in checks) {
+            string name = check.Name;
+            for(int i = 1; names.Contains(name); i++) {
+                name = $"{check.Name} ({i})";
+            }
+            check.Name = name;
+            names.Add(name);
+            config.Checks.Add(check);
+        }
+        config.RevitVersion = RevitVersionInfo.Version;
+        config.SaveProjectConfig();
+        return checks.Count;
+    }
+
+    private void AppendList(StringBuilder summary, string headerKey, IReadOnlyCollection<string> lines) {
+        if(lines.Count == 0) {
+            return;
+        }
+        summary.AppendLine();
+        summary.AppendLine(LocalizationService.GetLocalizedString(headerKey, lines.Count));
+        foreach(string line in lines) {
+            summary.AppendLine("• " + line);
+        }
     }
 
     private void RenewConfig() {

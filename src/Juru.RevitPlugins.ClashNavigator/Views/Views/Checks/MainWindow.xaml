@@ -90,7 +90,7 @@
              высоту удалённой. Проверок единицы, поэтому виртуализация тут не нужна вовсе.
              CanUserAddRows: иначе таблица дорисовывает в конце пустую строку-заготовку во всю
              высоту шаблона; проверки добавляются кнопкой. -->
-        <DataGrid x:Name="ChecksGrid" Grid.Row="1" SelectionMode="Extended" 
+        <DataGrid x:Name="ChecksGrid" Grid.Row="1" SelectionMode="Extended" Tag="{Binding}" 
                   AutoGenerateColumns="False" CanUserDeleteRows="False" CanUserReorderColumns="False" 
                   CanUserAddRows="False"
                   EnableRowVirtualization="False" EnableColumnVirtualization="False"
@@ -100,8 +100,16 @@
                   ItemsSource="{Binding Checks.View, UpdateSourceTrigger=PropertyChanged}">
             <DataGrid.Columns>
 
-                <!-- Колонка с чекбоксом и иконкой ошибки -->
+                <!-- Колонка с чекбоксом и иконкой ошибки. Флажок в заголовке отмечает все видимые
+                     проверки; привязка через Tag таблицы - из заголовка колонки RelativeSource до
+                     окна не дотягивается, заголовок попадает в дерево позже привязки. -->
                 <DataGridTemplateColumn Width="Auto" CanUserResize="False" CanUserSort="False">
+                    <DataGridTemplateColumn.HeaderTemplate>
+                        <DataTemplate>
+                            <CheckBox Padding="0" HorizontalAlignment="Center" Margin="12,0,0,0"
+                                      IsChecked="{Binding Tag.AllChecksSelected, Mode=TwoWay, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.HeaderTemplate>
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <DockPanel HorizontalAlignment="Center" Margin="5,0">
@@ -128,7 +136,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <DataGridTemplateColumn Width="150" CanUserSort="True" SortMemberPath="Name" Header="{me:LocalizationSource Common.Name}">
+                <DataGridTemplateColumn Width="150" CanUserSort="True" SortMemberPath="Name" local:ColumnLocalization.Key="Common.Name">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <ui:TextBox VerticalContentAlignment="Center" ToolTip="{Binding Name}" 
@@ -138,21 +146,50 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <DataGridTemplateColumn Width="*" CanUserSort="False" Header="{me:LocalizationSource ChecksWindow.Selection1}">
+                <DataGridTemplateColumn Width="*" CanUserSort="False" local:ColumnLocalization.Key="ChecksWindow.Files1">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <checks:SelectionView DataContext="{Binding FirstSelection, UpdateSourceTrigger=PropertyChanged}" />
+                            <checks:SelectionView Part="Files" DataContext="{Binding FirstSelection, UpdateSourceTrigger=PropertyChanged}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <DataGridTemplateColumn Width="*" CanUserSort="False" Header="{me:LocalizationSource ChecksWindow.Selection2}">
+                <DataGridTemplateColumn Width="*" CanUserSort="False" local:ColumnLocalization.Key="ChecksWindow.SearchSets1">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <checks:SelectionView DataContext="{Binding SecondSelection, UpdateSourceTrigger=PropertyChanged}" />
+                            <checks:SelectionView Part="SearchSets" DataContext="{Binding FirstSelection, UpdateSourceTrigger=PropertyChanged}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Width="*" CanUserSort="False" local:ColumnLocalization.Key="ChecksWindow.Files2">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <checks:SelectionView Part="Files" DataContext="{Binding SecondSelection, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Width="*" CanUserSort="False" local:ColumnLocalization.Key="ChecksWindow.SearchSets2">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <checks:SelectionView Part="SearchSets" DataContext="{Binding SecondSelection, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Число коллизий в отчёте проверки; прочерк - поиск ещё не запускали. -->
+                <DataGridTextColumn Width="80" IsReadOnly="True" CanUserSort="True" SortMemberPath="ClashCount"
+                                    local:ColumnLocalization.Key="ChecksWindow.ClashCount"
+                                    Binding="{Binding ClashCount, TargetNullValue='—'}">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="Margin" Value="0,0,12,0" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
 
                 <!-- Кнопка 'Показать коллизии' -->
                 <DataGridTemplateColumn Width="Auto" CanUserResize="False" CanUserSort="False">

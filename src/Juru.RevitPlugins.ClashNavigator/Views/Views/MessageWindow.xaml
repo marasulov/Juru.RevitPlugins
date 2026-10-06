@@ -26,11 +26,17 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock
-            x:Name="MessageText"
+        <!-- Прокрутка - для длинных сводок вроде отчёта импорта из Navisworks: без неё окно
+             с SizeToContent уходит за край экрана вместе с кнопкой ОК. -->
+        <ScrollViewer
             Grid.Row="0"
-            Margin="20"
-            TextWrapping="Wrap" />
+            MaxHeight="480"
+            VerticalScrollBarVisibility="Auto">
+            <TextBlock
+                x:Name="MessageText"
+                Margin="20"
+                TextWrapping="Wrap" />
+        </ScrollViewer>
 
         <!-- Не Appearance="Primary" - см. тот же комментарий в SelectableNamesWindow.xaml:
              подпись становится не видна при точечном ApplicationThemeManager.Apply(this). -->

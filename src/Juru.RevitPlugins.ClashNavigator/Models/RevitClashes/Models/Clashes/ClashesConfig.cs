@@ -21,7 +21,7 @@ internal class ClashesConfig : ProjectConfig {
             .SetProfilePath(RevitRepository.LocalProfilePath)
             .SetRelativePath(revitObjectName)
             .SetRevitVersion(RevitVersionInfo.Version)
-            .SetProjectConfigName(configName + ".json")
+            .SetProjectConfigName(ReportFileName.From(configName) + ".json")
             .Build<ClashesConfig>();
     }
 }

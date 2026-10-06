@@ -29,6 +29,7 @@ internal class FilterViewModel : BaseViewModel, INamedEntity, IName {
     private ObservableCollection<CategoryViewModel> _selectedCategories = [];
     private string _name;
     private string _providersErrorText;
+    private readonly List<string> _sourceFilePatterns;
 
     public FilterViewModel(RevitRepository revitRepository,
         ILocalizationService localizationService,
@@ -43,6 +44,7 @@ internal class FilterViewModel : BaseViewModel, INamedEntity, IName {
             .OrderBy(item => item.Name)];
 
         Name = filter?.Name ?? _localizationService.GetLocalizedString("SearchSets.DefaultFilterName");
+        _sourceFilePatterns = filter?.SourceFilePatterns;
         if(filter?.CategoryIds != null) {
             SelectedCategories = [.. AllCategories.Where(
                 item => filter.CategoryIds.Any(id => id == item.Id))];
@@ -107,7 +109,8 @@ internal class FilterViewModel : BaseViewModel, INamedEntity, IName {
         return new Filter(_revitRepository) {
             Name = Name,
             CategoryIds = [.. SelectedCategories.Select(item => item.Id)],
-            Set = (Set) Set.GetCriterion()
+            Set = (Set) Set.GetCriterion(),
+            SourceFilePatterns = _sourceFilePatterns
         };
     }
 

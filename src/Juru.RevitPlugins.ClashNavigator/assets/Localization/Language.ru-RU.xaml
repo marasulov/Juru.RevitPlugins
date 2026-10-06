@@ -35,10 +35,15 @@
     <system:String x:Key="ChecksWindow.SearchPlaceholder">Поиск проверок...</system:String>
     <system:String x:Key="ChecksWindow.Selection1">Выборка 1</system:String>
     <system:String x:Key="ChecksWindow.Selection2">Выборка 2</system:String>
+    <system:String x:Key="ChecksWindow.Files1">Файлы 1</system:String>
+    <system:String x:Key="ChecksWindow.SearchSets1">Поисковые наборы 1</system:String>
+    <system:String x:Key="ChecksWindow.Files2">Файлы 2</system:String>
+    <system:String x:Key="ChecksWindow.SearchSets2">Поисковые наборы 2</system:String>
     <system:String x:Key="ChecksWindow.ShowClashes">Коллизии</system:String>
     <system:String x:Key="ChecksWindow.ShowClashesTooltip">Открыть найденные коллизии в навигаторе</system:String>
     <system:String x:Key="ChecksWindow.DefaultCheckName">Новая проверка</system:String>
     <system:String x:Key="ChecksWindow.SearchCompleted">Поиск коллизий завершён</system:String>
+    <system:String x:Key="ChecksWindow.ClashCount">Коллизий</system:String>
     <system:String x:Key="ChecksWindow.SearchCancelled">Поиск коллизий отменён</system:String>
     <system:String x:Key="ChecksWindow.SearchFailed">Поиск коллизий прерван ошибкой: {0}</system:String>
     <system:String x:Key="ChecksWindow.Progress.Title">Поиск коллизий</system:String>
@@ -239,4 +244,26 @@
     <system:String x:Key="ClashStatus.Analized">Согласовано</system:String>
     <system:String x:Key="ClashStatus.Solved">Устранено</system:String>
     <system:String x:Key="ClashStatus.Imaginary">Нет пересечения</system:String>
+
+    <system:String x:Key="Import.Title">Импорт из Navisworks</system:String>
+    <system:String x:Key="Import.NotNavisworks">Файл {0} - не выгрузка Navisworks: ожидаются поисковые наборы или тесты Clash Detective в формате XML.</system:String>
+    <system:String x:Key="Import.SetsSummary">Поисковых наборов создано: {0} из {1}.</system:String>
+    <system:String x:Key="Import.SetsNotSaved">Наборы не сохранены: {0} Исправьте и нажмите «Сохранить».</system:String>
+    <system:String x:Key="Import.ChecksSummary">Проверок создано: {0} из {1}. Они появятся в окне поиска коллизий.</system:String>
+    <system:String x:Key="Import.Nothing">В файле нет ни поисковых наборов, ни тестов.</system:String>
+    <system:String x:Key="Import.SkippedHeader">Пропущено ({0}):</system:String>
+    <system:String x:Key="Import.NotesHeader">Переведено приблизительно ({0}):</system:String>
+    <system:String x:Key="Import.ExplicitSet">набор задан выбором элементов, а не поиском</system:String>
+    <system:String x:Key="Import.TestNotSearchSet">сторона теста - не поисковый набор ({0})</system:String>
+    <system:String x:Key="Import.TestEmpty">в тесте не выбраны наборы</system:String>
+    <system:String x:Key="Import.TestSetMissing">нет поискового набора {0}</system:String>
+    <system:String x:Key="Import.TestNoFiles">не найдено загруженных файлов по шаблону {0}</system:String>
+    <system:String x:Key="Import.SetNoCategories">ни одно условие не дало категорий Ревита</system:String>
+    <system:String x:Key="Import.SetRulesDropped">группы ИЛИ с разными правилами слиты, правила по параметрам сняты</system:String>
+    <system:String x:Key="Import.ConditionUnsupportedTest">условие «{0}» - такая проверка не переводится</system:String>
+    <system:String x:Key="Import.ConditionUnknownProperty">условие «{0}» - свойство не из Ревита</system:String>
+    <system:String x:Key="Import.ConditionSkipped">условие «{0}» - {1}</system:String>
+    <system:String x:Key="Import.ReasonNoParameter">у категорий этой группы нет параметра «{0}», по которому можно фильтровать</system:String>
+    <system:String x:Key="Import.ReasonNoEvaluator">проверка «{0}» не подходит к типу параметра</system:String>
+    <system:String x:Key="Import.ReasonBadValue">значение «{0}» не разобрать</system:String>
 </ResourceDictionary>

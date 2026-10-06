@@ -34,10 +34,15 @@
     <system:String x:Key="ChecksWindow.SearchPlaceholder">Search checks...</system:String>
     <system:String x:Key="ChecksWindow.Selection1">Selection 1</system:String>
     <system:String x:Key="ChecksWindow.Selection2">Selection 2</system:String>
+    <system:String x:Key="ChecksWindow.Files1">Files 1</system:String>
+    <system:String x:Key="ChecksWindow.SearchSets1">Search sets 1</system:String>
+    <system:String x:Key="ChecksWindow.Files2">Files 2</system:String>
+    <system:String x:Key="ChecksWindow.SearchSets2">Search sets 2</system:String>
     <system:String x:Key="ChecksWindow.ShowClashes">Clashes</system:String>
     <system:String x:Key="ChecksWindow.ShowClashesTooltip">Open the clashes found in the navigator</system:String>
     <system:String x:Key="ChecksWindow.DefaultCheckName">New check</system:String>
     <system:String x:Key="ChecksWindow.SearchCompleted">Clash detection finished</system:String>
+    <system:String x:Key="ChecksWindow.ClashCount">Clashes</system:String>
     <system:String x:Key="ChecksWindow.SearchCancelled">Clash detection cancelled</system:String>
     <system:String x:Key="ChecksWindow.SearchFailed">Clash detection stopped with an error: {0}</system:String>
     <system:String x:Key="ChecksWindow.Progress.Title">Clash detection</system:String>
@@ -238,4 +243,26 @@
     <system:String x:Key="ClashStatus.Analized">Approved</system:String>
     <system:String x:Key="ClashStatus.Solved">Resolved</system:String>
     <system:String x:Key="ClashStatus.Imaginary">No intersection</system:String>
+
+    <system:String x:Key="Import.Title">Import from Navisworks</system:String>
+    <system:String x:Key="Import.NotNavisworks">{0} is not a Navisworks export: expected search sets or Clash Detective tests in XML.</system:String>
+    <system:String x:Key="Import.SetsSummary">Search sets created: {0} of {1}.</system:String>
+    <system:String x:Key="Import.SetsNotSaved">Search sets were not saved: {0} Fix it and press Save.</system:String>
+    <system:String x:Key="Import.ChecksSummary">Checks created: {0} of {1}. They appear in the clash detection window.</system:String>
+    <system:String x:Key="Import.Nothing">The file has neither search sets nor tests.</system:String>
+    <system:String x:Key="Import.SkippedHeader">Skipped ({0}):</system:String>
+    <system:String x:Key="Import.NotesHeader">Converted approximately ({0}):</system:String>
+    <system:String x:Key="Import.ExplicitSet">the set is an explicit selection, not a search</system:String>
+    <system:String x:Key="Import.TestNotSearchSet">a test side is not a search set ({0})</system:String>
+    <system:String x:Key="Import.TestEmpty">the test has no sets selected</system:String>
+    <system:String x:Key="Import.TestSetMissing">search set {0} not found</system:String>
+    <system:String x:Key="Import.TestNoFiles">no loaded file matches {0}</system:String>
+    <system:String x:Key="Import.SetNoCategories">no condition resolved to a Revit category</system:String>
+    <system:String x:Key="Import.SetRulesDropped">OR groups with different rules were merged, parameter rules dropped</system:String>
+    <system:String x:Key="Import.ConditionUnsupportedTest">condition "{0}" - this test cannot be converted</system:String>
+    <system:String x:Key="Import.ConditionUnknownProperty">condition "{0}" - not a Revit property</system:String>
+    <system:String x:Key="Import.ConditionSkipped">condition "{0}" - {1}</system:String>
+    <system:String x:Key="Import.ReasonNoParameter">the group's categories have no filterable parameter "{0}"</system:String>
+    <system:String x:Key="Import.ReasonNoEvaluator">test "{0}" does not fit the parameter type</system:String>
+    <system:String x:Key="Import.ReasonBadValue">cannot read value "{0}"</system:String>
 </ResourceDictionary>
