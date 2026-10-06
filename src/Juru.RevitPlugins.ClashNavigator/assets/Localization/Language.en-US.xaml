@@ -43,6 +43,8 @@
     <system:String x:Key="ChecksWindow.DefaultCheckName">New check</system:String>
     <system:String x:Key="ChecksWindow.SearchCompleted">Clash detection finished</system:String>
     <system:String x:Key="ChecksWindow.ClashCount">Clashes</system:String>
+    <system:String x:Key="ChecksWindow.Tolerance">Tolerance, mm</system:String>
+    <system:String x:Key="ChecksWindow.ToleranceTooltip">Intersections shallower than the tolerance are not clashes. 0 means any intersection.</system:String>
     <system:String x:Key="ChecksWindow.SearchCancelled">Clash detection cancelled</system:String>
     <system:String x:Key="ChecksWindow.SearchFailed">Clash detection stopped with an error: {0}</system:String>
     <system:String x:Key="ChecksWindow.Progress.Title">Clash detection</system:String>
@@ -150,6 +152,7 @@
     <system:String x:Key="SettingsWindow.ClashDisplay">Clash display</system:String>
     <system:String x:Key="SettingsWindow.SectionBoxOffset">Section box size, mm</system:String>
     <system:String x:Key="SettingsWindow.HighlightClash">Highlight clash elements in colour</system:String>
+    <system:String x:Key="SettingsWindow.HalftoneOthers">Show the rest of the model in halftone</system:String>
     <system:String x:Key="SettingsWindow.Language">Interface language</system:String>
     <system:String x:Key="SettingsWindow.LanguageTooltip">The language applies the next time the plugin's windows are opened</system:String>
 
@@ -159,6 +162,7 @@
     <system:String x:Key="Language.English">English</system:String>
     <!-- Clash navigator -->
     <system:String x:Key="Navigator.Title">Clash navigator</system:String>
+    <system:String x:Key="Navigator.KeysHint">F3 - next clash, Shift+F3 - previous clash</system:String>
     <system:String x:Key="Navigator.TitleWithBuild">Clash navigator (build {0})</system:String>
     <system:String x:Key="Navigator.LoadXml">Load XML</system:String>
     <system:String x:Key="Navigator.LoadFromServer">Load from server</system:String>
@@ -265,4 +269,16 @@
     <system:String x:Key="Import.ReasonNoParameter">the group's categories have no filterable parameter "{0}"</system:String>
     <system:String x:Key="Import.ReasonNoEvaluator">test "{0}" does not fit the parameter type</system:String>
     <system:String x:Key="Import.ReasonBadValue">cannot read value "{0}"</system:String>
+    <system:String x:Key="Import.GroupNotApplicable">the group with condition &quot;{0}&quot; was dropped: its categories have no such parameter, so Navisworks finds nothing there</system:String>
+    <system:String x:Key="Export.Title">Export to Navisworks</system:String>
+    <system:String x:Key="Export.Button">To Navisworks</system:String>
+    <system:String x:Key="Export.SetsTooltip">Save the search sets as XML to import into Navisworks (Sets window → Import).</system:String>
+    <system:String x:Key="Export.ChecksTooltip">Save the checks as Clash Detective tests XML. Search sets are exported from the search sets window.</system:String>
+    <system:String x:Key="Export.SetsSummary">Search sets exported: {0} of {1}.&#10;File: {2}</system:String>
+    <system:String x:Key="Export.ChecksSummary">Tests exported: {0} of {1}.&#10;File: {2}&#10;Import the search sets into Navisworks first: a test refers to a set by name.</system:String>
+    <system:String x:Key="Export.NoCategories">the set has no categories</system:String>
+    <system:String x:Key="Export.CheckNoSets">one of the selections has no search set</system:String>
+    <system:String x:Key="Export.CheckFirstSetOnly">the selection has several sets - only the first one went into the test</system:String>
+    <system:String x:Key="Export.SetTooDeep">the rule tree is deeper than Navisworks can express - only categories were exported</system:String>
+    <system:String x:Key="Export.RuleSkipped">rule "{0} {1}" cannot be expressed in Navisworks and was skipped</system:String>
 </ResourceDictionary>

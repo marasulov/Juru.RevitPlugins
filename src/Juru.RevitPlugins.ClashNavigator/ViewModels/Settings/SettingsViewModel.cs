@@ -20,6 +20,7 @@ internal class SettingsViewModel : BaseViewModel {
     private const int _maxSectionBoxOffset = 10000;
     private bool _applySectionBoxSettings;
     private bool _highlightClashElements;
+    private bool _halftoneOtherElements;
     private string _clashServerUrl;
     private LanguageItem _selectedLanguage;
 
@@ -77,6 +78,11 @@ internal class SettingsViewModel : BaseViewModel {
         set => RaiseAndSetIfChanged(ref _highlightClashElements, value);
     }
 
+    public bool HalftoneOtherElements {
+        get => _halftoneOtherElements;
+        set => RaiseAndSetIfChanged(ref _halftoneOtherElements, value);
+    }
+
     /// <summary>
     /// Адрес сервера коллизий для загрузки отчётов по кнопке "Загрузить с сервера" (например, http://localhost:5000)
     /// </summary>
@@ -119,6 +125,7 @@ internal class SettingsViewModel : BaseViewModel {
         SectionBoxOffset = _config.SectionBoxOffset;
         ApplySectionBoxSettings = _config.ApplySectionBoxSettings;
         HighlightClashElements = _config.HighlightClashElements;
+        HalftoneOtherElements = _config.HalftoneOtherElements;
         ClashServerUrl = _config.ClashServerUrl;
     }
 
@@ -131,6 +138,7 @@ internal class SettingsViewModel : BaseViewModel {
         _config.SectionBoxOffset = SectionBoxOffset;
         _config.ApplySectionBoxSettings = ApplySectionBoxSettings;
         _config.HighlightClashElements = HighlightClashElements;
+        _config.HalftoneOtherElements = HalftoneOtherElements;
         _config.ClashServerUrl = ClashServerUrl?.Trim() ?? string.Empty;
         _config.SaveProjectConfig();
     }

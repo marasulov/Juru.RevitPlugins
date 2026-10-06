@@ -255,14 +255,13 @@ internal class RevitRepository {
             .WherePasses(filter);
     }
 
+    /// <remarks>
+    /// <c>MessageWindow</c>, а не <c>IMessageBoxService</c> из статического контейнера: служба
+    /// WPF-UI там не создаётся (ей нужен <c>IHasTheme</c>), исключение уходило в обработчик
+    /// окна, и сообщение пропадало молча.
+    /// </remarks>
     public void ShowErrorMessage(string message) {
-        var dialog = GetPlatformService<IMessageBoxService>();
-        dialog.Show(
-            message,
-            $"BIM",
-            System.Windows.MessageBoxButton.OK,
-            System.Windows.MessageBoxImage.Error,
-            System.Windows.MessageBoxResult.OK);
+        Views.MessageWindow.ShowError(message, "BIM", null);
     }
 
     /// <summary>
@@ -707,7 +706,5 @@ internal class RevitRepository {
         t.Commit();
     }
 
-    protected T GetPlatformService<T>() {
-        return ServicesProvider.GetPlatformService<T>();
-    }
+
 }

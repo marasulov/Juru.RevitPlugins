@@ -123,6 +123,7 @@ internal sealed class NavisworksImporter {
 
             checks.Add(new Check {
                 Name = test.Name,
+                Tolerance = Math.Round(ToInternal(test.Tolerance, "linear", exchange.Units) * 304.8, 1),
                 FirstSelection = new SelectionConfig { Filters = [left.Name], Files = leftFiles },
                 SecondSelection = new SelectionConfig { Filters = [right.Name], Files = rightFiles }
             });
@@ -234,8 +235,13 @@ internal sealed class NavisworksImporter {
 
         List<Rule> rules = [];
         foreach(var condition in parameterConditions) {
-            if(ConvertRule(condition, categories, units, out string reason) is { } rule) {
+            if(ConvertRule(condition, categories, units, out string reason, out bool notApplicable) is { } rule) {
                 rules.Add(rule);
+            } else if(notApplicable) {
+                // Параметр есть, но не у этих категорий: Navisworks по такой группе ничего не
+                // найдёт. Выбросить одно правило значило бы расширить набор - выбрасывается группа.
+                report.Note(set.Path, Text("Import.GroupNotApplicable", condition));
+                return null;
             } else {
                 report.Skip(set.Path, Text("Import.ConditionSkipped", condition, reason));
             }
@@ -330,8 +336,17 @@ internal sealed class NavisworksImporter {
         return filters.FirstOrDefault(item => string.Equals(item.Name, name, StringComparison.CurrentCultureIgnoreCase));
     }
 
-    private Rule ConvertRule(NavisCondition condition, ICollection<ElementId> categories, string units, out string reason) {
-        var revitParam = ResolveParameter(condition, categories);
+    /// <param name="notApplicable">
+    /// Параметр надёжно опознан, но ни одна категория группы по нему не фильтруется.
+    /// </param>
+    private Rule ConvertRule(
+        NavisCondition condition,
+        ICollection<ElementId> categories,
+        string units,
+        out string reason,
+        out bool notApplicable) {
+
+        var revitParam = ResolveParameter(condition, categories, out notApplicable);
         if(revitParam is null) {
             reason = Text("Import.ReasonNoParameter", condition.PropertyName);
             return null;
@@ -364,7 +379,13 @@ internal sealed class NavisworksImporter {
         };
     }
 
-    private RevitParam ResolveParameter(NavisCondition condition, ICollection<ElementId> categories) {
+    /// <remarks>
+    /// "Не применим" ставится, только когда параметр опознан надёжно: по подписи в языке Ревита
+    /// или по id, у которого та же подпись, что у свойства в Navisworks. Одному id верить нельзя:
+    /// "Толщина" перекрытия приходит под id толщины импоста, и группа стен выпала бы целиком.
+    /// </remarks>
+    private RevitParam ResolveParameter(NavisCondition condition, ICollection<ElementId> categories, out bool notApplicable) {
+        notApplicable = false;
         switch(condition.PropertyInternal) {
             case "LcRevitPropertyElementFamily":
                 return CreateBuiltIn(BuiltInParameter.ALL_MODEL_FAMILY_NAME);
@@ -383,21 +404,35 @@ internal sealed class NavisworksImporter {
             // Id из выгрузки Navisworks не всегда совпадает со смыслом в этой версии Ревита:
             // "Толщина" перекрытия приходит как -1007322, а это толщина импоста. Такой параметр
             // по категориям набора не фильтруется - тогда ищем по имени.
-            if(Enum.IsDefined(typeof(BuiltInParameter), parameter)
-               && GetFilterable(categories).Contains(new ElementId(parameter))
-               && CreateBuiltIn(parameter) is { } byId) {
-                return byId;
+            if(Enum.IsDefined(typeof(BuiltInParameter), parameter)) {
+                if(GetFilterable(categories).Contains(new ElementId(parameter))
+                   && CreateBuiltIn(parameter) is { } byId) {
+                    return byId;
+                }
+                notApplicable = string.Equals(GetLabel(parameter), condition.PropertyName?.Trim(),
+                    StringComparison.CurrentCultureIgnoreCase);
             }
         }
 
-        return ResolveByName(condition.PropertyName, categories);
+        var byName = ResolveByName(condition.PropertyName, categories, out bool nameNotApplicable);
+        notApplicable = byName is null && (notApplicable || nameNotApplicable);
+        return byName;
+    }
+
+    private static string GetLabel(BuiltInParameter parameter) {
+        try {
+            return LabelUtils.GetLabelFor(parameter);
+        } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+            return null;
+        }
     }
 
     /// <summary>
     /// Параметр по видимому имени: сначала параметр проекта или общий, затем встроенный с такой
     /// подписью - из тех, по которым можно фильтровать выбранные категории.
     /// </summary>
-    private RevitParam ResolveByName(string name, ICollection<ElementId> categories) {
+    private RevitParam ResolveByName(string name, ICollection<ElementId> categories, out bool notApplicable) {
+        notApplicable = false;
         if(string.IsNullOrWhiteSpace(name)) {
             return null;
         }
@@ -419,10 +454,12 @@ internal sealed class NavisworksImporter {
         }
 
         var filterable = GetFilterable(categories);
-        return candidates
+        var found = candidates
             .Where(item => filterable.Contains(new ElementId(item)))
             .Select(CreateBuiltIn)
             .FirstOrDefault(item => item is not null);
+        notApplicable = found is null;
+        return found;
     }
 
     /// <summary>

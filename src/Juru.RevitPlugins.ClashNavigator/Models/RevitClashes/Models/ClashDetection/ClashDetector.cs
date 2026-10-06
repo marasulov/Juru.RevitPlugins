@@ -11,8 +11,15 @@ internal class ClashDetector {
     private readonly RevitRepository _revitRepository;
     private readonly IEnumerable<IProvider> _mainDocProviders;
     private readonly IEnumerable<IProvider> _otherProviders;
+    private readonly double _tolerance;
 
-    public ClashDetector(RevitRepository revitRepository, IEnumerable<IProvider> mainDocProviders, IEnumerable<IProvider> otherProviders) {
+    /// <param name="tolerance">Допуск во внутренних единицах (футах): пересечения мельче не считаются.</param>
+    public ClashDetector(
+        RevitRepository revitRepository,
+        IEnumerable<IProvider> mainDocProviders,
+        IEnumerable<IProvider> otherProviders,
+        double tolerance = 0) {
+        _tolerance = tolerance;
         _revitRepository = revitRepository;
         _mainDocProviders = mainDocProviders;
         _otherProviders = otherProviders;
@@ -27,7 +34,7 @@ internal class ClashDetector {
                 progress.Token.ThrowIfCancellationRequested();
                 string stage = $"{checkName}: {RevitRepository.GetDocumentName(mainProvider.Doc)}"
                                + $" × {RevitRepository.GetDocumentName(provider.Doc)}";
-                var providerClashDetector = new ProvidersClashDetector(_revitRepository, mainProvider, provider);
+                var providerClashDetector = new ProvidersClashDetector(_revitRepository, mainProvider, provider, _tolerance);
                 clashes.AddRange(providerClashDetector.GetClashes(progress, stage));
             }
         }

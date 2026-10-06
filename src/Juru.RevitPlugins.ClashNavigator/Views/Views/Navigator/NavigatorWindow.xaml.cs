@@ -165,6 +165,39 @@ namespace Juru.RevitPlugins.ClashNavigator.Views.Navigator
             }
         }
 
+        /// <summary>
+        /// F3 - следующая коллизия, Shift+F3 - предыдущая: выделяет строку и показывает
+        /// коллизию в Ревите. Коллизии, которые нельзя показать (элементы не найдены), пропускаются.
+        /// </summary>
+        private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key != System.Windows.Input.Key.F3 || DataContext is not NavigatorViewModel viewModel)
+            {
+                return;
+            }
+
+            int step = (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) != 0 ? -1 : 1;
+            var items = ClashesGrid.Items;
+            int index = ClashesGrid.SelectedIndex + step;
+            while (index >= 0 && index < items.Count
+                   && !(items[index] is ViewModels.Navigator.ClashViewModel { IsResolved: true }))
+            {
+                index += step;
+            }
+            if (index < 0 || index >= items.Count)
+            {
+                return;
+            }
+
+            e.Handled = true;
+            ClashesGrid.SelectedIndex = index;
+            ClashesGrid.ScrollIntoView(items[index]);
+            if (viewModel.SelectClashCommand.CanExecute(items[index]))
+            {
+                viewModel.SelectClashCommand.Execute(items[index]);
+            }
+        }
+
         private void Window_Closed(object sender, EventArgs e)
         {
             if (DataContext is not NavigatorViewModel viewModel)

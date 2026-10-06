@@ -18,6 +18,7 @@ using dosymep.WPF.ViewModels;
 using Juru.RevitPlugins.ClashNavigator.Models;
 using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
 using Juru.RevitPlugins.ClashNavigator.Services;
+using Juru.RevitPlugins.ClashNavigator.Services.NavisworksImport;
 using Juru.RevitPlugins.ClashNavigator.ViewModels.Services;
 
 using Newtonsoft.Json;
@@ -74,6 +75,7 @@ internal class MainViewModel : BaseViewModel {
 
         SaveClashesCommand = RelayCommand.Create(SaveConfig);
         SaveAsClashesCommand = RelayCommand.Create(SaveAsConfig);
+        ExportNavisworksCommand = RelayCommand.Create(ExportNavisworks);
         LoadClashCommand = RelayCommand.Create(LoadConfig);
         AskForSaveCommand = RelayCommand.Create(AskForSave);
 
@@ -111,6 +113,7 @@ internal class MainViewModel : BaseViewModel {
     public ICommand RemoveCheckCommand { get; }
     public ICommand FindClashesCommand { get; }
     public ICommand SaveAsClashesCommand { get; }
+    public ICommand ExportNavisworksCommand { get; }
     public ICommand SaveClashesCommand { get; }
     public ICommand LoadClashCommand { get; }
     public IOpenFileDialogService OpenFileDialogService { get; }
@@ -300,15 +303,28 @@ internal class MainViewModel : BaseViewModel {
     /// произошло. Отмена в окне хода поиска останавливает прогон; сводка показывается по тем
     /// проверкам, что успели пройти до неё - их отчёты уже сохранены.
     /// </remarks>
+    /// <summary>
+    /// Ставит поиск в очередь Ревита.
+    /// </summary>
+    /// <remarks>
+    /// Окно проверок немодальное, и команда кнопки выполняется вне контекста Revit API: чтение
+    /// модели там чаще всего проходит, но это неподдерживаемый путь, который может сломаться на
+    /// любой версии. Внешнее событие выполняет поиск в контексте API - как показ коллизии
+    /// в навигаторе.
+    /// </remarks>
     private void FindClashes() {
         CanCancel = false;
-        RenewConfig();
-        _checksConfig.SaveProjectConfig();
-        RememberSavedState();
+        _revitRepository.DoAction(RunClashSearch);
+    }
 
+    private void RunClashSearch() {
         List<CheckSearchResult> results = [];
         string message = _localization.GetLocalizedString("ChecksWindow.SearchCompleted");
         try {
+            RenewConfig();
+            _checksConfig.SaveProjectConfig();
+            RememberSavedState();
+
             using var progress = new ClashSearchProgress(_localization);
             foreach(var check in AllChecks.Where(item => item.IsSelected)) {
                 results.Add(check.SaveClashes(progress));
@@ -372,7 +388,8 @@ internal class MainViewModel : BaseViewModel {
             _checksConfig.Checks.Add(new Check() {
                 Name = check.Name,
                 FirstSelection = check.FirstSelection.GetCheckSettings(),
-                SecondSelection = check.SecondSelection.GetCheckSettings()
+                SecondSelection = check.SecondSelection.GetCheckSettings(),
+                Tolerance = check.Tolerance
             });
         }
         _checksConfig.RevitVersion = RevitVersionInfo.Version;
@@ -384,6 +401,47 @@ internal class MainViewModel : BaseViewModel {
         RememberSavedState();
         MessageText = _localization.GetLocalizedString("ChecksWindow.ChecksSaved");
         Wait(() => { MessageText = null; });
+    }
+
+    /// <summary>
+    /// Выгружает проверки в XML тестов Clash Detective. Наборы для них выгружаются отдельно,
+    /// из окна поисковых наборов: тест ссылается на набор по имени.
+    /// </summary>
+    private void ExportNavisworks() {
+        var checks = AllChecks.Select(check => new Check {
+            Name = check.Name,
+            FirstSelection = check.FirstSelection.GetCheckSettings(),
+            SecondSelection = check.SecondSelection.GetCheckSettings(),
+            Tolerance = check.Tolerance
+        }).ToList();
+
+        var report = new NavisworksImportReport();
+        var document = new NavisworksExporter(_revitRepository.Doc, _localization)
+            .ExportClashTests(checks, _revitRepository.GetObjectName(), report);
+        string path = new ConfigSaverService(_revitRepository, SaveFileDialogService)
+            .SaveXml(document, "ClashTests");
+
+        var summary = new System.Text.StringBuilder();
+        summary.AppendLine(_localization.GetLocalizedString(
+            "Export.ChecksSummary", checks.Count - report.Skipped.Count, checks.Count, path));
+        (string Header, IReadOnlyList<string> Lines)[] sections = [
+            ("Import.SkippedHeader", report.Skipped),
+            ("Import.NotesHeader", report.Notes)
+        ];
+        foreach(var (header, lines) in sections) {
+            if(lines.Count == 0) {
+                continue;
+            }
+            summary.AppendLine();
+            summary.AppendLine(_localization.GetLocalizedString(header, lines.Count));
+            foreach(string line in lines) {
+                summary.AppendLine("• " + line);
+            }
+        }
+        Views.MessageWindow.ShowInfo(
+            summary.ToString().TrimEnd(),
+            _localization.GetLocalizedString("Export.Title"),
+            _localization);
     }
 
     private void SaveAsConfig() {
@@ -462,6 +520,7 @@ internal class MainViewModel : BaseViewModel {
     private string GetChecksState() {
         return JsonConvert.SerializeObject(AllChecks.Select(check => new {
             check.Name,
+            check.Tolerance,
             First = check.FirstSelection.GetCheckSettings(),
             Second = check.SecondSelection.GetCheckSettings()
         }));

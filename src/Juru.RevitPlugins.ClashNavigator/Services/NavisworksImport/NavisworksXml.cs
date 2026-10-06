@@ -72,6 +72,11 @@ internal sealed class NavisClashTest {
     /// Слева или справа указано не поисковое множество, а дерево модели или явный выбор.
     /// </summary>
     public string UnsupportedLocator { get; init; }
+
+    /// <summary>
+    /// Допуск теста в единицах файла (<c>units</c>).
+    /// </summary>
+    public double Tolerance { get; init; }
 }
 
 /// <summary>
@@ -184,7 +189,9 @@ internal sealed class NavisExchange {
 
         string left = ReadSide("left");
         string right = ReadSide("right");
+        double.TryParse((string) test.Attribute("tolerance"), NumberStyles.Float, CultureInfo.InvariantCulture, out double tolerance);
         return new NavisClashTest {
+            Tolerance = tolerance,
             Name = (string) test.Attribute("name") ?? string.Empty,
             Left = left,
             Right = right,

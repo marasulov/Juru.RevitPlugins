@@ -85,23 +85,35 @@ internal class SelectionViewModel : BaseViewModel {
         };
     }
 
+    /// <remarks>
+    /// Без учёта регистра - так же, как выборка сопоставляет файлы и наборы при загрузке
+    /// (<see cref="InitializeFiles(SelectionConfig)" />): иначе файл, который выбрался, всё равно
+    /// попадал в "не найденные".
+    /// </remarks>
     public string GetMissedFiles() {
         string[] missedFiles = _selectionConfig.Files
-           .Where(item => !AllFiles.Any(p => p.Name.Equals(item)))
+           .Where(item => !AllFiles.Any(p => p.Name.Equals(item, StringComparison.CurrentCultureIgnoreCase)))
            .ToArray();
         return string.Join(",", missedFiles);
     }
 
     public string GetMissedFilters() {
         string[] missedFilters = _selectionConfig.Filters
-           .Where(item => !AllProviders.Any(p => p.Name.Equals(item)))
+           .Where(item => !AllProviders.Any(p => p.Name.Equals(item, StringComparison.CurrentCultureIgnoreCase)))
            .ToArray();
         return string.Join(",", missedFilters);
     }
 
+    /// <remarks>
+    /// Выгруженная связь пропускается: у неё нет документа, и <see cref="FileViewModel" /> на
+    /// ней бросал исключение - окно проверок не открывалось целиком. Проверка, где такая связь
+    /// выбрана, покажет её в "не найденных файлах".
+    /// </remarks>
     private void InitializeFiles() {
         AllFiles = new ObservableCollection<FileViewModel>(_revitRepository.GetRevitLinkInstances()
-            .Select(item => new FileViewModel(item.GetLinkDocument(), item.GetTransform()))) {
+            .Select(item => (Document: item.GetLinkDocument(), Transform: item.GetTransform()))
+            .Where(item => item.Document is not null)
+            .Select(item => new FileViewModel(item.Document, item.Transform))) {
             new(_revitRepository.Doc, Transform.Identity)
         };
     }

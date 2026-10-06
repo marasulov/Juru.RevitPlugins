@@ -18,12 +18,16 @@ internal class ProvidersClashDetector {
     private readonly List<ElementId> _ids;
     private readonly List<Element> _mainElements;
     private readonly List<Element> _secondElements;
+    private readonly double _tolerance;
 
 
     public ProvidersClashDetector(
         RevitRepository revitRepository,
         IProvider firstProvider,
-        IProvider secondProvider) {
+        IProvider secondProvider,
+        double tolerance = 0) {
+
+        _tolerance = Math.Max(0, tolerance);
 
         _revitRepository = revitRepository ?? throw new ArgumentNullException(nameof(revitRepository));
         _firstProvider = firstProvider ?? throw new ArgumentNullException(nameof(firstProvider));
@@ -123,13 +127,29 @@ internal class ProvidersClashDetector {
         return false;
     }
 
+    /// <summary>
+    /// Глубина пересечения - наименьший размер габарита тела пересечения.
+    /// </summary>
+    /// <remarks>
+    /// Приближение глубины проникновения, которой допуск задаётся в Navisworks: для труб и
+    /// воздуховодов, пересекающих конструкцию, это меньшее из толщины конструкции и сечения,
+    /// и касания с нахлёстом в доли миллиметра им надёжно отсекаются. Габарит тела у Ревита
+    /// выровнен по его собственной системе координат, а для косых пересечений он больше
+    /// истинной глубины - такие пересечения допуском отсекаются реже, а не чаще.
+    /// </remarks>
+    private static double GetDepth(Solid intersection) {
+        var box = intersection.GetBoundingBox();
+        var size = box.Max - box.Min;
+        return Math.Min(size.X, Math.Min(size.Y, size.Z));
+    }
+
     private bool HasSolidIntersection(Element element, Solid solid0, Solid solid1) {
         try {
             var intersection = BooleanOperationsUtils.ExecuteBooleanOperation(
                 solid0,
                 solid1,
                 BooleanOperationsType.Intersect);
-            return intersection.Volume > 0;
+            return intersection.Volume > 0 && GetDepth(intersection) >= _tolerance;
         } catch(Autodesk.Revit.Exceptions.InvalidOperationException) {
             // будем считать, что коллизия есть, но с кривой геометрией.
             // Далее её можно будет проверить по объему и проценту пересечения в ClashData

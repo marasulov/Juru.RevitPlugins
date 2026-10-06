@@ -1,4 +1,5 @@
 using System;
+using System.Xml.Linq;
 
 using Juru.RevitPlugins.Core.ProjectConfigs;
 
@@ -30,5 +31,25 @@ internal class ConfigSaverService {
 
         _revitRepository.CommonConfig.LastRunPath = SaveFileDialogService.File.DirectoryName;
         _revitRepository.CommonConfig.SaveProjectConfig();
+    }
+
+    /// <summary>
+    /// Спрашивает путь и записывает файл обмена Navisworks.
+    /// </summary>
+    /// <returns>Путь записанного файла.</returns>
+    /// <exception cref="OperationCanceledException">Пользователь закрыл диалог.</exception>
+    public string SaveXml(XDocument document, string defaultName) {
+        SaveFileDialogService.AddExtension = true;
+        SaveFileDialogService.Filter = "Navisworks (*.xml)|*.xml";
+        SaveFileDialogService.FilterIndex = 1;
+
+        if(!SaveFileDialogService.ShowDialog(_revitRepository.GetFileDialogPath(), defaultName)) {
+            throw new OperationCanceledException();
+        }
+        document.Save(SaveFileDialogService.File.FullName);
+
+        _revitRepository.CommonConfig.LastRunPath = SaveFileDialogService.File.DirectoryName;
+        _revitRepository.CommonConfig.SaveProjectConfig();
+        return SaveFileDialogService.File.FullName;
     }
 }

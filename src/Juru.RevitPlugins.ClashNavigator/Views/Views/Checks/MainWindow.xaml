@@ -12,6 +12,7 @@
     xmlns:clashDetective="clr-namespace:Juru.RevitPlugins.ClashNavigator.ViewModels.ClashDetective"
     xmlns:checks="clr-namespace:Juru.RevitPlugins.ClashNavigator.Views.Checks"
     xmlns:me="clr-namespace:dosymep.WpfCore.MarkupExtensions;assembly=dosymep.WpfCore"
+    xmlns:glob="clr-namespace:System.Globalization;assembly=mscorlib"
     mc:Ignorable="d"
     Title="{me:LocalizationSource ChecksWindow.Title}"
     Height="450" Width="800" MinHeight="400" MinWidth="700"
@@ -72,6 +73,7 @@
             <ui:Button Content="{me:LocalizationSource Common.Load}" ToolTip="{me:LocalizationSource ChecksWindow.LoadTooltip}" Command="{Binding LoadClashCommand}" Margin="0,0,8,0" />
             <ui:Button Content="{me:LocalizationSource Common.Save}" ToolTip="{me:LocalizationSource ChecksWindow.SaveTooltip}" Command="{Binding SaveClashesCommand}" Margin="0,0,8,0" />
             <ui:Button Content="{me:LocalizationSource Common.SaveAs}" ToolTip="{me:LocalizationSource ChecksWindow.SaveAsTooltip}" Command="{Binding SaveAsClashesCommand}" Margin="0,0,8,0" />
+            <ui:Button Content="{me:LocalizationSource Export.Button}" ToolTip="{me:LocalizationSource Export.ChecksTooltip}" Command="{Binding ExportNavisworksCommand}" Margin="0,0,8,0" />
             <ui:Button Content="{me:LocalizationSource ChecksWindow.AddCheck}" Command="{Binding AddCheckCommand}" Margin="0,0,8,0" />
 
             <ui:Button Appearance="Danger" Content="{me:LocalizationSource ChecksWindow.RemoveCheck}"
@@ -174,6 +176,19 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <checks:SelectionView Part="SearchSets" DataContext="{Binding SecondSelection, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Допуск проверки, мм: пересечения мельче не считаются коллизиями. -->
+                <DataGridTemplateColumn Width="90" CanUserSort="True" SortMemberPath="Tolerance"
+                                        local:ColumnLocalization.Key="ChecksWindow.Tolerance">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ui:TextBox VerticalContentAlignment="Center" HorizontalContentAlignment="Right"
+                                        ToolTip="{DynamicResource ChecksWindow.ToleranceTooltip}"
+                                        Text="{Binding Tolerance, UpdateSourceTrigger=LostFocus, ConverterCulture={x:Static glob:CultureInfo.CurrentCulture}}"
+                                        BorderThickness="0" Background="Transparent" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

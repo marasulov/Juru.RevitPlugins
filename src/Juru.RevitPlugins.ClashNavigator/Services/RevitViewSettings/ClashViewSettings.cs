@@ -25,6 +25,8 @@ internal sealed class ClashViewSettings : IView3DSetting {
     }
 
     public void Apply(View3D view3D) {
+        ApplyHalftone(view3D, _settings.HighlightClashElements && _settings.HalftoneOtherElements);
+
         if(!_settings.ApplySectionBoxSettings) return;
 
         var bounds = _repository.GetCommonBoundingBox(_clash.GetElements());
@@ -44,5 +46,30 @@ internal sealed class ClashViewSettings : IView3DSetting {
 
         view3D.SetSectionBox(sectionBox);
         view3D.IsSectionBoxActive = true;
+    }
+
+    /// <summary>
+    /// Переводит модельные категории вида в полутон или возвращает обычное отображение.
+    /// </summary>
+    /// <remarks>
+    /// Полутон - на категориях вида, а не на элементах: так он действует и на связи с
+    /// отображением "как в основном виде", а элементы связи по одному не переопределить вовсе.
+    /// Сама пара коллизии при этом остаётся яркой - её рисует подсветка поверх модели.
+    /// Остальные переопределения категории сохраняются: меняется только флаг полутона, и только
+    /// там, где он отличается, - чтобы не трогать вид при каждом переходе между коллизиями.
+    /// </remarks>
+    private static void ApplyHalftone(View3D view3D, bool halftone) {
+        foreach(Category category in view3D.Document.Settings.Categories) {
+            if(category.CategoryType != CategoryType.Model || !category.get_AllowsVisibilityControl(view3D)) {
+                continue;
+            }
+
+            var overrides = view3D.GetCategoryOverrides(category.Id);
+            if(overrides.Halftone == halftone) {
+                continue;
+            }
+            overrides.SetHalftone(halftone);
+            view3D.SetCategoryOverrides(category.Id, overrides);
+        }
     }
 }

@@ -27,10 +27,11 @@ internal partial class MessageWindow : Window {
         MessageText.Text = message;
 
         // Подписи из кода: у обычного Window нет IHasLocalization, на котором держится
-        // me:LocalizationSource в разметке.
-        YesButton.Content = localizationService.GetLocalizedString("Common.Yes");
-        NoButton.Content = localizationService.GetLocalizedString("Common.No");
-        OkButton.Content = localizationService.GetLocalizedString("Common.Ok");
+        // me:LocalizationSource в разметке. Без службы локализации (сообщения из
+        // RevitRepository, где её нет) - подписи по умолчанию: окно должно закрываться всегда.
+        YesButton.Content = localizationService?.GetLocalizedString("Common.Yes") is { Length: > 0 } yes ? yes : "Yes";
+        NoButton.Content = localizationService?.GetLocalizedString("Common.No") is { Length: > 0 } no ? no : "No";
+        OkButton.Content = localizationService?.GetLocalizedString("Common.Ok") is { Length: > 0 } ok ? ok : "OK";
 
         // Владелец - главное окно Ревита: иначе окно уходит за него.
         _ = new WindowInteropHelper(this) { Owner = Process.GetCurrentProcess().MainWindowHandle };

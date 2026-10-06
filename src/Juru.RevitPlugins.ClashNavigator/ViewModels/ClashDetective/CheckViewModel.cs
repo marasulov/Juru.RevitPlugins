@@ -28,6 +28,7 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
     private readonly FiltersConfig _filtersConfig;
     private readonly IContentDialogService _contentDialogService;
     private string _name;
+    private double _tolerance;
     private string _errorText;
     private int? _clashCount;
     private bool _isSelected;
@@ -53,6 +54,7 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
         _filtersConfig = filtersConfig ?? throw new ArgumentNullException(nameof(filtersConfig));
         _contentDialogService = contentDialogService ?? throw new ArgumentNullException(nameof(contentDialogService));
         Name = check?.Name ?? _localizationService.GetLocalizedString("ChecksWindow.DefaultCheckName");
+        Tolerance = check?.Tolerance ?? 0;
 
         if(check == null) {
             InitializeSelections();
@@ -106,6 +108,14 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
         set => RaiseAndSetIfChanged(ref _errorText, value);
     }
 
+    /// <summary>
+    /// Допуск, мм: пересечения мельче не считаются коллизиями.
+    /// </summary>
+    public double Tolerance {
+        get => _tolerance;
+        set => RaiseAndSetIfChanged(ref _tolerance, Math.Max(0, value));
+    }
+
     public SelectionViewModel FirstSelection {
         get => _firstSelection;
         set => RaiseAndSetIfChanged(ref _firstSelection, value);
@@ -150,7 +160,7 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
     public List<ClashModel> GetClashes(ClashSearchProgress progress) {
         (var mainProviders, var otherProviders) = GetProviders();
 
-        var clashDetector = new ClashDetector(_revitRepository, mainProviders, otherProviders);
+        var clashDetector = new ClashDetector(_revitRepository, mainProviders, otherProviders, Tolerance / 304.8);
         return clashDetector.FindClashes(progress, Name);
     }
 

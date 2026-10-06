@@ -201,6 +201,11 @@
                 Command="{Binding SaveAsCommand}" />
             <ui:Button
                 Margin="0 0 8 0"
+                Content="{me:LocalizationSource Export.Button}"
+                ToolTip="{me:LocalizationSource Export.SetsTooltip}"
+                Command="{Binding ExportNavisworksCommand}" />
+            <ui:Button
+                Margin="0 0 8 0"
                 Content="{me:LocalizationSource SearchSets.AddFilter}"
                 Command="{Binding AddFilterCommand}" />
             <ui:Button

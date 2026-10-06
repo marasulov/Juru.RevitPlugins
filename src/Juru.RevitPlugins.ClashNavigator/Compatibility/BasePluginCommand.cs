@@ -36,10 +36,11 @@ public abstract class BasePluginCommand : IExternalCommand {
             FromGui = isFromGui;
         }
 
-        // RevitRepository.ShowErrorMessage resolves IMessageBoxService through the static
-        // ServicesProvider. The vendor's LoadInstance() binds that service through
-        // dosymep.Xpf.Core.Ninject, which wraps DevExpress; DevExpress is not vendored here.
-        // These bindings cover every service the plugin resolves statically.
+        // The plugin itself no longer resolves anything from the static ServicesProvider: these
+        // two services cannot even be built there (WpfUI ones need an IHasTheme), so error
+        // messages and search progress now use their own windows. The instance is still set in
+        // case dosymep code reaches for it internally; the vendor's LoadInstance() is avoided
+        // because it binds through dosymep.Xpf.Core.Ninject, i.e. DevExpress, not vendored here.
         if(ServicesProvider.Instance is null) {
             var platformKernel = new StandardKernel();
             platformKernel.UseWpfUIMessageBox();

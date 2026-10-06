@@ -104,6 +104,11 @@
                             Margin="14 8 14 0"
                             Content="{me:LocalizationSource SettingsWindow.HighlightClash}"
                             IsChecked="{Binding HighlightClashElements}" />
+                        <CheckBox
+                            Margin="38 8 14 0"
+                            Content="{me:LocalizationSource SettingsWindow.HalftoneOthers}"
+                            IsEnabled="{Binding HighlightClashElements}"
+                            IsChecked="{Binding HalftoneOtherElements}" />
 
                         <StackPanel
                             Margin="14 8"

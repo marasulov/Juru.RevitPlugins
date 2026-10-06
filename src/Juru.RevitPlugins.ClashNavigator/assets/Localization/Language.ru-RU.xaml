@@ -44,6 +44,8 @@
     <system:String x:Key="ChecksWindow.DefaultCheckName">Новая проверка</system:String>
     <system:String x:Key="ChecksWindow.SearchCompleted">Поиск коллизий завершён</system:String>
     <system:String x:Key="ChecksWindow.ClashCount">Коллизий</system:String>
+    <system:String x:Key="ChecksWindow.Tolerance">Допуск, мм</system:String>
+    <system:String x:Key="ChecksWindow.ToleranceTooltip">Пересечения мельче допуска не считаются коллизиями. 0 - любое пересечение.</system:String>
     <system:String x:Key="ChecksWindow.SearchCancelled">Поиск коллизий отменён</system:String>
     <system:String x:Key="ChecksWindow.SearchFailed">Поиск коллизий прерван ошибкой: {0}</system:String>
     <system:String x:Key="ChecksWindow.Progress.Title">Поиск коллизий</system:String>
@@ -151,6 +153,7 @@
     <system:String x:Key="SettingsWindow.ClashDisplay">Отображение коллизий</system:String>
     <system:String x:Key="SettingsWindow.SectionBoxOffset">Размер Section Box, мм</system:String>
     <system:String x:Key="SettingsWindow.HighlightClash">Подсвечивать элементы коллизии цветом</system:String>
+    <system:String x:Key="SettingsWindow.HalftoneOthers">Остальную модель - полутоном</system:String>
     <system:String x:Key="SettingsWindow.Language">Язык интерфейса</system:String>
     <system:String x:Key="SettingsWindow.LanguageTooltip">Язык применится при следующем открытии окон плагина</system:String>
 
@@ -160,6 +163,7 @@
     <system:String x:Key="Language.English">English</system:String>
     <!-- Навигатор коллизий -->
     <system:String x:Key="Navigator.Title">Навигатор коллизий</system:String>
+    <system:String x:Key="Navigator.KeysHint">F3 - следующая коллизия, Shift+F3 - предыдущая</system:String>
     <system:String x:Key="Navigator.TitleWithBuild">Навигатор коллизий (сборка {0})</system:String>
     <system:String x:Key="Navigator.LoadXml">Загрузить XML</system:String>
     <system:String x:Key="Navigator.LoadFromServer">Загрузить с сервера</system:String>
@@ -266,4 +270,16 @@
     <system:String x:Key="Import.ReasonNoParameter">у категорий этой группы нет параметра «{0}», по которому можно фильтровать</system:String>
     <system:String x:Key="Import.ReasonNoEvaluator">проверка «{0}» не подходит к типу параметра</system:String>
     <system:String x:Key="Import.ReasonBadValue">значение «{0}» не разобрать</system:String>
+    <system:String x:Key="Import.GroupNotApplicable">группа с условием «{0}» не перенесена: у её категорий такого параметра нет, Navisworks по ней ничего не найдёт</system:String>
+    <system:String x:Key="Export.Title">Экспорт в Navisworks</system:String>
+    <system:String x:Key="Export.Button">В Navisworks</system:String>
+    <system:String x:Key="Export.SetsTooltip">Сохранить поисковые наборы в XML для импорта в Navisworks (окно «Наборы» → Импорт).</system:String>
+    <system:String x:Key="Export.ChecksTooltip">Сохранить проверки в XML тестов Clash Detective. Поисковые наборы выгружаются из окна наборов.</system:String>
+    <system:String x:Key="Export.SetsSummary">Наборов выгружено: {0} из {1}.&#10;Файл: {2}</system:String>
+    <system:String x:Key="Export.ChecksSummary">Тестов выгружено: {0} из {1}.&#10;Файл: {2}&#10;В Navisworks сначала импортируйте поисковые наборы: тест ссылается на набор по имени.</system:String>
+    <system:String x:Key="Export.NoCategories">у набора нет категорий</system:String>
+    <system:String x:Key="Export.CheckNoSets">в одной из выборок нет поискового набора</system:String>
+    <system:String x:Key="Export.CheckFirstSetOnly">в выборке несколько наборов - в тест ушёл первый</system:String>
+    <system:String x:Key="Export.SetTooDeep">дерево правил глубже, чем выражается в Navisworks, - выгружены только категории</system:String>
+    <system:String x:Key="Export.RuleSkipped">правило «{0} {1}» не выражается в Navisworks и пропущено</system:String>
 </ResourceDictionary>

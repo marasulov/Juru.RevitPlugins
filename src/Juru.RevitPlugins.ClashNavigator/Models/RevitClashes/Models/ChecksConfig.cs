@@ -37,6 +37,11 @@ internal class Check
     public string Name { get; set; }
     public SelectionConfig FirstSelection { get; set; }
     public SelectionConfig SecondSelection { get; set; }
+
+    /// <summary>
+    /// Допуск, мм: пересечения мельче не считаются коллизиями. 0 - любое пересечение.
+    /// </summary>
+    public double Tolerance { get; set; }
 }
 
 internal class SelectionConfig

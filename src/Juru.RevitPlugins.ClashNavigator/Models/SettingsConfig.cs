@@ -33,6 +33,11 @@ internal class SettingsConfig : ProjectConfig {
     public bool HighlightClashElements { get; set; } = true;
 
     /// <summary>
+    /// При подсветке коллизии переводить остальную модель на виде коллизий в полутон.
+    /// </summary>
+    public bool HalftoneOtherElements { get; set; } = true;
+
+    /// <summary>
     /// Адрес сервера коллизий для загрузки отчётов через REST API (см. <see cref="RevitClashReport.ServerClashes.ClashServerClient"/>).
     /// Пустое значение означает адрес из <see cref="ClashServerOptions.DefaultUrl"/>.
     /// </summary>

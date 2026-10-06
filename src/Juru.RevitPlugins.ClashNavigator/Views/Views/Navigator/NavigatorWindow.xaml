@@ -12,6 +12,7 @@
         Background="{ui:ThemeResource ApplicationBackgroundBrush}"
         Foreground="{ui:ThemeResource TextFillColorPrimaryBrush}"
         Loaded="Window_Loaded"
+        PreviewKeyDown="Window_PreviewKeyDown"
         Closing="Window_Closing"
         Closed="Window_Closed">
     <platform:WpfUIPlatformWindow.Resources>
@@ -248,6 +249,7 @@
         <!-- VirtualizationMode=Standard вместо принятого в DataGrid Recycling: переиспользование строк
              отдаёт списку статусов ячейку от другой коллизии, и выбор уходит не в ту строку. -->
         <DataGrid x:Name="ClashesGrid" Grid.Row="3" ItemsSource="{Binding SelectedReport.GuiClashes}"
+                  ToolTip="{me:LocalizationSource Navigator.KeysHint}" ToolTipService.InitialShowDelay="1500"
                   SelectedItem="{Binding SelectedReport.SelectedGuiClash}" AutoGenerateColumns="False"
                   CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column"
                   CanUserResizeColumns="True" CanUserResizeRows="False" MinColumnWidth="40"

@@ -58,6 +58,7 @@ internal class FiltersViewModel : BaseViewModel {
         SaveCommand = RelayCommand.Create(SaveConfig, CanSave);
         SaveAsCommand = RelayCommand.Create(SaveAsConfig, CanSave);
         LoadCommand = RelayCommand.Create(LoadConfig);
+        ExportNavisworksCommand = RelayCommand.Create(ExportNavisworks, CanSave);
 
         PropertyChanged += FiltersFilterPropertyChanged;
     }
@@ -72,6 +73,7 @@ internal class FiltersViewModel : BaseViewModel {
     public ICommand SaveCommand { get; }
     public ICommand SaveAsCommand { get; }
     public ICommand LoadCommand { get; }
+    public ICommand ExportNavisworksCommand { get; }
 
     public CollectionViewSource Filters {
         get => _filters;
@@ -180,6 +182,28 @@ internal class FiltersViewModel : BaseViewModel {
         loader.CheckConfig(config);
         AddFilters(InitializeFilters(config));
         ShowMessage(LocalizationService.GetLocalizedString("SearchSets.SetsLoaded"));
+    }
+
+    /// <summary>
+    /// Выгружает наборы окна в XML поисковых наборов Navisworks.
+    /// </summary>
+    private void ExportNavisworks() {
+        var report = new NavisworksImportReport();
+        var filters = AllFilters.Select(item => item.GetFilter()).ToList();
+        var document = new NavisworksExporter(_revitRepository.Doc, LocalizationService)
+            .ExportSearchSets(filters, report);
+        string path = new ConfigSaverService(_revitRepository, SaveFileDialogService)
+            .SaveXml(document, "SearchSets");
+
+        var summary = new StringBuilder();
+        summary.AppendLine(LocalizationService.GetLocalizedString(
+            "Export.SetsSummary", filters.Count - report.Skipped.Count, filters.Count, path));
+        AppendList(summary, "Import.SkippedHeader", report.Skipped);
+        AppendList(summary, "Import.NotesHeader", report.Notes);
+        Views.MessageWindow.ShowInfo(
+            summary.ToString().TrimEnd(),
+            LocalizationService.GetLocalizedString("Export.Title"),
+            LocalizationService);
     }
 
     private void AddFilters(IEnumerable<FilterViewModel> filters) {
