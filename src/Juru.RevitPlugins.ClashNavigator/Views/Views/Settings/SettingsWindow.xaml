@@ -25,6 +25,11 @@
                 <ResourceDictionary
                     Source="pack://application:,,,/Juru.RevitPlugins.Core;component/Resources/CustomStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <!-- CustomStyles.xaml даёт стиль флажка только под ключом DefaultCheckBoxStyle:
+                 без этой неявной привязки флажок подсветки рисуется системным квадратом. -->
+            <Style
+                TargetType="CheckBox"
+                BasedOn="{StaticResource DefaultCheckBoxStyle}" />
         </ResourceDictionary>
     </Window.Resources>
     <b:Interaction.Triggers>
@@ -95,7 +100,11 @@
                 <Border
                     Style="{StaticResource CustomBorder}">
                     <StackPanel>
-                        
+                        <CheckBox
+                            Margin="14 8 14 0"
+                            Content="{me:LocalizationSource SettingsWindow.HighlightClash}"
+                            IsChecked="{Binding HighlightClashElements}" />
+
                         <StackPanel
                             Margin="14 8"
                             IsEnabled="{Binding ApplySectionBoxSettings}">

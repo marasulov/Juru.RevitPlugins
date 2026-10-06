@@ -172,6 +172,8 @@ namespace Juru.RevitPlugins.ClashNavigator.Views.Navigator
                 return;
             }
 
+            viewModel.ClearHighlight();
+
             var saved = viewModel.GetColumnSettings();
             var settings = new Dictionary<string, ClashColumnSettings>();
             foreach (var column in ClashesGrid.Columns)

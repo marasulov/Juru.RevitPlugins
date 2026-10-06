@@ -12,6 +12,7 @@ using Juru.RevitPlugins.ClashNavigator.Models.ClashDetection;
 using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
 using Juru.RevitPlugins.ClashNavigator.Models.Interfaces;
+using Juru.RevitPlugins.ClashNavigator.Services;
 using Juru.RevitPlugins.ClashNavigator.ViewModels.Navigator;
 using Juru.RevitPlugins.ClashNavigator.Views;
 using Juru.RevitPlugins.ClashNavigator.Views.Navigator;
@@ -128,11 +129,11 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
         return (mainProviders, otherProviders);
     }
 
-    public List<ClashModel> GetClashes() {
+    public List<ClashModel> GetClashes(ClashSearchProgress progress) {
         (var mainProviders, var otherProviders) = GetProviders();
 
         var clashDetector = new ClashDetector(_revitRepository, mainProviders, otherProviders);
-        return clashDetector.FindClashes();
+        return clashDetector.FindClashes(progress, Name);
     }
 
     /// <summary>
@@ -144,10 +145,11 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
     /// считаются ровно по тем коллизиям, для которых <c>ClashesMarker</c> не нашёл или потерял
     /// пару в старом отчёте.
     /// </remarks>
-    public CheckSearchResult SaveClashes() {
+    /// <param name="progress">Окно хода поиска, общее для всех проверок прогона.</param>
+    public CheckSearchResult SaveClashes(ClashSearchProgress progress) {
         var config = ClashesConfig.GetClashesConfig(_revitRepository.GetObjectName(), ReportName);
         var oldClashes = ClashesConfig.GetClashesConfig(_revitRepository.GetObjectName(), $"{_revitRepository.GetDocumentName()}_{Name}").Clashes;
-        var newClashes = GetClashes();
+        var newClashes = GetClashes(progress);
 
         int added = ClashesMarker.CountAdded(newClashes, oldClashes);
         int gone = ClashesMarker.CountGone(newClashes, oldClashes);
@@ -204,19 +206,22 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
         }
     }
 
+    /// <remarks>
+    /// Окно собирается тем же ядром, что и с ленты: пустой конструктор окна не даёт ему ни
+    /// словаря локализации, ни служб темы. Ошибки ловятся здесь - команда вызывается из окна,
+    /// и непойманное исключение пропадает в WPF молча, кнопка выглядит мёртвой.
+    /// </remarks>
     private void ShowClashes() {
-        var view = new NavigatorWindow() {
-            DataContext = new NavigatorViewModel(
-            _revitRepository,
-            OpenFileDialogService,
-            SaveFileDialogService,
-            MessageBoxService,
-            _localizationService,
-            _contentDialogService,
-            _settingsConfig,
-            ReportName) { OpenFromClashDetector = true }
-        };
-        view.Show();
+        try {
+            var window = NavigatorWindowFactory.Create(
+                _revitRepository.UiApplication, _revitRepository, ReportName);
+            window.Show(_revitRepository.UiApplication.MainWindowHandle);
+        } catch(Exception exception) {
+            MessageWindow.ShowError(
+                exception.ToString(),
+                _localizationService.GetLocalizedString("Navigator.Title"),
+                _localizationService);
+        }
     }
 
     private bool CanShowClashes() {

@@ -21,7 +21,7 @@ internal class RevitEventHandler : IExternalEventHandler, INotifyCompletion {
         try {
             TransactAction?.Invoke();
         } catch(Exception exception) {
-            TaskDialog.Show("ÐÐ°Ð²Ð¸Ð³Ð°Ñ‚Ð¾Ñ€ ÐºÐ¾Ð»Ð»Ð¸Ð·Ð¸Ð¹", exception.ToString());
+            TaskDialog.Show("Навигатор коллизий", exception.ToString());
         } finally {
             IsCompleted = true;
             _continuation?.Invoke();

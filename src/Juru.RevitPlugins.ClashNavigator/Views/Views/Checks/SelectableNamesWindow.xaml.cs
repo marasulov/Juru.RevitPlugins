@@ -42,6 +42,7 @@ internal partial class SelectableNamesWindow : Window {
         // Подписи ставятся из кода, а не через me:LocalizationSource: та разметка работает
         // только в окнах, реализующих IHasLocalization, а это обычный Window.
         SelectAllCheckBox.Content = localizationService.GetLocalizedString("Common.SelectAll");
+        SearchBox.PlaceholderText = localizationService.GetLocalizedString("SelectableNames.SearchPlaceholder");
         OkButton.Content = localizationService.GetLocalizedString("Common.Ok");
         CancelButton.Content = localizationService.GetLocalizedString("Common.Cancel");
 
@@ -53,6 +54,9 @@ internal partial class SelectableNamesWindow : Window {
 
         // Владелец - главное окно Ревита: иначе диалог уходит за него.
         _ = new WindowInteropHelper(this) { Owner = Process.GetCurrentProcess().MainWindowHandle };
+
+        // Сразу можно печатать: курсор в поиске, а не на первом флажке списка.
+        Loaded += (_, _) => SearchBox.Focus();
     }
 
     public SelectableNamesViewModel ViewModel { get; }

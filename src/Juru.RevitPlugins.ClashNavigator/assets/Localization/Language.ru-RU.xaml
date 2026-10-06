@@ -39,6 +39,12 @@
     <system:String x:Key="ChecksWindow.ShowClashesTooltip">Открыть найденные коллизии в навигаторе</system:String>
     <system:String x:Key="ChecksWindow.DefaultCheckName">Новая проверка</system:String>
     <system:String x:Key="ChecksWindow.SearchCompleted">Поиск коллизий завершён</system:String>
+    <system:String x:Key="ChecksWindow.SearchCancelled">Поиск коллизий отменён</system:String>
+    <system:String x:Key="ChecksWindow.SearchFailed">Поиск коллизий прерван ошибкой: {0}</system:String>
+    <system:String x:Key="ChecksWindow.Progress.Title">Поиск коллизий</system:String>
+    <system:String x:Key="ChecksWindow.Progress.Preparing">Сбор элементов...</system:String>
+    <system:String x:Key="ChecksWindow.Progress.Cancelling">Отмена...</system:String>
+    <system:String x:Key="SelectableNames.SearchPlaceholder">Поиск...</system:String>
     <system:String x:Key="ChecksWindow.ChecksSaved">Проверки сохранены</system:String>
     <system:String x:Key="ChecksWindow.ChecksLoaded">Проверки загружены</system:String>
     <system:String x:Key="ChecksWindow.SavePrompt">Сохранить проверки?</system:String>
@@ -139,6 +145,7 @@
     <system:String x:Key="SettingsWindow.ServerUrl">Адрес сервера</system:String>
     <system:String x:Key="SettingsWindow.ClashDisplay">Отображение коллизий</system:String>
     <system:String x:Key="SettingsWindow.SectionBoxOffset">Размер Section Box, мм</system:String>
+    <system:String x:Key="SettingsWindow.HighlightClash">Подсвечивать элементы коллизии цветом</system:String>
     <system:String x:Key="SettingsWindow.Language">Язык интерфейса</system:String>
     <system:String x:Key="SettingsWindow.LanguageTooltip">Язык применится при следующем открытии окон плагина</system:String>
 

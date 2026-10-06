@@ -3,6 +3,7 @@ using System.Linq;
 
 using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.ClashNavigator.Models.Interfaces;
+using Juru.RevitPlugins.ClashNavigator.Services;
 
 namespace Juru.RevitPlugins.ClashNavigator.Models.ClashDetection;
 internal class ClashDetector {
@@ -17,12 +18,17 @@ internal class ClashDetector {
         _otherProviders = otherProviders;
     }
 
-    public List<ClashModel> FindClashes() {
+    /// <param name="progress">Окно хода поиска, общее для всех проверок прогона.</param>
+    /// <param name="checkName">Имя проверки - начало подписи этапа в окне хода поиска.</param>
+    public List<ClashModel> FindClashes(ClashSearchProgress progress, string checkName) {
         List<ClashModel> clashes = [];
         foreach(var mainProvider in _mainDocProviders) {
             foreach(var provider in _otherProviders) {
+                progress.Token.ThrowIfCancellationRequested();
+                string stage = $"{checkName}: {RevitRepository.GetDocumentName(mainProvider.Doc)}"
+                               + $" × {RevitRepository.GetDocumentName(provider.Doc)}";
                 var providerClashDetector = new ProvidersClashDetector(_revitRepository, mainProvider, provider);
-                clashes.AddRange(providerClashDetector.GetClashes());
+                clashes.AddRange(providerClashDetector.GetClashes(progress, stage));
             }
         }
 

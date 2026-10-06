@@ -159,8 +159,8 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <ui:Button Click="ButtonOk_Click" Command="{Binding ShowClashesCommand}"
-                                       Content="{me:LocalizationSource ChecksWindow.ShowClashes}"
-                                       ToolTip="{me:LocalizationSource ChecksWindow.ShowClashesTooltip}"
+                                       Content="{DynamicResource ChecksWindow.ShowClashes}"
+                                       ToolTip="{DynamicResource ChecksWindow.ShowClashesTooltip}"
                                        Padding="6,4" Margin="4,2" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

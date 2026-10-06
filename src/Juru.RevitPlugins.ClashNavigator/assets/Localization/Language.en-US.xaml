@@ -38,6 +38,12 @@
     <system:String x:Key="ChecksWindow.ShowClashesTooltip">Open the clashes found in the navigator</system:String>
     <system:String x:Key="ChecksWindow.DefaultCheckName">New check</system:String>
     <system:String x:Key="ChecksWindow.SearchCompleted">Clash detection finished</system:String>
+    <system:String x:Key="ChecksWindow.SearchCancelled">Clash detection cancelled</system:String>
+    <system:String x:Key="ChecksWindow.SearchFailed">Clash detection stopped with an error: {0}</system:String>
+    <system:String x:Key="ChecksWindow.Progress.Title">Clash detection</system:String>
+    <system:String x:Key="ChecksWindow.Progress.Preparing">Collecting elements...</system:String>
+    <system:String x:Key="ChecksWindow.Progress.Cancelling">Cancelling...</system:String>
+    <system:String x:Key="SelectableNames.SearchPlaceholder">Search...</system:String>
     <system:String x:Key="ChecksWindow.ChecksSaved">Checks saved</system:String>
     <system:String x:Key="ChecksWindow.ChecksLoaded">Checks loaded</system:String>
     <system:String x:Key="ChecksWindow.SavePrompt">Save the checks?</system:String>
@@ -138,6 +144,7 @@
     <system:String x:Key="SettingsWindow.ServerUrl">Server address</system:String>
     <system:String x:Key="SettingsWindow.ClashDisplay">Clash display</system:String>
     <system:String x:Key="SettingsWindow.SectionBoxOffset">Section box size, mm</system:String>
+    <system:String x:Key="SettingsWindow.HighlightClash">Highlight clash elements in colour</system:String>
     <system:String x:Key="SettingsWindow.Language">Interface language</system:String>
     <system:String x:Key="SettingsWindow.LanguageTooltip">The language applies the next time the plugin's windows are opened</system:String>
 

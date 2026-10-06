@@ -1,0 +1,53 @@
+<Window
+    x:Class="Juru.RevitPlugins.ClashNavigator.Views.Checks.ClashSearchProgressWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    x:ClassModifier="internal"
+    Width="460"
+    SizeToContent="Height"
+    ResizeMode="NoResize"
+    WindowStartupLocation="CenterOwner"
+    ShowInTaskbar="False"
+    Topmost="True">
+
+    <!-- Тот же приём, что у окна прогресса в "Отверстиях": обычный Window со словарями темы
+         прямо в ресурсах. Подписи ставятся из кода - у обычного Window нет IHasLocalization. -->
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary />
+                <ui:ControlsDictionary />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            x:Name="StageText"
+            Grid.Row="0"
+            Margin="0,0,0,8"
+            TextTrimming="CharacterEllipsis" />
+
+        <ProgressBar
+            x:Name="Bar"
+            Grid.Row="1"
+            Height="18"
+            Minimum="0"
+            Maximum="100" />
+
+        <Button
+            x:Name="CancelButton"
+            Grid.Row="2"
+            Margin="0,12,0,0"
+            Padding="16,4"
+            HorizontalAlignment="Right"
+            Click="OnCancelClick" />
+    </Grid>
+</Window>

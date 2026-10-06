@@ -22,6 +22,7 @@ using Juru.RevitPlugins.ClashNavigator.Models.FilterableValueProviders;
 using Juru.RevitPlugins.ClashNavigator.Models.GraphicView;
 using Juru.RevitPlugins.ClashNavigator.Models.Handlers;
 using Juru.RevitPlugins.ClashNavigator.Models.Interfaces;
+using Juru.RevitPlugins.ClashNavigator.Services.ClashHighlight;
 
 using ParameterValueProvider = Juru.RevitPlugins.ClashNavigator.Models.FilterableValueProviders.ParameterValueProvider;
 
@@ -281,8 +282,13 @@ internal class RevitRepository {
     }
 
 
+    /// <summary>
+    /// Выделяет элементы в Ревите. Элементы связей - ссылкой на элемент в связи (Ревит 2024+),
+    /// на Ревите 2023 выделяются только элементы открытого документа.
+    /// </summary>
+    /// <returns>Выделено ли хоть что-то.</returns>
 #if REVIT_2023_OR_LESS
-    public void SelectElements(ICollection<ElementModel> elementModels) {
+    public bool SelectElements(ICollection<ElementModel> elementModels) {
         if(elementModels is null) {
             throw new ArgumentNullException(nameof(elementModels));
         }
@@ -292,12 +298,13 @@ internal class RevitRepository {
             .Select(e => e.Id)
             .ToArray();
         if(elements.Length == 0) {
-            return;
+            return false;
         }
         _uiDocument.Selection.SetElementIds(elements);
+        return true;
     }
 #else
-    public void SelectElements(ICollection<ElementModel> elementModels) {
+    public bool SelectElements(ICollection<ElementModel> elementModels) {
         if(elementModels is null) {
             throw new ArgumentNullException(nameof(elementModels));
         }
@@ -322,9 +329,10 @@ internal class RevitRepository {
             }
         }
         if(references.Count == 0) {
-            return;
+            return false;
         }
         _uiDocument.Selection.SetReferences(references);
+        return true;
     }
 #endif
 
@@ -332,27 +340,64 @@ internal class RevitRepository {
     /// Queues the complete navigation operation on Revit's API thread. This is
     /// required when it is initiated from the modeless navigator window.
     /// </summary>
-    public void QueueSelectAndShowElement(ICollection<ElementModel> elements, IView3DSetting viewSettings) {
+    /// <param name="elements">Элементы коллизии: первый и второй, в этом порядке.</param>
+    /// <param name="viewSettings">Настройки вида коллизий (подрезка).</param>
+    /// <param name="highlight">
+    /// Рисовать ли элементы цветом поверх модели: первый - <see cref="ClashHighlighter.FirstColor" />,
+    /// второй - <see cref="ClashHighlighter.SecondColor" />.
+    /// </param>
+    public void QueueSelectAndShowElement(ICollection<ElementModel> elements, IView3DSetting viewSettings, bool highlight) {
         if(elements is null) throw new ArgumentNullException(nameof(elements));
         if(viewSettings is null) throw new ArgumentNullException(nameof(viewSettings));
 
         _revitEventHandler.TransactAction = () => {
             _uiDocument.ActiveView = _view;
-            using(var transaction = new Transaction(Doc, "ÐŸÐ¾ÐºÐ°Ð· ÐºÐ¾Ð»Ð»Ð¸Ð·Ð¸Ð¸")) {
+            using(var transaction = new Transaction(Doc, "Показ коллизии")) {
                 transaction.Start();
                 viewSettings.Apply(_view);
                 transaction.Commit();
             }
 
-            var ids = GetElementsToSelect(
-                elements.Select(element => element.GetElement(DocInfos)).Where(element => element is not null),
-                _view);
-            _uiDocument.Selection.SetElementIds(ids);
+            // Оба элемента, включая элементы связей. Если выделить нечего - выделяется рамка
+            // подрезки, как раньше: так вид хотя бы показывает, где коллизия.
+            if(!SelectElements(elements)) {
+                _uiDocument.Selection.SetElementIds(GetElementsToSelect([], _view));
+            }
+
+            if(highlight) {
+                ClashHighlighter.Show(_uiDocument, _view, GetHighlightedElements(elements));
+            } else {
+                ClashHighlighter.Clear(_uiDocument);
+            }
 
             var uiView = _uiDocument.GetOpenUIViews().FirstOrDefault(item => item.ViewId == _view.Id);
             uiView?.ZoomToFit();
         };
         _revitEventHandler.Raise();
+    }
+
+    /// <summary>
+    /// Снимает цветную подсветку коллизии и сервер отрисовки - при закрытии навигатора.
+    /// </summary>
+    public void QueueClearHighlight() {
+        // Документ могли закрыть раньше окна: перерисовывать тогда нечего, а обращение к его
+        // UIDocument роняет Ревит.
+        _revitEventHandler.TransactAction = () => ClashHighlighter.Unregister(Doc.IsValidObject ? _uiDocument : null);
+        _revitEventHandler.Raise();
+    }
+
+    private IEnumerable<HighlightedElement> GetHighlightedElements(IEnumerable<ElementModel> elements) {
+        var colors = new[] { ClashHighlighter.FirstColor, ClashHighlighter.SecondColor };
+        int index = 0;
+        foreach(var model in elements) {
+            var color = colors[Math.Min(index++, colors.Length - 1)];
+            var element = model.GetElement(DocInfos);
+            var docInfo = model.GetDocInfo(DocInfos);
+            if(element is null || docInfo is null) {
+                continue;
+            }
+            yield return new HighlightedElement(element, docInfo.Transform, color);
+        }
     }
 
     public void SelectAndShowElement(ICollection<ElementModel> elements, IView3DSetting viewSettings) {

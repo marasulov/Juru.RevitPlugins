@@ -38,12 +38,22 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <DockPanel
+        <!-- Фокус ставится сюда при открытии окна (см. конструктор): список категорий модели
+             длинный, и нужное быстрее набрать, чем долистать. -->
+        <ui:TextBox
+            x:Name="SearchBox"
             Grid.Row="0"
+            Margin="10 10 10 0"
+            ClearButtonEnabled="True"
+            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+        <DockPanel
+            Grid.Row="1"
             Margin="10 8"
             LastChildFill="True">
             <CheckBox
@@ -53,7 +63,7 @@
         </DockPanel>
 
         <Border
-            Grid.Row="1"
+            Grid.Row="2"
             Margin="10 0"
             Style="{StaticResource CustomBorder}">
             <!-- Плавная прокрутка по пикселям, а не по элементам: список категорий модели легко
@@ -67,7 +77,7 @@
             <ListBox
                 BorderThickness="0"
                 Background="Transparent"
-                ItemsSource="{Binding Entities}"
+                ItemsSource="{Binding EntitiesView}"
                 HorizontalContentAlignment="Stretch"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 VirtualizingPanel.IsVirtualizing="True"
@@ -85,7 +95,7 @@
         </Border>
 
         <StackPanel
-            Grid.Row="2"
+            Grid.Row="3"
             Orientation="Horizontal"
             HorizontalAlignment="Right"
             Margin="10">

@@ -80,8 +80,8 @@
                     <ui:Button
                         Grid.Column="3"
                         Appearance="Danger"
-                        Content="{me:LocalizationSource Common.Delete}"
-                        ToolTip="{me:LocalizationSource SearchSets.DeleteRuleTooltip}"
+                        Content="{DynamicResource Common.Delete}"
+                        ToolTip="{DynamicResource SearchSets.DeleteRuleTooltip}"
                         Command="{Binding Parent.RemoveCriterionCommand}"
                         CommandParameter="{Binding}" />
                 </Grid>
@@ -107,17 +107,17 @@
                                 SelectedItem="{Binding SelectedEvaluator}" />
                             <ui:Button
                                 Margin="8 0 0 0"
-                                Content="{me:LocalizationSource SearchSets.AddRule}"
+                                Content="{DynamicResource SearchSets.AddRule}"
                                 Command="{Binding AddRuleCommand}" />
                             <ui:Button
                                 Margin="8 0 0 0"
-                                Content="{me:LocalizationSource SearchSets.AddNestedSet}"
+                                Content="{DynamicResource SearchSets.AddNestedSet}"
                                 Command="{Binding AddSetCommand}" />
                             <ui:Button
                                 Margin="8 0 0 0"
                                 Appearance="Danger"
-                                Content="{me:LocalizationSource Common.Delete}"
-                                ToolTip="{me:LocalizationSource SearchSets.DeleteSetTooltip}"
+                                Content="{DynamicResource Common.Delete}"
+                                ToolTip="{DynamicResource SearchSets.DeleteSetTooltip}"
                                 Command="{Binding Parent.RemoveCriterionCommand}"
                                 CommandParameter="{Binding}"
                                 Visibility="{Binding CanRemove, Converter={StaticResource BoolToVisibility}}" />
@@ -296,7 +296,18 @@
                         Padding="6 4"
                         BorderThickness="1"
                         CornerRadius="4"
+                        Background="Transparent"
+                        Cursor="Hand"
+                        ToolTip="{me:LocalizationSource SearchSets.SelectCategoriesTooltip}"
                         BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}">
+                        <!-- Щелчок по самому полю открывает тот же выбор, что и кнопка: поле похоже
+                             на поле ввода, и в него щёлкают, чтобы искать категорию. В окне выбора
+                             курсор сразу стоит в поиске. -->
+                        <Border.InputBindings>
+                            <MouseBinding
+                                Gesture="LeftClick"
+                                Command="{Binding SelectedFilter.SelectCategoriesCommand}" />
+                        </Border.InputBindings>
                         <TextBlock
                             TextWrapping="Wrap"
                             VerticalAlignment="Center"

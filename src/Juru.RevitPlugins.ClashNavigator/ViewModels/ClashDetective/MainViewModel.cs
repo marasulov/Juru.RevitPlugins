@@ -16,6 +16,7 @@ using dosymep.WPF.ViewModels;
 
 using Juru.RevitPlugins.ClashNavigator.Models;
 using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
+using Juru.RevitPlugins.ClashNavigator.Services;
 using Juru.RevitPlugins.ClashNavigator.ViewModels.Services;
 
 using Wpf.Ui;
@@ -212,18 +213,39 @@ internal class MainViewModel : BaseViewModel {
         return selectedItems is not null && AllChecks?.Count > selectedItems.Count;
     }
 
+    /// <remarks>
+    /// Исключения ловятся здесь, а не выше: команда вызывается из окна, и всё, что не поймано,
+    /// уходит в обработчик WPF и пропадает молча - нажатие OK выглядит так, будто ничего не
+    /// произошло. Отмена в окне хода поиска останавливает прогон; сводка показывается по тем
+    /// проверкам, что успели пройти до неё - их отчёты уже сохранены.
+    /// </remarks>
     private void FindClashes() {
         CanCancel = false;
         RenewConfig();
         _checksConfig.SaveProjectConfig();
 
-        var results = AllChecks
-            .Where(item => item.IsSelected)
-            .Select(item => item.SaveClashes())
-            .ToArray();
+        List<CheckSearchResult> results = [];
+        string message = _localization.GetLocalizedString("ChecksWindow.SearchCompleted");
+        try {
+            using var progress = new ClashSearchProgress(_localization);
+            foreach(var check in AllChecks.Where(item => item.IsSelected)) {
+                results.Add(check.SaveClashes(progress));
+            }
+        } catch(OperationCanceledException) {
+            message = _localization.GetLocalizedString("ChecksWindow.SearchCancelled");
+        } catch(Exception exception) {
+            CanCancel = true;
+            MessageText = null;
+            Views.MessageWindow.ShowError(
+                _localization.GetLocalizedString("ChecksWindow.SearchFailed", exception.Message)
+                + Environment.NewLine + Environment.NewLine + exception,
+                _localization.GetLocalizedString("ChecksWindow.SummaryTitle"),
+                _localization);
+            return;
+        }
 
         CanCancel = true;
-        MessageText = _localization.GetLocalizedString("ChecksWindow.SearchCompleted");
+        MessageText = message;
         ShowSummary(results);
         Wait(() => {
             foreach(var check in AllChecks) {

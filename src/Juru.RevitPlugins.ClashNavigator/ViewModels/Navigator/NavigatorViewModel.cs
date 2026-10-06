@@ -596,6 +596,13 @@ internal class NavigatorViewModel : BaseViewModel {
         return SelectedReport != null;
     }
 
+    /// <summary>
+    /// Снимает цветную подсветку коллизии - вызывается при закрытии окна навигатора.
+    /// </summary>
+    public void ClearHighlight() {
+        _revitRepository.QueueClearHighlight();
+    }
+
     private void SelectClash(IClashViewModel clash) {
         if(clash is not ClashViewModel resolvable || !resolvable.IsResolved) {
             // Показывать нечего: элементы коллизии не найдены в открытом документе и связях.
@@ -605,7 +612,7 @@ internal class NavigatorViewModel : BaseViewModel {
 
         var settings = new ClashViewSettings(_revitRepository, _localizationService, clash, _settingsConfig);
         var elements = clash.GetElements();
-        _revitRepository.QueueSelectAndShowElement(elements, settings);
+        _revitRepository.QueueSelectAndShowElement(elements, settings, _settingsConfig.HighlightClashElements);
     }
 
     private void SaveAllReports() {

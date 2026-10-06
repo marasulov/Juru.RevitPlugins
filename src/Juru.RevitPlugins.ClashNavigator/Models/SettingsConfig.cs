@@ -28,6 +28,11 @@ internal class SettingsConfig : ProjectConfig {
     public int SectionBoxOffset { get; set; } = 3000;
 
     /// <summary>
+    /// Рисовать элементы выбранной коллизии цветом поверх модели на виде коллизий.
+    /// </summary>
+    public bool HighlightClashElements { get; set; } = true;
+
+    /// <summary>
     /// Адрес сервера коллизий для загрузки отчётов через REST API (см. <see cref="RevitClashReport.ServerClashes.ClashServerClient"/>).
     /// Пустое значение означает адрес из <see cref="ClashServerOptions.DefaultUrl"/>.
     /// </summary>

@@ -5,12 +5,10 @@ using System.Threading;
 
 using Autodesk.Revit.DB;
 
-using dosymep.Bim4Everyone.SimpleServices;
-using dosymep.SimpleServices;
-
 using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.ClashNavigator.Models.Extensions;
 using Juru.RevitPlugins.ClashNavigator.Models.Interfaces;
+using Juru.RevitPlugins.ClashNavigator.Services;
 
 namespace Juru.RevitPlugins.ClashNavigator.Models.ClashDetection;
 internal class ProvidersClashDetector {
@@ -20,7 +18,6 @@ internal class ProvidersClashDetector {
     private readonly List<ElementId> _ids;
     private readonly List<Element> _mainElements;
     private readonly List<Element> _secondElements;
-    private readonly int _progressBarStep = 100;
 
 
     public ProvidersClashDetector(
@@ -38,20 +35,14 @@ internal class ProvidersClashDetector {
         _secondElements = _secondProvider.GetElements();
     }
 
-    public List<ClashModel> GetClashes() {
+    /// <param name="progress">Окно хода поиска; этап задаётся здесь, по числу элементов второй выборки.</param>
+    /// <param name="stage">Подпись этапа в окне хода поиска.</param>
+    public List<ClashModel> GetClashes(ClashSearchProgress progress, string stage) {
         if(_mainElements.Count == 0) {
             return [];
         }
-        using var pb = GetPlatformService<IProgressDialogService>();
-        pb.StepValue = _progressBarStep;
-        pb.DisplayTitleFormat = "Идёт расчёт... [{0}\\{1}]";
-        var progress = pb.CreateProgress();
-        pb.MaxValue = _secondElements.Count;
-        var ct = pb.CreateCancellationToken();
-
-        pb.Show();
-
-        return GetClashes(progress, ct).Distinct().ToList();
+        progress.StartStage(stage, _secondElements.Count);
+        return GetClashes(progress, progress.Token).Distinct().ToList();
     }
 
     private List<ClashModel> GetClashes(IProgress<int> progress, CancellationToken ct) {
@@ -144,9 +135,5 @@ internal class ProvidersClashDetector {
             // Далее её можно будет проверить по объему и проценту пересечения в ClashData
             return true;
         }
-    }
-
-    protected T GetPlatformService<T>() {
-        return ServicesProvider.GetPlatformService<T>();
     }
 }
