@@ -58,9 +58,9 @@ internal class FiltersViewModel : BaseViewModel {
         AddFilterCommand = RelayCommand.Create(AddFilter);
         RemoveFilterCommand = RelayCommand.Create<IList>(RemoveFilter, CanRemoveFilter);
         SaveCommand = RelayCommand.Create(SaveConfig, CanSave);
-        SaveAsCommand = RelayCommand.Create(SaveAsConfig, CanSave);
-        LoadCommand = RelayCommand.Create(LoadConfig);
-        ExportNavisworksCommand = RelayCommand.Create(ExportNavisworks, CanSave);
+        SaveAsCommand = RelayCommand.Create(() => IgnoreCancel(SaveAsConfig), CanSave);
+        LoadCommand = RelayCommand.Create(() => IgnoreCancel(LoadConfig));
+        ExportNavisworksCommand = RelayCommand.Create(() => IgnoreCancel(ExportNavisworks), CanSave);
         SaveAndCloseCommand = RelayCommand.Create(SaveAndClose, CanSave);
         RenameFilterCommand = RelayCommand.Create(RenameFilter, HasSelectedFilter);
         CopyFilterCommand = RelayCommand.Create(CopyFilter, HasSelectedFilter);
@@ -275,6 +275,17 @@ internal class FiltersViewModel : BaseViewModel {
         return string.Join("\n", AllFilters
             .Select(item => item.GetSignature())
             .OrderBy(item => item, StringComparer.Ordinal));
+    }
+
+    /// <summary>
+    /// Закрытый пользователем файловый диалог - не ошибка: сервисы диалогов сообщают о нём
+    /// исключением, и без перехвата оно уходило из команды в Ревит.
+    /// </summary>
+    private static void IgnoreCancel(Action action) {
+        try {
+            action();
+        } catch(OperationCanceledException) {
+        }
     }
 
     private void SaveAsConfig() {

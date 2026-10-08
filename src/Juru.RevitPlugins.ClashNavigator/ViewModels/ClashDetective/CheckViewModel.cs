@@ -240,7 +240,7 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
 
         string secondFiles = SecondSelection.GetMissedFiles();
         if(!string.IsNullOrEmpty(secondFiles)) {
-            ErrorText = _localizationService.GetLocalizedString(
+            ErrorText += _localizationService.GetLocalizedString(
                     "ChecksWindow.Validation.MissingFiles2", secondFiles)
                 + Environment.NewLine;
         }
