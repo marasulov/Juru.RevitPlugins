@@ -1,4 +1,4 @@
-﻿using Juru.RevitPlugins.ClashNavigator.Commands;
+using ClashNavigator.Commands;
 using Juru.RevitPlugins.Openings.Commands;
 using Juru.RevitPlugins.Schedules.Commands;
 
@@ -38,7 +38,7 @@ namespace Juru.RevitPlugins.App
         {
             var panel = Application.CreatePanel("ClashNavigator", TabName);
 
-            panel.AddPushButton<FindClashesCommand>(RibbonText.FindClashes)
+            panel.AddPushButton<DetectiveClashesCommand>(RibbonText.FindClashes)
                 .SetImage(IconsPath + "FindClashesIcon16.png")
                 .SetLargeImage(IconsPath + "FindClashesIcon32.png")
                 .SetToolTip(RibbonText.FindClashesTip);
@@ -48,7 +48,7 @@ namespace Juru.RevitPlugins.App
                 .SetLargeImage(IconsPath + "NavigatorIcon32.png")
                 .SetToolTip(RibbonText.ClashNavigatorTip);
 
-            panel.AddPushButton<SetFiltersCommand>(RibbonText.SearchSets)
+            panel.AddPushButton<CreateFiltersCommand>(RibbonText.SearchSets)
                 .SetImage(IconsPath + "SearchSetsIcon16.png")
                 .SetLargeImage(IconsPath + "SearchSetsIcon32.png")
                 .SetToolTip(RibbonText.SearchSetsTip);

@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Xml.Linq;
 
-using Juru.RevitPlugins.ClashNavigator.Services.NavisworksImport;
+using ClashNavigator.Services.NavisworksImport;
 
 using Xunit;
 

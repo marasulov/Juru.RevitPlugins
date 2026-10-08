@@ -34,11 +34,14 @@
         <PackageReference Include="WPF-UI" Version="4.3.0" />
     </ItemGroup>
 
-    <ItemGroup>
-        <Folder Include="Models" />
-        <Folder Include="Commands\" />
-        <Folder Include="Services\" />
-    </ItemGroup>
+    <!-- Общий код ClashNavigator: субмодуль external\ClashNavigator.Core, а пока его нет -
+         соседний репозиторий рядом с Juru.RevitPlugins. Здесь остаются только части редакции:
+         PluginEdition.Edition.cs, словарь по умолчанию и сервер коллизий (Server). -->
+    <PropertyGroup>
+        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\external\ClashNavigator.Core\ClashNavigator.Core.props')">$(MSBuildThisFileDirectory)..\..\external\ClashNavigator.Core\</ClashNavigatorCorePath>
+        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == ''">$(MSBuildThisFileDirectory)..\..\..\ClashNavigator.Core\</ClashNavigatorCorePath>
+    </PropertyGroup>
+    <Import Project="$(ClashNavigatorCorePath)ClashNavigator.Core.props" />
 
     <ItemGroup>
         <Reference Include="System.Net.Http" />

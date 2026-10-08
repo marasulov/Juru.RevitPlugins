@@ -3,8 +3,8 @@ using System.Linq;
 
 using Autodesk.Revit.DB;
 
-using Juru.RevitPlugins.ClashNavigator.Models.ClashDetection;
-using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
+using ClashNavigator.Models.ClashDetection;
+using ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.RevitTests.Infrastructure;
 
 using Nice3point.TUnit.Revit;

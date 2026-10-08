@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Xml.Linq;
 
-using Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport;
+using ClashNavigator.Models.RevitClashReport;
 
 using Xunit;
 
