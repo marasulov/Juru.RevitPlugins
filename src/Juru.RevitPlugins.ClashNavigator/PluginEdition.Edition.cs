@@ -28,6 +28,11 @@ internal static partial class PluginEdition {
 
     public const string DefaultViewFilterPrefix = "BIM_коллизии_";
 
+    /// <summary>
+    /// Параметр группы видов по стандарту Bim4Everyone, принятому в организации.
+    /// </summary>
+    public const string ViewGroupParameterName = "_Группа Видов";
+
     public static string LocalProfilePath => ProfilePaths.Local;
 
     /// <summary>
