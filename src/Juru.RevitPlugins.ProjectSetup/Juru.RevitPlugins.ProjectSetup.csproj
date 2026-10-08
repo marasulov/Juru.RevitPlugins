@@ -43,4 +43,9 @@
         <None Include="ProjectSetup.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
+    <!-- Логика здесь internal; тесты внутри Ревита вызывают её напрямую. -->
+    <ItemGroup>
+        <InternalsVisibleTo Include="Juru.RevitPlugins.RevitTests" />
+    </ItemGroup>
+
 </Project>
