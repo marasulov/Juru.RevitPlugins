@@ -56,6 +56,13 @@
             Grid.Row="1"
             Margin="10 8"
             LastChildFill="True">
+            <!-- Только там, где вызывающая сторона его включила (CanHideUnselected). -->
+            <CheckBox
+                x:Name="HideUnselectedCheckBox"
+                DockPanel.Dock="Right"
+                VerticalAlignment="Center"
+                Visibility="Collapsed"
+                IsChecked="{Binding HideUnselected, UpdateSourceTrigger=PropertyChanged}" />
             <CheckBox
                 x:Name="SelectAllCheckBox"
                 VerticalAlignment="Center"

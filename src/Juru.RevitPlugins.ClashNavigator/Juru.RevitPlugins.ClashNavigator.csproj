@@ -42,6 +42,8 @@
 
     <ItemGroup>
         <Reference Include="System.Net.Http" />
+        <!-- ZipArchive: файл BCF - это zip. -->
+        <Reference Include="System.IO.Compression" />
     </ItemGroup>
 
     <ItemGroup>
@@ -83,6 +85,11 @@
         <HintPath>..\Juru.RevitPlugins.Core\libs\Serilog.dll</HintPath>
         <Private>false</Private>
       </Reference>
+    </ItemGroup>
+
+    <!-- Логика здесь internal; тесты внутри Ревита вызывают её напрямую. -->
+    <ItemGroup>
+        <InternalsVisibleTo Include="Juru.RevitPlugins.RevitTests" />
     </ItemGroup>
 
 </Project>

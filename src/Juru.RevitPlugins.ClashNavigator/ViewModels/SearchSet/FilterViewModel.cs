@@ -6,6 +6,7 @@ using System.Windows.Input;
 
 using Autodesk.Revit.DB;
 
+using dosymep.Revit;
 using dosymep.SimpleServices;
 using dosymep.WPF.Commands;
 using dosymep.WPF.ViewModels;
@@ -16,8 +17,6 @@ using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
 using Juru.RevitPlugins.ClashNavigator.Models.Interfaces;
 using Juru.RevitPlugins.ClashNavigator.ViewModels.ClashDetective;
 using Juru.RevitPlugins.ClashNavigator.Views.Checks;
-
-using ParameterValueProvider = Juru.RevitPlugins.ClashNavigator.Models.FilterableValueProviders.ParameterValueProvider;
 
 namespace Juru.RevitPlugins.ClashNavigator.ViewModels.SearchSet;
 /// <summary>
@@ -70,9 +69,9 @@ internal class FilterViewModel : BaseViewModel, INamedEntity, IName {
     }
 
     /// <summary>
-    /// Параметры, доступные правилам набора: общие для всех выбранных категорий.
+    /// Параметры, доступные правилам набора: общие для всех выбранных категорий, и рабочий набор.
     /// </summary>
-    public ObservableCollection<ParameterValueProvider> Providers { get; } = [];
+    public ObservableCollection<IFilterableValueProvider> Providers { get; } = [];
 
     public SetViewModel Set { get; }
 
@@ -95,7 +94,7 @@ internal class FilterViewModel : BaseViewModel, INamedEntity, IName {
     /// <summary>
     /// Возвращает параметр из списка доступных, добавляя его туда, если его там ещё нет.
     /// </summary>
-    public ParameterValueProvider GetOrAddProvider(ParameterValueProvider provider) {
+    public IFilterableValueProvider GetOrAddProvider(IFilterableValueProvider provider) {
         var existing = Providers.FirstOrDefault(item => item.Equals(provider));
         if(existing != null) {
             return existing;
@@ -114,6 +113,16 @@ internal class FilterViewModel : BaseViewModel, INamedEntity, IName {
         };
     }
 
+    /// <summary>
+    /// Состояние набора одной строкой - см. <see cref="CriterionViewModel.GetSignature" />.
+    /// </summary>
+    public string GetSignature() {
+        string categories = string.Join(",", SelectedCategories
+            .Select(item => item.Id.GetIdValue())
+            .OrderBy(item => item));
+        return $"{Name}|{categories}|{Set.GetSignature()}";
+    }
+
     public string GetErrorText() {
         if(string.IsNullOrWhiteSpace(Name)) {
             return _localizationService.GetLocalizedString("SearchSets.Validation.NoName");
@@ -129,7 +138,8 @@ internal class FilterViewModel : BaseViewModel, INamedEntity, IName {
 
     private void SelectCategories() {
         var vm = new SelectableNamesViewModel(AllCategories, SelectedCategories) {
-            Title = _localizationService.GetLocalizedString("SearchSets.SelectCategoriesTitle")
+            Title = _localizationService.GetLocalizedString("SearchSets.SelectCategoriesTitle"),
+            CanHideUnselected = true
         };
         var window = new SelectableNamesWindow(vm, _localizationService);
 
@@ -147,7 +157,7 @@ internal class FilterViewModel : BaseViewModel, INamedEntity, IName {
     private void RefreshProviders() {
         var used = GetUsedProviders().ToList();
         var categories = GetSelectedCategories();
-        IEnumerable<ParameterValueProvider> parameters;
+        IEnumerable<IFilterableValueProvider> parameters;
         if(categories.Length == 0) {
             // Список параметров общий для выбранных категорий: без единой выбранной категории
             // получить его неоткуда. Явное сообщение вместо молча пустого списка - иначе кажется,
@@ -158,7 +168,12 @@ internal class FilterViewModel : BaseViewModel, INamedEntity, IName {
                 : null;
         } else {
             try {
-                parameters = _revitRepository.GetParameters(_revitRepository.Doc, categories);
+                // Рабочий набор есть у элемента любой категории, поэтому он в списке всегда, когда
+                // выбрана хоть одна категория.
+                parameters = [
+                    .. _revitRepository.GetParameters(_revitRepository.Doc, categories),
+                    new WorksetValueProvider(_revitRepository)
+                ];
                 ProvidersErrorText = null;
             } catch(Exception exception) {
                 parameters = [];
@@ -188,11 +203,11 @@ internal class FilterViewModel : BaseViewModel, INamedEntity, IName {
         }
     }
 
-    private IEnumerable<ParameterValueProvider> GetUsedProviders() {
+    private IEnumerable<IFilterableValueProvider> GetUsedProviders() {
         return Set is null ? [] : GetUsedProviders(Set);
     }
 
-    private IEnumerable<ParameterValueProvider> GetUsedProviders(SetViewModel set) {
+    private IEnumerable<IFilterableValueProvider> GetUsedProviders(SetViewModel set) {
         foreach(var criterion in set.Criteria) {
             switch(criterion) {
                 case SetViewModel nestedSet: {

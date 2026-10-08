@@ -1,0 +1,66 @@
+<Window
+    x:Class="Juru.RevitPlugins.ClashNavigator.Views.Filters.FilterNameWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:searchSet="clr-namespace:Juru.RevitPlugins.ClashNavigator.ViewModels.SearchSet"
+    mc:Ignorable="d"
+    x:ClassModifier="internal"
+    Title="{Binding Title}"
+    Width="460" SizeToContent="Height" ResizeMode="NoResize"
+    WindowStartupLocation="CenterOwner"
+    d:DataContext="{d:DesignInstance searchSet:FilterNameViewModel, IsDesignTimeCreatable=False}">
+
+    <!-- Обычное WPF-окно, как SelectableNamesWindow и MessageWindow: системная строка заголовка
+         (крестик, Esc) закрывает его всегда, даже если тема WPF-UI в нём не поднимется. -->
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/Juru.RevitPlugins.Core;component/Resources/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid
+        Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TextBox
+            x:Name="NameBox"
+            Grid.Row="0"
+            Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+        <TextBlock
+            Grid.Row="1"
+            Margin="0 6 0 0"
+            TextWrapping="Wrap"
+            Foreground="Red"
+            Text="{Binding ErrorText}" />
+
+        <!-- Не Appearance="Primary" - см. тот же комментарий в SelectableNamesWindow.xaml. -->
+        <StackPanel
+            Grid.Row="2"
+            Margin="0 10 0 0"
+            Orientation="Horizontal"
+            HorizontalAlignment="Right">
+            <ui:Button
+                x:Name="OkButton"
+                MinWidth="80"
+                Margin="0 0 8 0"
+                IsDefault="True"
+                IsEnabled="{Binding CanAccept}"
+                Click="ButtonOk_Click" />
+            <ui:Button
+                x:Name="CancelButton"
+                MinWidth="80"
+                IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</Window>

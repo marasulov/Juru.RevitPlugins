@@ -35,6 +35,7 @@ internal class FiltersViewModel : BaseViewModel {
     private string _filtersFilter;
     private string _errorText;
     private string _messageText;
+    private string _savedSignature;
 
     public FiltersViewModel(RevitRepository revitRepository,
         IOpenFileDialogService openFileDialogService,
@@ -52,6 +53,7 @@ internal class FiltersViewModel : BaseViewModel {
 
         SetAllFilters(InitializeFilters(_filtersConfig));
         SelectedFilter = AllFilters.FirstOrDefault();
+        _savedSignature = GetSignature();
 
         AddFilterCommand = RelayCommand.Create(AddFilter);
         RemoveFilterCommand = RelayCommand.Create<IList>(RemoveFilter, CanRemoveFilter);
@@ -59,6 +61,10 @@ internal class FiltersViewModel : BaseViewModel {
         SaveAsCommand = RelayCommand.Create(SaveAsConfig, CanSave);
         LoadCommand = RelayCommand.Create(LoadConfig);
         ExportNavisworksCommand = RelayCommand.Create(ExportNavisworks, CanSave);
+        SaveAndCloseCommand = RelayCommand.Create(SaveAndClose, CanSave);
+        RenameFilterCommand = RelayCommand.Create(RenameFilter, HasSelectedFilter);
+        CopyFilterCommand = RelayCommand.Create(CopyFilter, HasSelectedFilter);
+        PreviewCommand = RelayCommand.Create(Preview, CanPreview);
 
         PropertyChanged += FiltersFilterPropertyChanged;
     }
@@ -74,6 +80,31 @@ internal class FiltersViewModel : BaseViewModel {
     public ICommand SaveAsCommand { get; }
     public ICommand LoadCommand { get; }
     public ICommand ExportNavisworksCommand { get; }
+    public ICommand SaveAndCloseCommand { get; }
+    public ICommand RenameFilterCommand { get; }
+    public ICommand CopyFilterCommand { get; }
+    public ICommand PreviewCommand { get; }
+
+    /// <summary>
+    /// Запрос имени набора. Окно назначает его себе: диалогу нужен владелец, иначе он
+    /// уходит за окно наборов.
+    /// </summary>
+    public Func<FilterNameViewModel, bool> AskFilterName { get; set; }
+
+    /// <summary>
+    /// Открывает окно просмотра набора. Назначается окном - по той же причине, что и <see cref="AskFilterName" />.
+    /// </summary>
+    public Action<SearchSetPreviewViewModel> ShowPreview { get; set; }
+
+    /// <summary>
+    /// Наборы сохранены кнопкой ОК, окно можно закрывать.
+    /// </summary>
+    public event EventHandler CloseRequested;
+
+    /// <summary>
+    /// Есть ли изменения, не записанные в наборы проекта.
+    /// </summary>
+    public bool HasUnsavedChanges => GetSignature() != _savedSignature;
 
     public CollectionViewSource Filters {
         get => _filters;
@@ -155,7 +186,95 @@ internal class FiltersViewModel : BaseViewModel {
     private void SaveConfig() {
         RenewConfig();
         _filtersConfig.SaveProjectConfig();
+        _savedSignature = GetSignature();
         ShowMessage(LocalizationService.GetLocalizedString("SearchSets.SetsSaved"));
+    }
+
+    private void SaveAndClose() {
+        SaveConfig();
+        CloseRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Решает, закрывать ли окно: при несохранённых изменениях предлагает их сохранить, а если
+    /// наборы сохранить нельзя - предупреждает, что изменения пропадут.
+    /// </summary>
+    /// <returns>false - окно оставить открытым.</returns>
+    public bool ConfirmClose() {
+        if(!HasUnsavedChanges) {
+            return true;
+        }
+
+        string title = LocalizationService.GetLocalizedString("SearchSets.Title");
+        if(CanSave()) {
+            if(Views.MessageWindow.AskYesNo(
+                   LocalizationService.GetLocalizedString("SearchSet.SavePrompt"), title, LocalizationService)) {
+                SaveConfig();
+            }
+            return true;
+        }
+
+        return Views.MessageWindow.AskYesNo(
+            LocalizationService.GetLocalizedString("SearchSet.CannotSavePrompt", ErrorText), title, LocalizationService);
+    }
+
+    private bool HasSelectedFilter() {
+        return SelectedFilter != null;
+    }
+
+    private void RenameFilter() {
+        var nameViewModel = new FilterNameViewModel(
+            LocalizationService,
+            LocalizationService.GetLocalizedString("SearchSet.RenameTitle"),
+            AllFilters.Where(item => item != SelectedFilter).Select(item => item.Name),
+            SelectedFilter.Name);
+        if(AskFilterName?.Invoke(nameViewModel) == true) {
+            SelectedFilter.Name = nameViewModel.Name.Trim();
+        }
+    }
+
+    /// <summary>
+    /// Копия выбранного набора под новым именем - со всеми категориями и правилами, в том числе
+    /// ещё не сохранёнными.
+    /// </summary>
+    private void CopyFilter() {
+        var names = AllFilters.Select(item => item.Name).ToList();
+        string name = SelectedFilter.Name;
+        for(int i = 1; names.Contains(name, StringComparer.CurrentCultureIgnoreCase); i++) {
+            name = $"{SelectedFilter.Name} ({i})";
+        }
+
+        var nameViewModel = new FilterNameViewModel(
+            LocalizationService,
+            LocalizationService.GetLocalizedString("SearchSet.CopyTitle"),
+            names,
+            name);
+        if(AskFilterName?.Invoke(nameViewModel) != true) {
+            return;
+        }
+
+        var filter = SelectedFilter.GetFilter();
+        filter.Name = nameViewModel.Name.Trim();
+        var copy = new FilterViewModel(_revitRepository, LocalizationService, filter);
+        AllFilters.Add(copy);
+        SelectedFilter = copy;
+    }
+
+    private void Preview() {
+        ShowPreview?.Invoke(new SearchSetPreviewViewModel(_revitRepository, LocalizationService, SelectedFilter.GetFilter()));
+    }
+
+    /// <summary>
+    /// Смотреть можно только заполненный набор: из недозаполненного правила фильтр Ревита не собрать.
+    /// </summary>
+    private bool CanPreview() {
+        return SelectedFilter != null && SelectedFilter.GetErrorText() is null;
+    }
+
+    private string GetSignature() {
+        return string.Join("\n", AllFilters
+            .Select(item => item.GetSignature())
+            .OrderBy(item => item, StringComparer.Ordinal));
     }
 
     private void SaveAsConfig() {
@@ -254,6 +373,7 @@ internal class FiltersViewModel : BaseViewModel {
         if(setsSaved) {
             RenewConfig();
             _filtersConfig.SaveProjectConfig();
+            _savedSignature = GetSignature();
         } else {
             summary.AppendLine(LocalizationService.GetLocalizedString("Import.SetsNotSaved", ErrorText));
         }

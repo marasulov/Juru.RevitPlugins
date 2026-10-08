@@ -29,6 +29,7 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
     private readonly IContentDialogService _contentDialogService;
     private string _name;
     private double _tolerance;
+    private ClashIgnoreRules _ignoreRules = ClashIgnoreRules.Default;
     private string _errorText;
     private int? _clashCount;
     private bool _isSelected;
@@ -55,6 +56,7 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
         _contentDialogService = contentDialogService ?? throw new ArgumentNullException(nameof(contentDialogService));
         Name = check?.Name ?? _localizationService.GetLocalizedString("ChecksWindow.DefaultCheckName");
         Tolerance = check?.Tolerance ?? 0;
+        IgnoreRules = check?.IgnoreRules ?? ClashIgnoreRules.Default;
 
         if(check == null) {
             InitializeSelections();
@@ -63,6 +65,7 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
         }
 
         ShowClashesCommand = new RelayCommand(ShowClashes, CanShowClashes);
+        SelectIgnoreRulesCommand = new RelayCommand(SelectIgnoreRules);
     }
 
     public ICommand SelectMainProviderCommand { get; }
@@ -111,6 +114,25 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
     /// <summary>
     /// Допуск, мм: пересечения мельче не считаются коллизиями.
     /// </summary>
+    public ICommand SelectIgnoreRulesCommand { get; }
+
+    /// <summary>
+    /// Пары, которые не считаются коллизиями.
+    /// </summary>
+    public ClashIgnoreRules IgnoreRules {
+        get => _ignoreRules;
+        set {
+            RaiseAndSetIfChanged(ref _ignoreRules, value);
+            RaisePropertyChanged(nameof(IgnoreRulesTitle));
+        }
+    }
+
+    /// <summary>
+    /// Подпись кнопки правил: сколько включено.
+    /// </summary>
+    public string IgnoreRulesTitle => _localizationService.GetLocalizedString(
+        "ChecksWindow.IgnoreRulesTitle", RuleItems().Count(item => IgnoreRules.HasFlag(item.Rule)));
+
     public double Tolerance {
         get => _tolerance;
         set => RaiseAndSetIfChanged(ref _tolerance, Math.Max(0, value));
@@ -160,7 +182,7 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
     public List<ClashModel> GetClashes(ClashSearchProgress progress) {
         (var mainProviders, var otherProviders) = GetProviders();
 
-        var clashDetector = new ClashDetector(_revitRepository, mainProviders, otherProviders, Tolerance / 304.8);
+        var clashDetector = new ClashDetector(_revitRepository, mainProviders, otherProviders, Tolerance / 304.8, IgnoreRules);
         return clashDetector.FindClashes(progress, Name);
     }
 
@@ -251,6 +273,41 @@ internal class CheckViewModel : BaseViewModel, INamedEntity {
                 _localizationService.GetLocalizedString("Navigator.Title"),
                 _localizationService);
         }
+    }
+
+    private void SelectIgnoreRules() {
+        var items = RuleItems();
+        var vm = new SelectableNamesViewModel(items, items.Where(item => IgnoreRules.HasFlag(item.Rule))) {
+            Title = _localizationService.GetLocalizedString("ChecksWindow.IgnoreRulesDialogTitle")
+        };
+        var window = new Views.Checks.SelectableNamesWindow(vm, _localizationService);
+        if(window.ShowDialog() == true) {
+            IgnoreRules = vm.GetSelectedEntities<IgnoreRuleItem>()
+                .Aggregate(ClashIgnoreRules.None, (rules, item) => rules | item.Rule);
+        }
+    }
+
+    private List<IgnoreRuleItem> RuleItems() {
+        return [
+            new(ClashIgnoreRules.Insulation, _localizationService.GetLocalizedString("IgnoreRule.Insulation")),
+            new(ClashIgnoreRules.HostAndNested, _localizationService.GetLocalizedString("IgnoreRule.HostAndNested")),
+            new(ClashIgnoreRules.Connected, _localizationService.GetLocalizedString("IgnoreRule.Connected")),
+            new(ClashIgnoreRules.SameSystem, _localizationService.GetLocalizedString("IgnoreRule.SameSystem")),
+            new(ClashIgnoreRules.SameFile, _localizationService.GetLocalizedString("IgnoreRule.SameFile"))
+        ];
+    }
+
+    /// <summary>
+    /// Правило исключения как строка диалога выбора.
+    /// </summary>
+    private sealed class IgnoreRuleItem : IName {
+        public IgnoreRuleItem(ClashIgnoreRules rule, string name) {
+            Rule = rule;
+            Name = name;
+        }
+
+        public ClashIgnoreRules Rule { get; }
+        public string Name { get; }
     }
 
     private bool CanShowClashes() {

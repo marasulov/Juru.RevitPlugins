@@ -389,7 +389,8 @@ internal class MainViewModel : BaseViewModel {
                 Name = check.Name,
                 FirstSelection = check.FirstSelection.GetCheckSettings(),
                 SecondSelection = check.SecondSelection.GetCheckSettings(),
-                Tolerance = check.Tolerance
+                Tolerance = check.Tolerance,
+                IgnoreRules = check.IgnoreRules
             });
         }
         _checksConfig.RevitVersion = RevitVersionInfo.Version;
@@ -521,6 +522,7 @@ internal class MainViewModel : BaseViewModel {
         return JsonConvert.SerializeObject(AllChecks.Select(check => new {
             check.Name,
             check.Tolerance,
+            check.IgnoreRules,
             First = check.FirstSelection.GetCheckSettings(),
             Second = check.SecondSelection.GetCheckSettings()
         }));

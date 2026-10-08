@@ -51,6 +51,8 @@
                  Link="NavisworksXml.cs" />
         <Compile Include="..\..\src\Juru.RevitPlugins.ClashNavigator\Models\RevitClashes\Models\Clashes\ReportFileName.cs"
                  Link="ReportFileName.cs" />
+        <Compile Include="..\..\src\Juru.RevitPlugins.ClashNavigator\Models\RevitClashes\Models\RevitClashReport\NavisXmlReport.cs"
+                 Link="NavisXmlReport.cs" />
     </ItemGroup>
 
 </Project>

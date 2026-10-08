@@ -38,6 +38,16 @@ internal class SettingsConfig : ProjectConfig {
     public bool HalftoneOtherElements { get; set; } = true;
 
     /// <summary>
+    /// Цвет и прозрачность подсветки первого элемента коллизии.
+    /// </summary>
+    public HighlightColorSettings FirstHighlight { get; set; } = HighlightColorSettings.DefaultFirst;
+
+    /// <summary>
+    /// Цвет и прозрачность подсветки второго элемента коллизии.
+    /// </summary>
+    public HighlightColorSettings SecondHighlight { get; set; } = HighlightColorSettings.DefaultSecond;
+
+    /// <summary>
     /// Адрес сервера коллизий для загрузки отчётов через REST API (см. <see cref="RevitClashReport.ServerClashes.ClashServerClient"/>).
     /// Пустое значение означает адрес из <see cref="ClashServerOptions.DefaultUrl"/>.
     /// </summary>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,8 +23,6 @@ namespace Juru.RevitPlugins.ClashNavigator.Views.Navigator
 {
     public partial class NavigatorWindow : WpfUIPlatformWindow
     {
-        private Window _imagePreviewWindow;
-        private Image _imagePreviewImage;
         private bool _columnSettingsApplied;
         private bool _startupLoadRequested;
 
@@ -113,6 +112,10 @@ namespace Juru.RevitPlugins.ClashNavigator.Views.Navigator
             }
 
             clash.ClashStatus = status;
+            if (clash.ClashStatus == status && DataContext is NavigatorViewModel viewModel)
+            {
+                viewModel.SelectedReport?.ApplyStatusToSelection(clash);
+            }
 
             // Если модель выбор не приняла, возвращаем список к её значению: пусть расхождение
             // будет видно сразу, а не оборачивается молчаливым "статус изменён, но никуда не идёт".
@@ -120,6 +123,21 @@ namespace Juru.RevitPlugins.ClashNavigator.Views.Navigator
             {
                 box.SelectedValue = clash.ClashStatus;
             }
+        }
+
+        // DataGrid отдаёт только одну выбранную строку через привязку SelectedItem, а команды
+        // выделения элементов и массовая смена статуса работают по всем выделенным строкам.
+        private void ClashesGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Сюда же всплывает SelectionChanged списков статусов из ячеек - их пропускаем.
+            if (!ReferenceEquals(e.OriginalSource, ClashesGrid)
+                || DataContext is not NavigatorViewModel { SelectedReport: { } report })
+            {
+                return;
+            }
+
+            report.SelectedGuiClashes = new System.Collections.ObjectModel.ObservableCollection<IClashViewModel>(
+                ClashesGrid.SelectedItems.OfType<IClashViewModel>());
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -251,42 +269,43 @@ namespace Juru.RevitPlugins.ClashNavigator.Views.Navigator
             return string.IsNullOrWhiteSpace(key) ? null : key;
         }
 
+        // Снимок показываем во всплывающей панели у курсора: отдельное окно оставалось висеть
+        // за навигатором, и его приходилось закрывать руками.
         private void ClashImage_Click(object sender, MouseButtonEventArgs e)
         {
-            if (sender is not Image image || image.Source is null)
+            if (sender is not Image image || image.Source is null || ImagePreviewPopup is null)
             {
                 return;
             }
 
-            if (_imagePreviewWindow is null)
+            // Закрываем перед открытием: открытый Popup не переезжает к новому положению курсора.
+            ImagePreviewPopup.IsOpen = false;
+            ImagePreviewImage.Source = image.Source;
+            ImagePreviewPopup.IsOpen = true;
+        }
+
+        private void ImagePreview_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (ImagePreviewPopup is not null)
             {
-                _imagePreviewImage = new Image
-                {
-                    Stretch = Stretch.Uniform,
-                    Margin = new Thickness(10)
-                };
-                _imagePreviewWindow = new Window
-                {
-                    Title = "Снимок коллизии",
-                    Content = _imagePreviewImage,
-                    Width = 900,
-                    Height = 700,
-                    WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                    Owner = this
-                };
-                _imagePreviewWindow.Closed += (_, _) => _imagePreviewWindow = null;
+                ImagePreviewPopup.IsOpen = false;
+            }
+        }
+
+        // TextBox ячейки Id забирает щелчок себе, и строка под ним не выделялась - а F3, команды
+        // выделения и смена статуса работают от выделенной строки. Выделяем её сами; с Ctrl/Shift
+        // щелчок оставляем таблице как есть, чтобы не ломать множественное выделение.
+        private void IdCell_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (ClashesGrid is null
+                || Keyboard.Modifiers != ModifierKeys.None
+                || sender is not FrameworkElement { DataContext: { } item }
+                || ClashesGrid.SelectedItems.Contains(item))
+            {
+                return;
             }
 
-            _imagePreviewImage.Source = image.Source;
-
-            if (_imagePreviewWindow.IsVisible)
-            {
-                _imagePreviewWindow.Activate();
-            }
-            else
-            {
-                _imagePreviewWindow.Show();
-            }
+            ClashesGrid.SelectedItem = item;
         }
     }
 }

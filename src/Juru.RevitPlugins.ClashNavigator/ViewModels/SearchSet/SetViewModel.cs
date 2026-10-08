@@ -82,6 +82,10 @@ internal class SetViewModel : CriterionViewModel {
             : Criteria.Select(item => item.GetErrorText()).FirstOrDefault(item => item != null);
     }
 
+    public override string GetSignature() {
+        return $"S[{SelectedEvaluator?.Evaluator}:{string.Join(",", Criteria.Select(item => item.GetSignature()))}]";
+    }
+
     private void Add(CriterionViewModel criterion) {
         if(criterion is null) {
             return;

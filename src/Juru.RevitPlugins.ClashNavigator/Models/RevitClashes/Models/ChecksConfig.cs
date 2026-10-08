@@ -42,6 +42,12 @@ internal class Check
     /// Допуск, мм: пересечения мельче не считаются коллизиями. 0 - любое пересечение.
     /// </summary>
     public double Tolerance { get; set; }
+
+    /// <summary>
+    /// Пары, которые не считаются коллизиями. У проверок, сохранённых до появления правил,
+    /// свойства в файле нет - они получают правила по умолчанию.
+    /// </summary>
+    public ClashDetection.ClashIgnoreRules IgnoreRules { get; set; } = ClashDetection.ClashIgnoreRules.Default;
 }
 
 internal class SelectionConfig

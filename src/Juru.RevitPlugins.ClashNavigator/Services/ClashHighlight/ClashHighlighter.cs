@@ -15,20 +15,8 @@ namespace Juru.RevitPlugins.ClashNavigator.Services.ClashHighlight;
 /// закрытия плагина в Ревите не оставалось его серверов отрисовки.
 /// </remarks>
 internal static class ClashHighlighter {
-    /// <summary>
-    /// Цвет первого элемента коллизии.
-    /// </summary>
-    public static readonly Color FirstColor = new(229, 57, 53);
-
-    /// <summary>
-    /// Цвет второго элемента коллизии.
-    /// </summary>
-    /// <remarks>
-    /// Не синий: элементы коллизии ещё и выделены, а выделение Ревит рисует синим поверх, -
-    /// синий элемент на нём не отличить от выделенного.
-    /// </remarks>
-    public static readonly Color SecondColor = new(255, 179, 0);
-
+    // Цвета и прозрачность подсветки задаёт пользователь в настройках
+    // (Models.HighlightColorSettings) и приходят сюда в самих элементах.
     private static ClashHighlightServer _server;
 
     /// <summary>

@@ -44,6 +44,15 @@
     <system:String x:Key="ChecksWindow.DefaultCheckName">Новая проверка</system:String>
     <system:String x:Key="ChecksWindow.SearchCompleted">Поиск коллизий завершён</system:String>
     <system:String x:Key="ChecksWindow.ClashCount">Коллизий</system:String>
+    <system:String x:Key="ChecksWindow.IgnoreRules">Исключения</system:String>
+    <system:String x:Key="ChecksWindow.IgnoreRulesTitle">Правил: {0}</system:String>
+    <system:String x:Key="ChecksWindow.IgnoreRulesTooltip">Какие пересечения не считаются коллизиями</system:String>
+    <system:String x:Key="ChecksWindow.IgnoreRulesDialogTitle">Не считать коллизиями</system:String>
+    <system:String x:Key="IgnoreRule.Insulation">Изоляцию и облицовку с их трубой или воздуховодом</system:String>
+    <system:String x:Key="IgnoreRule.HostAndNested">Элемент с его основой (дверь и стена) и вложенные семейства</system:String>
+    <system:String x:Key="IgnoreRule.Connected">Элементы, соединённые коннекторами (труба и фитинг)</system:String>
+    <system:String x:Key="IgnoreRule.SameSystem">Элементы одной инженерной системы</system:String>
+    <system:String x:Key="IgnoreRule.SameFile">Элементы одного файла</system:String>
     <system:String x:Key="ChecksWindow.Tolerance">Допуск, мм</system:String>
     <system:String x:Key="ChecksWindow.ToleranceTooltip">Пересечения мельче допуска не считаются коллизиями. 0 - любое пересечение.</system:String>
     <system:String x:Key="ChecksWindow.SearchCancelled">Поиск коллизий отменён</system:String>
@@ -112,6 +121,39 @@
     <system:String x:Key="SearchSets.Validation.RuleNoValue">У правила "{0}" не задано значение.</system:String>
     <system:String x:Key="SearchSets.Validation.NestedSetEmpty">Вложенный набор пуст.</system:String>
 
+    <!-- Search sets window: rename, copy, closing, categories -->
+    <system:String x:Key="SearchSet.Rename">Переименовать...</system:String>
+    <system:String x:Key="SearchSet.RenameTitle">Переименование набора</system:String>
+    <system:String x:Key="SearchSet.Copy">Копировать...</system:String>
+    <system:String x:Key="SearchSet.CopyTooltip">Создать копию набора под новым именем</system:String>
+    <system:String x:Key="SearchSet.CopyTitle">Копия набора</system:String>
+    <system:String x:Key="SearchSet.NameTaken">Набор с таким именем уже есть.</system:String>
+    <system:String x:Key="SearchSet.SavePrompt">Наборы изменены. Сохранить изменения?</system:String>
+    <system:String x:Key="SearchSet.CannotSavePrompt">Наборы изменены, но сохранить их нельзя: {0}&#x0a;&#x0a;Закрыть окно без сохранения? Изменения будут потеряны.</system:String>
+    <system:String x:Key="SearchSet.HideUnselected">Только выбранные</system:String>
+
+    <!-- Search set preview -->
+    <system:String x:Key="SearchSet.Preview">Просмотр</system:String>
+    <system:String x:Key="SearchSet.PreviewTooltip">Показать элементы, которые отбирает набор, - таблицей и на 3D-виде коллизий</system:String>
+    <system:String x:Key="SearchSet.ShowSet">Показать набор</system:String>
+    <system:String x:Key="SearchSet.ShowSetTooltip">Скрыть на 3D-виде коллизий всё, что в набор не входит</system:String>
+    <system:String x:Key="SearchSet.Previous">Предыдущий</system:String>
+    <system:String x:Key="SearchSet.Next">Следующий</system:String>
+    <system:String x:Key="SearchSet.StepTooltip">Перейти к элементу и показать его на 3D-виде</system:String>
+    <system:String x:Key="SearchSet.ShowElement">Показать элемент</system:String>
+    <system:String x:Key="SearchSet.ShowElementTooltip">Подрезать 3D-вид по выбранному элементу и выделить его (или двойной щелчок по строке)</system:String>
+    <system:String x:Key="SearchSet.Invert">Обратный набор</system:String>
+    <system:String x:Key="SearchSet.InvertTooltip">Элементы тех же категорий, которые под правила набора не подходят</system:String>
+    <system:String x:Key="SearchSet.Column.File">Файл</system:String>
+    <system:String x:Key="SearchSet.Column.Id">Id</system:String>
+    <system:String x:Key="SearchSet.Column.Category">Категория</system:String>
+    <system:String x:Key="SearchSet.Column.Family">Семейство</system:String>
+    <system:String x:Key="SearchSet.Column.Type">Типоразмер</system:String>
+    <system:String x:Key="SearchSet.ElementsCount">Элементов: {0}</system:String>
+    <system:String x:Key="SearchSet.LoadError">Не удалось отобрать элементы набора: {0}</system:String>
+    <system:String x:Key="SearchSet.ShowSetError">Ревит не смог построить фильтр вида по правилам набора - на виде показаны все элементы его категорий.</system:String>
+    <system:String x:Key="SearchSet.ShowElementError">Элемент не удалось выделить: документ закрыт, или элемент из связи (в Ревите 2023 элементы связей не выделяются).</system:String>
+
     <!-- Условия правил -->
     <system:String x:Key="Evaluator.Equals">равно</system:String>
     <system:String x:Key="Evaluator.NotEquals">не равно</system:String>
@@ -154,6 +196,11 @@
     <system:String x:Key="SettingsWindow.SectionBoxOffset">Размер Section Box, мм</system:String>
     <system:String x:Key="SettingsWindow.HighlightClash">Подсвечивать элементы коллизии цветом</system:String>
     <system:String x:Key="SettingsWindow.HalftoneOthers">Остальную модель - полутоном</system:String>
+    <system:String x:Key="SettingsWindow.FirstHighlight">Первый элемент</system:String>
+    <system:String x:Key="SettingsWindow.SecondHighlight">Второй элемент</system:String>
+    <system:String x:Key="SettingsWindow.PickColorTooltip">Цвет подсветки элемента. Щёлкните, чтобы выбрать</system:String>
+    <system:String x:Key="SettingsWindow.TransparencyTooltip">Прозрачность граней подсветки: 0% - непрозрачные. Рёбра всегда видны</system:String>
+    <system:String x:Key="SettingsWindow.ResetColorTooltip">Вернуть цвет и прозрачность по умолчанию</system:String>
     <system:String x:Key="SettingsWindow.Language">Язык интерфейса</system:String>
     <system:String x:Key="SettingsWindow.LanguageTooltip">Язык применится при следующем открытии окон плагина</system:String>
 
@@ -163,6 +210,16 @@
     <system:String x:Key="Language.English">English</system:String>
     <!-- Навигатор коллизий -->
     <system:String x:Key="Navigator.Title">Навигатор коллизий</system:String>
+    <system:String x:Key="Navigator.BcfTitle">Экспорт в BCF</system:String>
+    <system:String x:Key="Navigator.BcfTooltip">Выгрузить видимые коллизии отчёта в BCF 2.1 - для Revizto, BIMcollab, Solibri, Navisworks, ACC</system:String>
+    <system:String x:Key="Navigator.BcfDone">Тем выгружено: {0}.&#10;Файл: {1}</system:String>
+    <system:String x:Key="Navigator.GroupTooltip">Группировать коллизии</system:String>
+    <system:String x:Key="Navigator.Group.None">Без группировки</system:String>
+    <system:String x:Key="Navigator.Group.FirstElement">По элементу 1</system:String>
+    <system:String x:Key="Navigator.Group.SecondElement">По элементу 2</system:String>
+    <system:String x:Key="Navigator.Group.Level">По уровню</system:String>
+    <system:String x:Key="Navigator.Group.Status">По статусу</system:String>
+    <system:String x:Key="Navigator.Group.NoValue">(не задано)</system:String>
     <system:String x:Key="Navigator.KeysHint">F3 - следующая коллизия, Shift+F3 - предыдущая</system:String>
     <system:String x:Key="Navigator.TitleWithBuild">Навигатор коллизий (сборка {0})</system:String>
     <system:String x:Key="Navigator.LoadXml">Загрузить XML</system:String>
@@ -180,12 +237,21 @@
     <system:String x:Key="Navigator.ColumnsTooltip">Показать или скрыть колонки таблицы</system:String>
     <system:String x:Key="Navigator.ReportsTooltip">Выберите отчёт из загруженного XML</system:String>
     <system:String x:Key="Navigator.Show">Показать</system:String>
+    <system:String x:Key="Navigator.Pick.First">Выделить элемент 1</system:String>
+    <system:String x:Key="Navigator.Pick.FirstTooltip">Выделить в Ревите первый элемент выделенных коллизий</system:String>
+    <system:String x:Key="Navigator.Pick.Second">Выделить элемент 2</system:String>
+    <system:String x:Key="Navigator.Pick.SecondTooltip">Выделить в Ревите второй элемент выделенных коллизий</system:String>
+    <system:String x:Key="Navigator.Pick.Both">Выделить оба</system:String>
+    <system:String x:Key="Navigator.Pick.BothTooltip">Выделить в Ревите оба элемента выделенных коллизий</system:String>
+    <system:String x:Key="Navigator.Pick.Done">Выделены элементы коллизий: {0}</system:String>
+    <system:String x:Key="Navigator.Pick.Nothing">Нечего выделить: элементы не найдены в документе (элементы связей выделяются начиная с Revit 2024)</system:String>
     <system:String x:Key="Navigator.ColumnFilterTooltip">Отобрать значения в этой колонке</system:String>
     <system:String x:Key="Navigator.FilterSearchPlaceholder">Поиск...</system:String>
     <system:String x:Key="Navigator.FilterSelectAll">Все</system:String>
     <system:String x:Key="Navigator.FilterClear">Очистить</system:String>
     <system:String x:Key="Navigator.FilterApply">Применить</system:String>
     <system:String x:Key="Navigator.StatusTooltip">Новый статус уйдёт в базу по кнопке «Отправить статусы»</system:String>
+    <system:String x:Key="Navigator.CopyIdTooltip">Выделите Id и нажмите Ctrl+C, чтобы скопировать</system:String>
 
     <!-- Колонки таблицы коллизий -->
     <system:String x:Key="Navigator.Column.ClashName">Коллизия</system:String>
@@ -242,6 +308,13 @@
     <system:String x:Key="Clash.ElementWithoutId">У элемента {0} нет Id элемента в отчёте — показать его нечем</system:String>
     <system:String x:Key="Clash.ElementNotFound">Элемент {0} (Id {1}): {2}</system:String>
     <system:String x:Key="Clash.ImaginaryHint">Мнимая коллизия: второго элемента нет, показывать нечего</system:String>
+
+    <!-- Отчёт Navisworks: почему объект не сопоставлен с элементом Ревита (колонка файла) -->
+    <system:String x:Key="NavisXml.ObjectMissing">&lt;объект в отчёте отсутствует&gt;</system:String>
+    <system:String x:Key="NavisXml.NoElementId">&lt;нет Id элемента в отчёте&gt;</system:String>
+    <system:String x:Key="NavisXml.NotLoaded">&lt;не загружен в Revit&gt;</system:String>
+    <system:String x:Key="NavisXml.FileNotLoaded">&lt;файл «{0}» не загружен в Revit&gt;</system:String>
+    <system:String x:Key="NavisXml.ElementNotFound">&lt;элемента нет в файле «{0}»&gt;</system:String>
 
     <!-- Статусы коллизий. Подписи совпадают с веб-интерфейсом сервера коллизий. -->
     <system:String x:Key="ClashStatus.Active">Активно</system:String>

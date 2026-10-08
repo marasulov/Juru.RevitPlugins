@@ -8,10 +8,8 @@ using dosymep.SimpleServices;
 using dosymep.WPF.Commands;
 
 using Juru.RevitPlugins.ClashNavigator.Models.Evaluators;
-using Juru.RevitPlugins.ClashNavigator.Models.FilterableValueProviders;
 using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
-
-using ParameterValueProvider = Juru.RevitPlugins.ClashNavigator.Models.FilterableValueProviders.ParameterValueProvider;
+using Juru.RevitPlugins.ClashNavigator.Models.Interfaces;
 
 namespace Juru.RevitPlugins.ClashNavigator.ViewModels.SearchSet;
 /// <summary>
@@ -20,7 +18,7 @@ namespace Juru.RevitPlugins.ClashNavigator.ViewModels.SearchSet;
 internal class RuleViewModel : CriterionViewModel {
     private readonly FilterViewModel _filter;
     private readonly ILocalizationService _localizationService;
-    private ParameterValueProvider _selectedProvider;
+    private IFilterableValueProvider _selectedProvider;
     private RuleEvaluator _selectedEvaluator;
     private ObservableCollection<RuleEvaluator> _evaluators = [];
     private ObservableCollection<string> _values = [];
@@ -35,7 +33,7 @@ internal class RuleViewModel : CriterionViewModel {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         LoadValuesCommand = RelayCommand.Create(LoadValues, CanLoadValues);
 
-        if(rule?.Provider is ParameterValueProvider provider) {
+        if(rule?.Provider is { } provider) {
             // Параметр из сохранённого набора мог остаться без своей категории - иначе правило
             // молча теряло бы параметр, стоило открыть набор с изменившимся составом категорий.
             SelectedProvider = _filter.GetOrAddProvider(provider);
@@ -47,9 +45,9 @@ internal class RuleViewModel : CriterionViewModel {
 
     public override bool IsSet => false;
 
-    public ObservableCollection<ParameterValueProvider> Providers => _filter.Providers;
+    public ObservableCollection<IFilterableValueProvider> Providers => _filter.Providers;
 
-    public ParameterValueProvider SelectedProvider {
+    public IFilterableValueProvider SelectedProvider {
         get => _selectedProvider;
         set {
             RaiseAndSetIfChanged(ref _selectedProvider, value);
@@ -108,8 +106,14 @@ internal class RuleViewModel : CriterionViewModel {
         return new Rule() {
             Provider = SelectedProvider,
             Evaluator = SelectedEvaluator,
-            Value = SelectedProvider.GetParamValueFormString(IsValueEnabled ? Value : null)
+            // Без параметра правило не сохранить (см. GetErrorText), но копия набора собирается
+            // и из недозаполненного - там правило просто останется пустым.
+            Value = SelectedProvider?.GetParamValueFormString(IsValueEnabled ? Value : null)
         };
+    }
+
+    public override string GetSignature() {
+        return $"R[{SelectedProvider?.GetType().Name}:{SelectedProvider?.Name}|{SelectedEvaluator?.Evaluator}|{(IsValueEnabled ? Value : null)}]";
     }
 
     public override string GetErrorText() {

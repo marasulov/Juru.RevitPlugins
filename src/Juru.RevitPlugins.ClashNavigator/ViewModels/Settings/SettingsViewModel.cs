@@ -31,6 +31,8 @@ internal class SettingsViewModel : BaseViewModel {
 
         LoadViewCommand = RelayCommand.Create(LoadView);
         AcceptViewCommand = RelayCommand.Create(AcceptView, CanAcceptView);
+        FirstHighlight = new HighlightColorViewModel(() => HighlightColorSettings.DefaultFirst);
+        SecondHighlight = new HighlightColorViewModel(() => HighlightColorSettings.DefaultSecond);
     }
 
 
@@ -84,6 +86,16 @@ internal class SettingsViewModel : BaseViewModel {
     }
 
     /// <summary>
+    /// Цвет и прозрачность подсветки первого элемента коллизии.
+    /// </summary>
+    public HighlightColorViewModel FirstHighlight { get; }
+
+    /// <summary>
+    /// Цвет и прозрачность подсветки второго элемента коллизии.
+    /// </summary>
+    public HighlightColorViewModel SecondHighlight { get; }
+
+    /// <summary>
     /// Адрес сервера коллизий для загрузки отчётов по кнопке "Загрузить с сервера" (например, http://localhost:5000)
     /// </summary>
     public string ClashServerUrl {
@@ -126,6 +138,8 @@ internal class SettingsViewModel : BaseViewModel {
         ApplySectionBoxSettings = _config.ApplySectionBoxSettings;
         HighlightClashElements = _config.HighlightClashElements;
         HalftoneOtherElements = _config.HalftoneOtherElements;
+        FirstHighlight.Load(_config.FirstHighlight);
+        SecondHighlight.Load(_config.SecondHighlight);
         ClashServerUrl = _config.ClashServerUrl;
     }
 
@@ -139,6 +153,8 @@ internal class SettingsViewModel : BaseViewModel {
         _config.ApplySectionBoxSettings = ApplySectionBoxSettings;
         _config.HighlightClashElements = HighlightClashElements;
         _config.HalftoneOtherElements = HalftoneOtherElements;
+        _config.FirstHighlight = FirstHighlight.GetSettings();
+        _config.SecondHighlight = SecondHighlight.GetSettings();
         _config.ClashServerUrl = ClashServerUrl?.Trim() ?? string.Empty;
         _config.SaveProjectConfig();
     }

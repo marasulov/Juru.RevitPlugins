@@ -37,6 +37,7 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     private ObservableCollection<ClashViewModel> _clashes;
     private IClashViewModel _selectedGuiClash;
     private ObservableCollection<IClashViewModel> _guiClashes;
+    private ClashGrouping _grouping;
     private ObservableCollection<IClashViewModel> _selectedGuiClashes = [];
     private double _firstIntersectionPercentage;
     private double _secondIntersectionPercentage;
@@ -131,22 +132,41 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
 
     public IClashViewModel SelectedGuiClash {
         get => _selectedGuiClash;
-        set {
-            if(!(_selectedGuiClash?.Equals(value) ?? false)) {
-                if(_selectedGuiClash is not null) {
-                    _selectedGuiClash.PropertyChanged -= OnSelectedGuiClashChanged;
-                }
-                RaiseAndSetIfChanged(ref _selectedGuiClash, value);
-                if(_selectedGuiClash is not null) {
-                    _selectedGuiClash.PropertyChanged += OnSelectedGuiClashChanged;
-                }
-            }
-        }
+        set => RaiseAndSetIfChanged(ref _selectedGuiClash, value);
     }
 
     public ObservableCollection<IClashViewModel> GuiClashes {
         get => _guiClashes;
-        private set => RaiseAndSetIfChanged(ref _guiClashes, value);
+        private set {
+            RaiseAndSetIfChanged(ref _guiClashes, value);
+            // Список пересоздаётся целиком (сброс, мнимые коллизии), а группировка живёт на его
+            // представлении - её надо повесить заново.
+            ApplyGrouping();
+        }
+    }
+
+    /// <summary>
+    /// Группирует строки отчёта. Группировка висит на том же представлении списка, что и
+    /// фильтры колонок, поэтому они работают вместе.
+    /// </summary>
+    public void SetGrouping(ClashGrouping grouping) {
+        _grouping = grouping;
+        ApplyGrouping();
+    }
+
+    private void ApplyGrouping() {
+        if(GuiClashes is null) {
+            return;
+        }
+
+        var view = CollectionViewSource.GetDefaultView(GuiClashes);
+        using(view.DeferRefresh()) {
+            view.GroupDescriptions.Clear();
+            if(_grouping != ClashGrouping.None) {
+                view.GroupDescriptions.Add(new PropertyGroupDescription(null,
+                    new ClashGroupKeyConverter(_grouping, _localization.GetLocalizedString("Navigator.Group.NoValue"))));
+            }
+        }
     }
 
     public int ImportedClashesCount => _allClashes?.Count ?? 0;
@@ -323,7 +343,7 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         InitializeTimer();
 
         SaveCommand = RelayCommand.Create(Save);
-        SaveAsCommand = RelayCommand.Create(SaveAs);
+        SaveAsCommand = RelayCommand.Create(SaveAs, CanSaveAs);
         ShowImaginaryClashesChangedCommand = RelayCommand.Create(ShowImaginaryClashesChanged);
         ResetFiltersCommand = RelayCommand.Create(ResetFilters, CanResetFilters);
         PickFirstElementsCommand = RelayCommand.Create(
@@ -365,9 +385,18 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     private void SaveAs() {
         var config = GetUpdatedConfig();
         var saver = new ConfigSaverService(_revitRepository, SaveFileDialogService);
-        saver.Save(config);
+        try {
+            saver.Save(config);
+        } catch(OperationCanceledException) {
+            // Пользователь закрыл диалог сохранения - это не ошибка, сообщать нечего.
+            return;
+        }
         Message = _localization.GetLocalizedString("Navigator.ReportSaved");
         RefreshMessage();
+    }
+
+    private bool CanSaveAs() {
+        return GetClashes().Count > 0;
     }
 
     private void InitializeClashes(IEnumerable<ClashModel> clashModels) {
@@ -544,26 +573,21 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
         _timer.Start();
     }
 
-    private void OnSelectedGuiClashChanged(object sender, PropertyChangedEventArgs e) {
-        if(string.IsNullOrWhiteSpace(e.PropertyName)) {
+    /// <summary>
+    /// Ставит статус, выбранный в строке, всем выделенным строкам, если эта строка среди них.
+    /// Вызывается из окна, а не по смене текущей строки: щелчок по списку статусов выделение
+    /// не меняет, и правка могла прийти из любой выделенной строки, а не только из текущей.
+    /// </summary>
+    public void ApplyStatusToSelection(IClashViewModel source) {
+        if(source is null || !SelectedGuiClashes.Contains(source)) {
             return;
         }
-        var prop = typeof(IClashViewModel).GetProperty(e.PropertyName);
-        if(prop is null) {
-            return;
-        }
-        if(prop.Name == nameof(IClashViewModel.ClashStatus)) {
-            // мультиредактирование только для статуса коллизии
-            object newValue = prop.GetValue(SelectedGuiClash);
 
-            IClashViewModel[] sheets = [.. SelectedGuiClashes];
-            foreach(var item in sheets) {
-                if(!item.Equals(SelectedGuiClash)) {
-                    prop.SetValue(item, newValue);
-                }
-            }
-
-            RaiseUnsentStatusesChanged();
+        // Копия: смена статуса обновляет фильтры, и строки могут уйти из выделения прямо в цикле.
+        IClashViewModel[] targets = [.. SelectedGuiClashes
+            .Where(c => !c.Equals(source) && c.CanChangeStatus && c.ClashStatus != source.ClashStatus)];
+        foreach(var clash in targets) {
+            clash.ClashStatus = source.ClashStatus;
         }
     }
 
@@ -650,35 +674,43 @@ internal class ReportViewModel : BaseViewModel, INamedEntity, IEquatable<ReportV
     }
 
     private void PickFirstElements() {
-        List<ElementModel> elements = [];
-        foreach(var clash in SelectedGuiClashes) {
-            try {
-                elements.Add(clash.GetFirstElement());
-            } catch(NotSupportedException) {
-                continue;
-            }
-        }
-        _revitRepository.SelectElements(elements);
+        PickElements(clash => [clash.GetFirstElement()]);
     }
 
     private void PickSecondElements() {
+        PickElements(clash => [clash.GetSecondElement()]);
+    }
+
+    private void PickBothElements() {
+        PickElements(clash => clash.GetElements());
+    }
+
+    /// <summary>
+    /// Выделяет в Ревите элементы выделенных строк. У мнимой коллизии второго элемента нет -
+    /// такие строки пропускаются.
+    /// </summary>
+    private void PickElements(Func<IClashViewModel, IEnumerable<ElementModel>> getElements) {
         List<ElementModel> elements = [];
         foreach(var clash in SelectedGuiClashes) {
             try {
-                elements.Add(clash.GetSecondElement());
+                elements.AddRange(getElements(clash).Where(e => e is not null));
             } catch(NotSupportedException) {
                 continue;
             }
         }
-        _revitRepository.SelectElements(elements);
-    }
 
-    private void PickBothElements() {
-        List<ElementModel> elements = [];
-        foreach(var clash in SelectedGuiClashes) {
-            elements.AddRange(clash.GetElements());
+        if(elements.Count == 0) {
+            Message = _localization.GetLocalizedString("Navigator.Pick.Nothing");
+            RefreshMessage();
+            return;
         }
-        _revitRepository.SelectElements(elements);
+
+        _revitRepository.QueueSelectElements(elements.Distinct().ToArray(), selected => {
+            Message = selected
+                ? _localization.GetLocalizedString("Navigator.Pick.Done", SelectedGuiClashes.Count)
+                : _localization.GetLocalizedString("Navigator.Pick.Nothing");
+            RefreshMessage();
+        });
     }
 
     private bool CanPickElements() {

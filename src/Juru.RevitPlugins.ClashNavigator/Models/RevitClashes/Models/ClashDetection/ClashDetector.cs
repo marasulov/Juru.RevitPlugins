@@ -12,14 +12,18 @@ internal class ClashDetector {
     private readonly IEnumerable<IProvider> _mainDocProviders;
     private readonly IEnumerable<IProvider> _otherProviders;
     private readonly double _tolerance;
+    private readonly ClashIgnoreRules _ignoreRules;
 
     /// <param name="tolerance">Допуск во внутренних единицах (футах): пересечения мельче не считаются.</param>
+    /// <param name="ignoreRules">Пары, которые не считаются коллизиями.</param>
     public ClashDetector(
         RevitRepository revitRepository,
         IEnumerable<IProvider> mainDocProviders,
         IEnumerable<IProvider> otherProviders,
-        double tolerance = 0) {
+        double tolerance = 0,
+        ClashIgnoreRules ignoreRules = ClashIgnoreRules.None) {
         _tolerance = tolerance;
+        _ignoreRules = ignoreRules;
         _revitRepository = revitRepository;
         _mainDocProviders = mainDocProviders;
         _otherProviders = otherProviders;
@@ -32,9 +36,13 @@ internal class ClashDetector {
         foreach(var mainProvider in _mainDocProviders) {
             foreach(var provider in _otherProviders) {
                 progress.Token.ThrowIfCancellationRequested();
+                // "Один файл" - пара провайдеров по одному документу не проверяется вовсе.
+                if(_ignoreRules.HasFlag(ClashIgnoreRules.SameFile) && mainProvider.Doc.Equals(provider.Doc)) {
+                    continue;
+                }
                 string stage = $"{checkName}: {RevitRepository.GetDocumentName(mainProvider.Doc)}"
                                + $" × {RevitRepository.GetDocumentName(provider.Doc)}";
-                var providerClashDetector = new ProvidersClashDetector(_revitRepository, mainProvider, provider, _tolerance);
+                var providerClashDetector = new ProvidersClashDetector(_revitRepository, mainProvider, provider, _tolerance, _ignoreRules);
                 clashes.AddRange(providerClashDetector.GetClashes(progress, stage));
             }
         }

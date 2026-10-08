@@ -43,6 +43,10 @@ internal partial class SelectableNamesWindow : Window {
         // только в окнах, реализующих IHasLocalization, а это обычный Window.
         SelectAllCheckBox.Content = localizationService.GetLocalizedString("Common.SelectAll");
         SearchBox.PlaceholderText = localizationService.GetLocalizedString("SelectableNames.SearchPlaceholder");
+        if(viewModel.CanHideUnselected) {
+            HideUnselectedCheckBox.Content = localizationService.GetLocalizedString("SearchSet.HideUnselected");
+            HideUnselectedCheckBox.Visibility = System.Windows.Visibility.Visible;
+        }
         OkButton.Content = localizationService.GetLocalizedString("Common.Ok");
         CancelButton.Content = localizationService.GetLocalizedString("Common.Cancel");
 

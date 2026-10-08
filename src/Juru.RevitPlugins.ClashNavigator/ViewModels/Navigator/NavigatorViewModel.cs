@@ -21,6 +21,7 @@ using Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport;
 using Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport.ServerClashes;
 using Juru.RevitPlugins.Core.FileNaming;
 using Juru.RevitPlugins.ClashNavigator.Commands;
+using Juru.RevitPlugins.ClashNavigator.Services.Bcf;
 using Juru.RevitPlugins.ClashNavigator.Services.ClashStatuses;
 using Juru.RevitPlugins.ClashNavigator.Services.ReportsMerging;
 using Juru.RevitPlugins.ClashNavigator.Services.RevitViewSettings;
@@ -41,6 +42,7 @@ internal class NavigatorViewModel : BaseViewModel {
     private readonly IClashStatusService _clashStatusService;
     private bool _openFromClashDetector;
     private ReportViewModel _selectedFile;
+    private ClashGroupingItem _selectedGrouping;
     private ObservableCollection<ReportViewModel> _reports;
     private ReportsMergeViewModel _reportsMergeViewModel;
     private bool _showReportsMergeView;
@@ -88,6 +90,7 @@ internal class NavigatorViewModel : BaseViewModel {
             RelayCommand.Create<ReportsMergeViewModel>(AcceptReportsMerge, CanAcceptReportsMerge);
         CancelReportsMergeCommand = RelayCommand.Create(CancelReportsMerge);
         SaveAllReportsCommand = RelayCommand.Create(SaveAllReports, CanSaveAllReports);
+        ExportBcfCommand = RelayCommand.Create(ExportBcf, () => SelectedReport is not null);
         // Кнопка активна при любом открытом отчёте, даже когда отправлять нечего: иначе объяснение,
         // почему статусы не уходят (отчёт не с сервера), пользователю негде получить.
         SendStatusesCommand = RelayCommand.Create(SendStatuses, () => Reports.Count > 0);
@@ -102,6 +105,7 @@ internal class NavigatorViewModel : BaseViewModel {
     public ICommand LoadFromServerOnStartupCommand { get; }
     public ICommand DeleteCommand { get; }
     public ICommand SaveAllReportsCommand { get; }
+    public ICommand ExportBcfCommand { get; }
     public ICommand SendStatusesCommand { get; }
     public ICommand AskForSaveCommand { get; }
     public ICommand EditCommentsCommand { get; }
@@ -147,6 +151,9 @@ internal class NavigatorViewModel : BaseViewModel {
     /// <inheritdoc cref="ShowTitle" />
     public string StatusTooltip => _localizationService.GetLocalizedString("Navigator.StatusTooltip");
 
+    /// <inheritdoc cref="ShowTitle" />
+    public string CopyIdTooltip => _localizationService.GetLocalizedString("Navigator.CopyIdTooltip");
+
     /// <summary>
     /// Сколько изменений статусов ждёт отправки в базу по всем отчётам.
     /// </summary>
@@ -172,7 +179,31 @@ internal class NavigatorViewModel : BaseViewModel {
 
     public ReportViewModel SelectedReport {
         get => _selectedFile;
-        set => RaiseAndSetIfChanged(ref _selectedFile, value);
+        set {
+            RaiseAndSetIfChanged(ref _selectedFile, value);
+            _selectedFile?.SetGrouping(SelectedGrouping?.Grouping ?? ClashGrouping.None);
+        }
+    }
+
+    /// <summary>
+    /// Варианты группировки строк. Выбранный сохраняется при переходе между отчётами.
+    /// </summary>
+    public IReadOnlyList<ClashGroupingItem> Groupings => _groupings ??= [
+        new(ClashGrouping.None, _localizationService.GetLocalizedString("Navigator.Group.None")),
+        new(ClashGrouping.FirstElement, _localizationService.GetLocalizedString("Navigator.Group.FirstElement")),
+        new(ClashGrouping.SecondElement, _localizationService.GetLocalizedString("Navigator.Group.SecondElement")),
+        new(ClashGrouping.Level, _localizationService.GetLocalizedString("Navigator.Group.Level")),
+        new(ClashGrouping.Status, _localizationService.GetLocalizedString("Navigator.Group.Status"))
+    ];
+
+    private IReadOnlyList<ClashGroupingItem> _groupings;
+
+    public ClashGroupingItem SelectedGrouping {
+        get => _selectedGrouping ??= Groupings[0];
+        set {
+            RaiseAndSetIfChanged(ref _selectedGrouping, value);
+            SelectedReport?.SetGrouping(value?.Grouping ?? ClashGrouping.None);
+        }
     }
 
     /// <summary>
@@ -320,7 +351,7 @@ internal class NavigatorViewModel : BaseViewModel {
     /// <returns>Коллекция отчетов из заданного файла.</returns>
     /// <param name="skipEmpty">Не создавать модели для отчётов без коллизий.</param>
     private IList<ReportViewModel> GetReports(string reportPath, bool skipEmpty = false) {
-        return ReportLoader.GetReports(_revitRepository, reportPath)
+        return ReportLoader.GetReports(_revitRepository, reportPath, _localizationService)
             .Where(r => !skipEmpty || r.Clashes?.Count > 0)
             .Select(r => new ReportViewModel(
                 _revitRepository,
@@ -618,7 +649,62 @@ internal class NavigatorViewModel : BaseViewModel {
 
         var settings = new ClashViewSettings(_revitRepository, _localizationService, clash, _settingsConfig);
         var elements = clash.GetElements();
-        _revitRepository.QueueSelectAndShowElement(elements, settings, _settingsConfig.HighlightClashElements);
+        _revitRepository.QueueSelectAndShowElement(elements, settings, GetHighlightColors());
+    }
+
+    /// <summary>
+    /// Цвета подсветки первого и второго элемента из настроек; <see langword="null" />, если подсветка выключена.
+    /// </summary>
+    private IReadOnlyList<HighlightColorSettings> GetHighlightColors() {
+        if(!_settingsConfig.HighlightClashElements) {
+            return null;
+        }
+
+        // null в файле настроек (правка руками) не должен гасить подсветку - берём цвета по умолчанию.
+        return [
+            _settingsConfig.FirstHighlight ?? HighlightColorSettings.DefaultFirst,
+            _settingsConfig.SecondHighlight ?? HighlightColorSettings.DefaultSecond
+        ];
+    }
+
+    /// <summary>
+    /// Выгружает в BCF коллизии выбранного отчёта, видимые с учётом фильтров колонок:
+    /// отфильтровал активные - выгрузил только их.
+    /// </summary>
+    private void ExportBcf() {
+        var clashes = System.Windows.Data.CollectionViewSource.GetDefaultView(SelectedReport.GuiClashes)
+            .Cast<object>()
+            .OfType<ClashViewModel>()
+            .Select(item => new BcfClash(
+                $"{item.ClashName}: {item.FirstCategory} × {item.SecondCategory}",
+                item.ClashStatusName,
+                item.GetClashModel()))
+            .ToList();
+        if(clashes.Count == 0) {
+            return;
+        }
+
+        SaveFileDialogService.AddExtension = true;
+        SaveFileDialogService.Filter = "BCF (*.bcfzip)|*.bcfzip";
+        SaveFileDialogService.FilterIndex = 1;
+        if(!SaveFileDialogService.ShowDialog(_revitRepository.GetFileDialogPath(),
+               ReportFileName.From(SelectedReport.Name))) {
+            return;
+        }
+
+        string path = SaveFileDialogService.File.FullName;
+        try {
+            int count = new BcfExporter(_revitRepository).Export(clashes, path);
+            Views.MessageWindow.ShowInfo(
+                _localizationService.GetLocalizedString("Navigator.BcfDone", count, path),
+                _localizationService.GetLocalizedString("Navigator.BcfTitle"),
+                _localizationService);
+        } catch(Exception exception) when(exception is IOException or UnauthorizedAccessException) {
+            Views.MessageWindow.ShowError(
+                exception.Message,
+                _localizationService.GetLocalizedString("Navigator.BcfTitle"),
+                _localizationService);
+        }
     }
 
     private void SaveAllReports() {

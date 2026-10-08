@@ -18,9 +18,9 @@ namespace Juru.RevitPlugins.ClashNavigator.Services.ClashHighlight;
 internal readonly record struct HighlightTriangle(XYZ A, XYZ B, XYZ C, XYZ Normal);
 
 /// <summary>
-/// Грани одного элемента подсветки и их цвет.
+/// Грани одного элемента подсветки, их цвет и прозрачность (доля от 0 до 1).
 /// </summary>
-internal sealed record HighlightFaces(Color Color, IReadOnlyList<HighlightTriangle> Triangles);
+internal sealed record HighlightFaces(Color Color, double Transparency, IReadOnlyList<HighlightTriangle> Triangles);
 
 /// <summary>
 /// Отрезок ребра подсветки в координатах открытого документа.
@@ -33,7 +33,8 @@ internal readonly record struct HighlightLine(XYZ Start, XYZ End, ColorWithTrans
 /// <param name="Element">Элемент открытого документа или связи.</param>
 /// <param name="Transform">Положение документа элемента относительно открытого.</param>
 /// <param name="Color">Цвет подсветки.</param>
-internal sealed record HighlightedElement(Element Element, Transform Transform, Color Color);
+/// <param name="Transparency">Прозрачность граней: 0 - непрозрачные, 1 - невидимые.</param>
+internal sealed record HighlightedElement(Element Element, Transform Transform, Color Color, double Transparency);
 
 /// <summary>
 /// Что рисует <see cref="ClashHighlightServer" />: готовая геометрия и вид, на котором она видна.
@@ -80,7 +81,7 @@ internal sealed class ClashHighlightScene {
                 AddSolid(solid, item.Transform ?? Transform.Identity, edgeColor, triangles, edges);
             }
             if(triangles.Count > 0) {
-                faces.Add(new HighlightFaces(item.Color, triangles));
+                faces.Add(new HighlightFaces(item.Color, item.Transparency, triangles));
             }
         }
 

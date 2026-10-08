@@ -32,4 +32,10 @@ internal abstract class CriterionViewModel : BaseViewModel {
     /// Возвращает описание того, чего не хватает узлу для сохранения, или null, если узел заполнен.
     /// </summary>
     public abstract string GetErrorText();
+
+    /// <summary>
+    /// Строка, по которой видно, менялся ли узел: окно сравнивает её с той, что была при
+    /// последнем сохранении, и спрашивает о сохранении при закрытии только при отличии.
+    /// </summary>
+    public abstract string GetSignature();
 }

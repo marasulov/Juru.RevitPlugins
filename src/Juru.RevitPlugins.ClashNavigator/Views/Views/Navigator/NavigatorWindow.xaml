@@ -113,6 +113,44 @@
             <Setter Property="Margin" Value="0,2" />
         </Style>
 
+        <!-- Единое положение текста во всех ячейках: строки высокие из-за снимка, и по умолчанию
+             текст прижимался к верху, а Id и кнопки - к центру. Стиль именованный, не неявный:
+             неявный стиль WPF-UI в ресурсах окна вместе с контролом в DataGrid ронял окно
+             с ArgumentNullException при очистке таблицы. -->
+        <Style x:Key="CellTextStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+        <!-- Id в ячейке лежит в TextBox только затем, чтобы его можно было выделить и скопировать:
+             редактировать значение нельзя. Свой Template обязателен - тема WPF-UI даёт TextBox рамку
+             и фон поля ввода даже при BorderThickness=0, и ячейка выглядела бы как поле ввода.
+             Подсказка - из модели представления: в шаблон ячейки me:LocalizationSource попадает
+             невычисленным. -->
+        <Style x:Key="IdCellStyle" TargetType="TextBox">
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{ui:ThemeResource TextFillColorPrimaryBrush}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="IBeam" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="ToolTip"
+                    Value="{Binding DataContext.CopyIdTooltip, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <EventSetter Event="PreviewMouseLeftButtonDown" Handler="IdCell_PreviewMouseLeftButtonDown" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}">
+                            <ScrollViewer x:Name="PART_ContentHost" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <DataTemplate x:Key="FilterHeaderTemplate">
             <DockPanel LastChildFill="False">
                 <TextBlock Text="{Binding}" VerticalAlignment="Center" />
@@ -206,6 +244,7 @@
                            Foreground="{ui:ThemeResource TextFillColorPrimaryBrush}"
                            ToolTip="{me:LocalizationSource Navigator.SendStatusesTooltip}"/>
                 <ui:Button Content="{me:LocalizationSource Navigator.SaveAll}" Command="{Binding SaveAllReportsCommand}" Margin="0,0,8,0"/>
+                <ui:Button Content="BCF" ToolTip="{me:LocalizationSource Navigator.BcfTooltip}" Command="{Binding ExportBcfCommand}" Margin="0,0,8,0"/>
                 <!-- ClickMode=Press: иначе клик по кнопке при открытом Popup перехватывается им,
                      и кнопка остаётся нажатой при закрытом списке. -->
                 <ui:Button Content="{me:LocalizationSource Navigator.ResetFilters}" Command="{Binding SelectedReport.ResetFiltersCommand}"
@@ -236,6 +275,9 @@
             <ComboBox ItemsSource="{Binding Reports}" SelectedItem="{Binding SelectedReport}"
                       DisplayMemberPath="Name" MinWidth="300"
                       ToolTip="{me:LocalizationSource Navigator.ReportsTooltip}" />
+            <ComboBox ItemsSource="{Binding Groupings}" SelectedItem="{Binding SelectedGrouping}"
+                      DisplayMemberPath="Name" MinWidth="180" Margin="8,0,0,0"
+                      ToolTip="{me:LocalizationSource Navigator.GroupTooltip}" />
             <TextBlock Margin="12,4,0,0" Foreground="MediumVioletRed"
                        Text="{Binding SelectedReport.ImportedClashesInfo}" />
             <TextBlock Margin="12,4,0,0" Foreground="MediumVioletRed"
@@ -246,9 +288,21 @@
                        Text="{Binding SelectedReport.FilterInfo}" />
         </DockPanel>
 
+        <!-- Выделение в Ревите элементов всех выделенных строк: удобно, когда править надо
+             конкретный элемент коллизии, а не оба сразу. -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
+            <ui:Button Content="{me:LocalizationSource Navigator.Pick.First}" Command="{Binding SelectedReport.PickFirstElementsCommand}"
+                       ToolTip="{me:LocalizationSource Navigator.Pick.FirstTooltip}" Margin="0,0,8,0"/>
+            <ui:Button Content="{me:LocalizationSource Navigator.Pick.Second}" Command="{Binding SelectedReport.PickSecondElementsCommand}"
+                       ToolTip="{me:LocalizationSource Navigator.Pick.SecondTooltip}" Margin="0,0,8,0"/>
+            <ui:Button Content="{me:LocalizationSource Navigator.Pick.Both}" Command="{Binding SelectedReport.PickBothElementsCommand}"
+                       ToolTip="{me:LocalizationSource Navigator.Pick.BothTooltip}"/>
+        </StackPanel>
+
         <!-- VirtualizationMode=Standard вместо принятого в DataGrid Recycling: переиспользование строк
              отдаёт списку статусов ячейку от другой коллизии, и выбор уходит не в ту строку. -->
         <DataGrid x:Name="ClashesGrid" Grid.Row="3" ItemsSource="{Binding SelectedReport.GuiClashes}"
+                  VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                   ToolTip="{me:LocalizationSource Navigator.KeysHint}" ToolTipService.InitialShowDelay="1500"
                   SelectedItem="{Binding SelectedReport.SelectedGuiClash}" AutoGenerateColumns="False"
                   CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column"
@@ -256,19 +310,63 @@
                   VirtualizingPanel.VirtualizationMode="Standard"
                   ColumnHeaderStyle="{StaticResource ResizableColumnHeaderStyle}"
                   Loaded="ClashesGrid_Loaded"
+                  SelectionChanged="ClashesGrid_SelectionChanged"
                   GridLinesVisibility="Horizontal" BorderThickness="1"
                   BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="{me:LocalizationSource Navigator.Pick.First}" Command="{Binding SelectedReport.PickFirstElementsCommand}" />
+                    <MenuItem Header="{me:LocalizationSource Navigator.Pick.Second}" Command="{Binding SelectedReport.PickSecondElementsCommand}" />
+                    <MenuItem Header="{me:LocalizationSource Navigator.Pick.Both}" Command="{Binding SelectedReport.PickBothElementsCommand}" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+            <!-- Группы: строка-заголовок со сворачиванием и числом коллизий. -->
+            <DataGrid.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="GroupItem">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="GroupItem">
+                                        <Expander IsExpanded="True" Margin="0,2,0,0">
+                                            <Expander.Header>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                                                    <TextBlock Margin="8,0,0,0" Opacity="0.7" Text="{Binding ItemCount, StringFormat=({0})}" />
+                                                </StackPanel>
+                                            </Expander.Header>
+                                            <ItemsPresenter />
+                                        </Expander>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
             <DataGrid.Columns>
-                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.ClashName" Binding="{Binding ClashName}" SortMemberPath="ClashName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="120" />
-                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.FirstFile" Binding="{Binding FirstDocumentName}" SortMemberPath="FirstDocumentName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
-                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.FirstId" Binding="{Binding FirstId}" SortMemberPath="FirstId" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="100" />
-                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.FirstElement" Binding="{Binding FirstObjectName}" SortMemberPath="FirstObjectName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
-                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.SecondFile" Binding="{Binding SecondDocumentName}" SortMemberPath="SecondDocumentName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
-                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.SecondId" Binding="{Binding SecondId}" SortMemberPath="SecondId" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="100" />
-                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.SecondElement" Binding="{Binding SecondObjectName}" SortMemberPath="SecondObjectName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="*" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.ClashName" Binding="{Binding ClashName}" SortMemberPath="ClashName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" ElementStyle="{StaticResource CellTextStyle}" Width="120" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.FirstFile" Binding="{Binding FirstDocumentName}" SortMemberPath="FirstDocumentName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" ElementStyle="{StaticResource CellTextStyle}" Width="*" />
+                <DataGridTemplateColumn loc:ColumnLocalization.Key="Navigator.Column.FirstId" SortMemberPath="FirstId" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding FirstId, Mode=OneWay}" Style="{StaticResource IdCellStyle}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.FirstElement" Binding="{Binding FirstObjectName}" SortMemberPath="FirstObjectName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" ElementStyle="{StaticResource CellTextStyle}" Width="*" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.SecondFile" Binding="{Binding SecondDocumentName}" SortMemberPath="SecondDocumentName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" ElementStyle="{StaticResource CellTextStyle}" Width="*" />
+                <DataGridTemplateColumn loc:ColumnLocalization.Key="Navigator.Column.SecondId" SortMemberPath="SecondId" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding SecondId, Mode=OneWay}" Style="{StaticResource IdCellStyle}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.SecondElement" Binding="{Binding SecondObjectName}" SortMemberPath="SecondObjectName" HeaderTemplate="{StaticResource FilterHeaderTemplate}" ElementStyle="{StaticResource CellTextStyle}" Width="*" />
                 <!-- Статус меняется прямо в таблице: выбор в списке уходит на сервер коллизий
-                     вместе с учётной записью Windows. Если выделено несколько строк,
-                     статус применяется ко всем выделенным. -->
+                     вместе с учётной записью Windows. Если строка среди выделенных,
+                     статус применяется ко всем выделенным строкам. -->
                 <DataGridTemplateColumn loc:ColumnLocalization.Key="Navigator.Column.Status" SortMemberPath="ClashStatusName"
                                         HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="150">
                     <DataGridTemplateColumn.CellTemplate>
@@ -286,7 +384,7 @@
                                     SelectedValuePath="Status"
                                     SelectedValue="{Binding ClashStatus, Mode=OneWay}"
                                     SelectionChanged="StatusBox_SelectionChanged"
-                                    Margin="0,2"
+                                    Margin="0,2" VerticalAlignment="Center"
                                     ToolTip="{Binding DataContext.StatusTooltip, RelativeSource={RelativeSource AncestorType=Window}}" />
                                 <!-- У коллизии "Нет пересечения" статус не выбирают: показываем его текстом. -->
                                 <TextBlock x:Name="StatusText" Text="{Binding ClashStatusName}"
@@ -301,13 +399,14 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.ChangedBy" Binding="{Binding StatusAuthorInfo}" SortMemberPath="StatusAuthorInfo" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="180" />
-                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.ChangedAt" Binding="{Binding StatusChangedAt}" SortMemberPath="StatusChangedAt" HeaderTemplate="{StaticResource FilterHeaderTemplate}" Width="130" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.ChangedBy" Binding="{Binding StatusAuthorInfo}" SortMemberPath="StatusAuthorInfo" HeaderTemplate="{StaticResource FilterHeaderTemplate}" ElementStyle="{StaticResource CellTextStyle}" Width="180" />
+                <DataGridTextColumn loc:ColumnLocalization.Key="Navigator.Column.ChangedAt" Binding="{Binding StatusChangedAt}" SortMemberPath="StatusChangedAt" HeaderTemplate="{StaticResource FilterHeaderTemplate}" ElementStyle="{StaticResource CellTextStyle}" Width="130" />
                 <DataGridTemplateColumn loc:ColumnLocalization.Key="Navigator.Column.Snapshot"
                                         SortMemberPath="ImagePath" CanUserSort="False" Width="145">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Image Source="{Binding ImagePath}" Height="70" Stretch="Uniform" ToolTip="{Binding ImagePath}"
+                            <Image Source="{Binding ImagePath}" Height="70" Stretch="Uniform" VerticalAlignment="Center"
+                                   ToolTip="{Binding ImagePath}"
                                    Cursor="Hand" MouseLeftButtonUp="ClashImage_Click" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -319,6 +418,7 @@
                             <!-- ShowOnDisabled: подсказка нужна именно у выключенной кнопки -
                                  иначе причина, по которой коллизию не показать, остаётся неизвестной. -->
                             <ui:Button Content="{Binding DataContext.ShowTitle, RelativeSource={RelativeSource AncestorType=Window}}" IsEnabled="{Binding IsResolved}"
+                                VerticalAlignment="Center"
                                 ToolTip="{Binding RevitHint}" ToolTipService.ShowOnDisabled="True"
                                 Command="{Binding DataContext.SelectClashCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}" />
@@ -344,6 +444,20 @@
             <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" TextTrimming="CharacterEllipsis"
                        Foreground="MediumVioletRed" Text="{Binding Diagnostic}" />
         </DockPanel>
+
+        <!-- Просмотр снимка во всплывающей панели, а не отдельным окном: окно оставалось висеть
+             за навигатором и его приходилось закрывать руками. Placement=Mouse со сдвигом внутрь -
+             курсор оказывается внутри панели, и уход курсора с неё закрывает её по MouseLeave.
+             Фон и рамку задаём явно: у Popup своё визуальное дерево, тема окна на него не переходит. -->
+        <Popup x:Name="ImagePreviewPopup" Placement="Mouse" HorizontalOffset="-80" VerticalOffset="-80"
+               AllowsTransparency="True" StaysOpen="False" PopupAnimation="Fade">
+            <Border Padding="10" BorderThickness="1"
+                    Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+                    BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}"
+                    MouseLeave="ImagePreview_MouseLeave">
+                <Image x:Name="ImagePreviewImage" Stretch="Uniform" MaxWidth="1100" MaxHeight="800" />
+            </Border>
+        </Popup>
     </Grid>
     </Grid>
 </platform:WpfUIPlatformWindow>

@@ -14,6 +14,7 @@ internal class SelectableNamesViewModel : BaseViewModel {
     private string _title;
     private bool _allSelected;
     private string _searchText;
+    private bool _hideUnselected;
 
     public SelectableNamesViewModel(IEnumerable<IName> allEntities, IEnumerable<IName> currentSelection) {
         if(allEntities is null) {
@@ -71,6 +72,27 @@ internal class SelectableNamesViewModel : BaseViewModel {
         }
     }
 
+    /// <summary>
+    /// Показывать ли переключатель <see cref="HideUnselected" />. По умолчанию его нет: нужен он
+    /// там, где список длинный, а отмечено в нём немного, - в выборе категорий поискового набора.
+    /// </summary>
+    public bool CanHideUnselected { get; set; }
+
+    /// <summary>
+    /// Оставить в списке только отмеченное.
+    /// </summary>
+    /// <remarks>
+    /// Список пересобирается только при переключении: строка, с которой сняли флажок, остаётся
+    /// на месте, чтобы промах мышью можно было тут же исправить.
+    /// </remarks>
+    public bool HideUnselected {
+        get => _hideUnselected;
+        set {
+            RaiseAndSetIfChanged(ref _hideUnselected, value);
+            EntitiesView.Refresh();
+        }
+    }
+
     public ObservableCollection<SelectableNameViewModel> Entities { get; }
 
     /// <summary>
@@ -83,7 +105,8 @@ internal class SelectableNamesViewModel : BaseViewModel {
     }
 
     private bool IsVisible(SelectableNameViewModel entity) {
-        return string.IsNullOrWhiteSpace(SearchText)
-               || entity.Name.IndexOf(SearchText.Trim(), StringComparison.CurrentCultureIgnoreCase) >= 0;
+        return (!HideUnselected || entity.IsSelected)
+               && (string.IsNullOrWhiteSpace(SearchText)
+                   || entity.Name.IndexOf(SearchText.Trim(), StringComparison.CurrentCultureIgnoreCase) >= 0);
     }
 }

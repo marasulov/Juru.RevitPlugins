@@ -19,6 +19,8 @@ using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.Core.Profiles;
 using Juru.RevitPlugins.ClashNavigator.Models.Extensions;
 using Juru.RevitPlugins.ClashNavigator.Models.FilterableValueProviders;
+using Juru.RevitPlugins.ClashNavigator.Models.FilterGenerators;
+using Juru.RevitPlugins.ClashNavigator.Models.FilterModel;
 using Juru.RevitPlugins.ClashNavigator.Models.GraphicView;
 using Juru.RevitPlugins.ClashNavigator.Models.Handlers;
 using Juru.RevitPlugins.ClashNavigator.Models.Interfaces;
@@ -33,10 +35,6 @@ internal class RevitRepository {
     private readonly RevitEventHandler _revitEventHandler;
     private static readonly HashSet<string> _endings = ["_отсоединено", "_detached"];
     private const string _clashViewName = "BIM_Проверка на коллизии";
-    /// <summary>
-    /// Параметр проекта, задающий группу вида в браузере. Отсутствует в документах без стандарта Bim4Everyone.
-    /// </summary>
-    private const string _viewGroupParamName = "_Группа Видов";
     private readonly View3D _view;
     public const string FiltersNamePrefix = "BIM_коллизии_";
 
@@ -119,23 +117,42 @@ internal class RevitRepository {
                 }
             }
 
-            string bimGroup = new FilteredElementCollector(Doc)
-                .OfClass(typeof(View3D))
-                .Cast<View3D>()
-                .Where(item => !item.IsTemplate)
-                .Select(item => item.LookupParameter(_viewGroupParamName)?.AsString())
-                .FirstOrDefault(item => item != null && item.Contains("BIM"));
-            if(bimGroup != null) {
-                var viewGroupParam = view.LookupParameter(_viewGroupParamName);
-                if(viewGroupParam is {IsReadOnly: false}) {
-                    viewGroupParam.Set(bimGroup);
-                }
-            }
+            CopyBimViewGroup(view);
             view.DisplayStyle = DisplayStyle.FlatColors;
 
             t.Commit();
         }
         return view;
+    }
+
+    /// <summary>
+    /// Кладёт новый вид коллизий в ту же группу браузера, что и остальные BIM-виды модели.
+    /// </summary>
+    /// <remarks>
+    /// Группа вида - только порядок в браузере, поэтому любая ошибка здесь проглатывается.
+    /// Параметр группы берём из настроек параметров Bim4Everyone: в моделях без этого стандарта
+    /// настроек или самого параметра нет, и чтение падало бы - а без вида коллизий
+    /// навигатор не открывается вовсе.
+    /// </remarks>
+    private void CopyBimViewGroup(View3D view) {
+        try {
+            var viewGroup = ProjectParamsConfig.Instance?.ViewGroup;
+            if(viewGroup == null) {
+                return;
+            }
+
+            string bimGroup = new FilteredElementCollector(Doc)
+                .OfClass(typeof(View3D))
+                .Cast<View3D>()
+                .Where(item => !item.IsTemplate)
+                .Select(item => item.GetParamValueOrDefault<string>(viewGroup))
+                .FirstOrDefault(item => item != null && item.Contains("BIM"));
+            if(bimGroup != null) {
+                view.SetParamValue(viewGroup, bimGroup);
+            }
+        } catch(Exception) {
+            // Вид работает и без группы, см. remarks.
+        }
     }
 
     public string GetDocumentName() {
@@ -223,9 +240,18 @@ internal class RevitRepository {
     /// <summary>
     /// Возвращает имена связей, которые присутствуют в документе, но не загружены.
     /// </summary>
+    /// <remarks>
+    /// Перебираем экземпляры связей напрямую, а не через <see cref="GetRevitLinkInstances"/>:
+    /// тот отбрасывает связи без документа, и выгруженных среди них не оставалось никогда.
+    /// Имя берём у типа связи: имя экземпляра содержит ещё номер копии и площадку.
+    /// </remarks>
     public List<string> GetUnloadedLinkNames() {
-        return GetRevitLinkInstances()
+        return new FilteredElementCollector(Doc)
+            .OfClass(typeof(RevitLinkInstance))
+            .Cast<RevitLinkInstance>()
             .Where(item => item.GetLinkDocument() is null)
+            .Select(item => Doc.GetElement(item.GetTypeId()) as RevitLinkType)
+            .Where(item => item is not null && IsRvtLinkType(item))
             .Select(item => item.Name)
             .Distinct()
             .OrderBy(item => item)
@@ -336,16 +362,35 @@ internal class RevitRepository {
 #endif
 
     /// <summary>
+    /// Выделяет элементы из немодального окна навигатора: само выделение ставится в очередь Ревита,
+    /// вне контекста API оно не работает.
+    /// </summary>
+    /// <param name="onSelected">Получает признак того, что хоть что-то выделено.</param>
+    public void QueueSelectElements(ICollection<ElementModel> elements, Action<bool> onSelected) {
+        if(elements is null) throw new ArgumentNullException(nameof(elements));
+
+        _revitEventHandler.TransactAction = () => {
+            // Документ могли закрыть при открытом навигаторе: обращение к его UIDocument роняет Ревит.
+            bool selected = Doc.IsValidObject && SelectElements(elements);
+            onSelected?.Invoke(selected);
+        };
+        _revitEventHandler.Raise();
+    }
+
+    /// <summary>
     /// Queues the complete navigation operation on Revit's API thread. This is
     /// required when it is initiated from the modeless navigator window.
     /// </summary>
     /// <param name="elements">Элементы коллизии: первый и второй, в этом порядке.</param>
     /// <param name="viewSettings">Настройки вида коллизий (подрезка).</param>
     /// <param name="highlight">
-    /// Рисовать ли элементы цветом поверх модели: первый - <see cref="ClashHighlighter.FirstColor" />,
-    /// второй - <see cref="ClashHighlighter.SecondColor" />.
+    /// Цвета подсветки элементов по порядку (первый, второй) или <see langword="null" />,
+    /// если элементы цветом поверх модели не рисовать.
     /// </param>
-    public void QueueSelectAndShowElement(ICollection<ElementModel> elements, IView3DSetting viewSettings, bool highlight) {
+    public void QueueSelectAndShowElement(
+        ICollection<ElementModel> elements,
+        IView3DSetting viewSettings,
+        IReadOnlyList<HighlightColorSettings> highlight) {
         if(elements is null) throw new ArgumentNullException(nameof(elements));
         if(viewSettings is null) throw new ArgumentNullException(nameof(viewSettings));
 
@@ -363,8 +408,8 @@ internal class RevitRepository {
                 _uiDocument.Selection.SetElementIds(GetElementsToSelect([], _view));
             }
 
-            if(highlight) {
-                ClashHighlighter.Show(_uiDocument, _view, GetHighlightedElements(elements));
+            if(highlight is { Count: > 0 }) {
+                ClashHighlighter.Show(_uiDocument, _view, GetHighlightedElements(elements, highlight));
             } else {
                 ClashHighlighter.Clear(_uiDocument);
             }
@@ -385,17 +430,19 @@ internal class RevitRepository {
         _revitEventHandler.Raise();
     }
 
-    private IEnumerable<HighlightedElement> GetHighlightedElements(IEnumerable<ElementModel> elements) {
-        var colors = new[] { ClashHighlighter.FirstColor, ClashHighlighter.SecondColor };
+    private IEnumerable<HighlightedElement> GetHighlightedElements(
+        IEnumerable<ElementModel> elements,
+        IReadOnlyList<HighlightColorSettings> colors) {
         int index = 0;
         foreach(var model in elements) {
-            var color = colors[Math.Min(index++, colors.Length - 1)];
+            var color = colors[Math.Min(index++, colors.Count - 1)];
             var element = model.GetElement(DocInfos);
             var docInfo = model.GetDocInfo(DocInfos);
             if(element is null || docInfo is null) {
                 continue;
             }
-            yield return new HighlightedElement(element, docInfo.Transform, color);
+            yield return new HighlightedElement(
+                element, docInfo.Transform, color.ToRevitColor(), color.TransparencyFraction);
         }
     }
 
@@ -472,6 +519,181 @@ internal class RevitRepository {
                 "нельзя показать элемент.";
             throw new InvalidOperationException(error);
         }
+    }
+
+    /// <summary>
+    /// Элементы поискового набора во всех документах проверки: в открытом файле и в
+    /// загруженных связях.
+    /// </summary>
+    /// <param name="filter">Поисковый набор.</param>
+    /// <param name="inverted">
+    /// Взять обратный набор: элементы тех же категорий, которые под правила набора не подходят.
+    /// </param>
+    public List<ElementModel> GetSearchSetElements(Filter filter, bool inverted) {
+        if(filter is null) { throw new ArgumentNullException(nameof(filter)); }
+
+        List<ElementModel> elements = [];
+        foreach(var docInfo in DocInfos) {
+            var revitFilter = filter.GetRevitFilter(docInfo.Doc, CreateFilterGenerator(inverted));
+            var transform = new TransformModel(docInfo.Transform);
+            elements.AddRange(GetFilteredElements(docInfo.Doc, filter.CategoryIds, revitFilter)
+                .Where(item => item is { IsValidObject: true })
+                .Select(item => new ElementModel(item, transform, computeLevel: false)));
+        }
+        return elements;
+    }
+
+    /// <summary>
+    /// Показывает поисковый набор на 3D-виде коллизий: фильтрами вида скрывает всё, что в набор
+    /// не входит, - и в открытом файле, и в связях с отображением "как в основном виде".
+    /// </summary>
+    /// <remarks>
+    /// Через внешнее событие: вызывается из немодального окна поисковых наборов.
+    /// </remarks>
+    /// <param name="filter">Поисковый набор.</param>
+    /// <param name="inverted">Показать обратный набор.</param>
+    /// <param name="onShown">Получает признак того, что фильтры вида применились.</param>
+    public void QueueShowSearchSet(Filter filter, bool inverted, Action<bool> onShown) {
+        if(filter is null) { throw new ArgumentNullException(nameof(filter)); }
+
+        _revitEventHandler.TransactAction = () => {
+            // Документ могли закрыть при открытом окне: обращение к его UIDocument роняет Ревит.
+            bool shown = false;
+            if(Doc.IsValidObject) {
+                try {
+                    _uiDocument.ActiveView = _view;
+                    shown = ApplySearchSetFilters(filter, inverted);
+                } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+                    shown = false;
+                }
+            }
+            onShown?.Invoke(shown);
+        };
+        _revitEventHandler.Raise();
+    }
+
+    /// <summary>
+    /// Подрезает 3D-вид коллизий по элементу поискового набора и выделяет его.
+    /// </summary>
+    /// <param name="onShown">Получает признак того, что элемент удалось выделить.</param>
+    public void QueueShowSearchSetElement(ElementModel element, Action<bool> onShown) {
+        if(element is null) { throw new ArgumentNullException(nameof(element)); }
+
+        _revitEventHandler.TransactAction = () => {
+            bool shown = false;
+            if(Doc.IsValidObject) {
+                _uiDocument.ActiveView = _view;
+                var box = GetCommonBoundingBox([element]);
+                if(box != null) {
+                    double halfSize = 5d; // футы, как у подрезки SelectAndShowElement по умолчанию
+                    box.Min -= new XYZ(halfSize, halfSize, halfSize);
+                    box.Max += new XYZ(halfSize, halfSize, halfSize);
+                    if(box.IsNotEmpty()) {
+                        using(var transaction = Doc.StartTransaction("Показ элемента поискового набора")) {
+                            _view.SetSectionBox(box);
+                            _view.IsSectionBoxActive = true;
+                            transaction.Commit();
+                        }
+                        _uiDocument.GetOpenUIViews()
+                            .FirstOrDefault(item => item.ViewId == _view.Id)
+                            ?.ZoomAndCenterRectangle(box.Min, box.Max);
+                    }
+                }
+                shown = SelectElements([element]);
+            }
+            onShown?.Invoke(shown);
+        };
+        _revitEventHandler.Raise();
+    }
+
+    /// <summary>
+    /// Убирает с 3D-вида коллизий фильтры показа поискового набора - при закрытии окна просмотра.
+    /// Иначе навигатор показывал бы коллизии на виде, где половина модели скрыта.
+    /// </summary>
+    public void QueueClearSearchSetPreview() {
+        _revitEventHandler.TransactAction = () => {
+            if(!Doc.IsValidObject || !_view.IsValidObject) {
+                return;
+            }
+            var names = GetSearchSetFilterNames();
+            var filterIds = _view.GetFilters()
+                .Where(id => Doc.GetElement(id) is ParameterFilterElement filter && names.Contains(filter.Name))
+                .ToList();
+            if(filterIds.Count == 0) {
+                return;
+            }
+            using var transaction = Doc.StartTransaction("Снятие показа поискового набора");
+            foreach(var id in filterIds) {
+                _view.RemoveFilter(id);
+            }
+            transaction.Commit();
+        };
+        _revitEventHandler.Raise();
+    }
+
+    private static RevitFilterGenerator CreateFilterGenerator(bool inverted) {
+        return inverted ? new InvertedRevitFilterGenerator() : new StraightRevitFilterGenerator();
+    }
+
+    private string[] GetSearchSetFilterNames() {
+        string username = Doc.Application.Username;
+        return [
+            $"{FiltersNamePrefix}поисковый_набор_инвертированный_{username}",
+            $"{FiltersNamePrefix}категории_не_поискового_набора_{username}"
+        ];
+    }
+
+    /// <summary>
+    /// Ставит на вид коллизий два фильтра, скрывающих всё лишнее: элементы категорий набора, не
+    /// подходящие под его правила, и элементы остальных категорий.
+    /// </summary>
+    /// <remarks>
+    /// В отличие от <see cref="HighlightFilter" />, не глушит отказ Ревита создать фильтр по
+    /// правилам: тогда вид показал бы все элементы категорий, и это выглядело бы как результат
+    /// набора. Снимаются только фильтры плагина, а не все фильтры вида.
+    /// </remarks>
+    /// <returns>Удалось ли поставить фильтр по правилам.</returns>
+    private bool ApplySearchSetFilters(Filter filter, bool inverted) {
+        var categories = new HashSet<BuiltInCategory>(filter.CategoryIds.Select(item => item.AsBuiltInCategory()));
+        string[] names = GetSearchSetFilterNames();
+        bool hasRules = filter.Set?.Criteria is { Count: > 0 };
+
+        using var transaction = Doc.StartTransaction("Показ поискового набора");
+        _view.IsSectionBoxActive = false;
+        foreach(var id in _view.GetFilters()
+                    .Where(id => Doc.GetElement(id)?.Name?.StartsWith(FiltersNamePrefix) == true)
+                    .ToList()) {
+            _view.RemoveFilter(id);
+        }
+
+        List<ParameterFilterElement> filtersToHide = [];
+        bool applied = true;
+        if(hasRules) {
+            // Скрывается обратное тому, что надо показать.
+            var filterToHide = filter.GetRevitFilter(Doc, CreateFilterGenerator(!inverted));
+            try {
+                filtersToHide.Add(ParameterFilterProvider.CreateParameterFilter(Doc, names[0], filterToHide, categories));
+            } catch(Autodesk.Revit.Exceptions.ApplicationException) {
+                applied = false;
+            }
+        }
+        // Пустой набор - все элементы его категорий, обратный ему пуст: скрываются все категории.
+        ICollection<BuiltInCategory> categoriesToShow = hasRules || !inverted ? categories : new HashSet<BuiltInCategory>();
+        filtersToHide.Add(ParameterFilterProvider.GetExceptCategoriesFilter(Doc, _view, categoriesToShow, names[1]));
+
+        foreach(var parameterFilter in filtersToHide) {
+            _view.AddFilter(parameterFilter.Id);
+            _view.SetFilterVisibility(parameterFilter.Id, false);
+        }
+        foreach(var category in GetLineCategoriesToHide()) {
+            _view.SetCategoryHidden(category, true);
+        }
+        transaction.Commit();
+
+        _uiDocument.GetOpenUIViews()
+            .FirstOrDefault(item => item.ViewId == _view.Id)
+            ?.ZoomToFit();
+        return applied;
     }
 
     /// <summary>
@@ -667,13 +889,15 @@ internal class RevitRepository {
         }
 
         var type = (RevitLinkType) Doc.GetElement(link.GetTypeId());
-        var extRef = type.GetExternalFileReference();
-        if(extRef == null) {
-            return false;
-        }
+        return link.GetLinkDocument() != null && IsRvtLinkType(type);
+    }
 
-        var doc = link.GetLinkDocument();
-        return doc != null
+    /// <summary>
+    /// Тип связи ссылается на внешний rvt-файл. Загружена ли связь, не проверяет.
+    /// </summary>
+    private static bool IsRvtLinkType(RevitLinkType type) {
+        var extRef = type.GetExternalFileReference();
+        return extRef != null
                && extRef.ExternalFileReferenceType == ExternalFileReferenceType.RevitLink
                && type.Name.EndsWith(".rvt", StringComparison.CurrentCultureIgnoreCase);
     }

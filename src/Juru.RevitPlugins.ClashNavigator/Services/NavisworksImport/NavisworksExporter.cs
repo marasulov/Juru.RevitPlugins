@@ -210,6 +210,12 @@ internal sealed class NavisworksExporter {
 
     private XElement ConvertRule(Filter filter, Rule rule, NavisworksImportReport report) {
         if(rule.Provider is not ParameterValueProvider provider || provider.RevitParam is null) {
+            // Псевдопараметр (рабочий набор) - не параметр Ревита, и как он называется в свойствах
+            // Navisworks, не известно наверняка. Правило пропускается, но не молча: без него
+            // набор в Navisworks отберёт больше, чем в Ревите.
+            if(rule.Provider is not null) {
+                report.Note(filter.Name, Text("Export.RuleSkipped", rule.Provider.Name, rule.Evaluator?.Evaluator));
+            }
             return null;
         }
 

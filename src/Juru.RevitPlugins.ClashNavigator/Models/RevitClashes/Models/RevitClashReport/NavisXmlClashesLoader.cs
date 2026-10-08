@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using Autodesk.Revit.DB;
 
 using dosymep.Revit;
+using dosymep.SimpleServices;
 
 using Juru.RevitPlugins.ClashNavigator.Models.Clashes;
 using Juru.RevitPlugins.ClashNavigator.Models.Interfaces;
@@ -99,12 +100,19 @@ namespace Juru.RevitPlugins.ClashNavigator.Models.RevitClashReport;
 //</exchange>
 internal class NavisXmlClashesLoader : BaseClashesLoader, IClashesLoader {
     private readonly RevitRepository _revitRepository;
+    private readonly ILocalizationService _localization;
 
-    public NavisXmlClashesLoader(RevitRepository revitRepository, string path) {
+    /// <param name="localization">
+    /// Служба локализации для описаний несопоставленных объектов. Если не задана,
+    /// вместо описания в колонке файла показывается ключ строки.
+    /// </param>
+    public NavisXmlClashesLoader(
+        RevitRepository revitRepository, string path, ILocalizationService localization = null) {
         if(string.IsNullOrWhiteSpace(path)) {
             throw new ArgumentException(nameof(path));
         }
         _revitRepository = revitRepository ?? throw new ArgumentNullException(nameof(revitRepository));
+        _localization = localization;
         FilePath = path;
     }
 
@@ -132,15 +140,18 @@ internal class NavisXmlClashesLoader : BaseClashesLoader, IClashesLoader {
 
 
     private ICollection<ClashModel> GetClashModels(XElement clashTest) {
-        return clashTest.Descendants("clashresult")
+        // Коллизии с несопоставленными объектами не отбрасываем: у нативной геометрии
+        // Id элемента Revit в отчёте нет, и раньше такие коллизии пропадали из таблицы.
+        // Причину, по которой такую коллизию нельзя показать в Ревите, объясняет
+        // ClashViewModel.RevitHint по описанию в DocumentName элемента.
+        return NavisXmlReport.GetClashResults(clashTest)
             .Select(GetClashModel)
-            .Where(c => (c.MainElement?.Id.IsNotNull() ?? false) && (c.OtherElement?.Id.IsNotNull() ?? false))
             .ToArray();
     }
 
     private ClashModel GetClashModel(XElement clashResult) {
         string name = clashResult.Attribute("name")?.Value ?? string.Empty;
-        var status = GetClashStatus(clashResult.Attribute("status")?.Value);
+        var status = GetClashStatus(NavisXmlReport.GetStatus(clashResult));
         var elements = clashResult.Descendants("clashobject")
             .Take(2)
             .Select(GetElementModel)
@@ -155,11 +166,20 @@ internal class NavisXmlClashesLoader : BaseClashesLoader, IClashesLoader {
             ClashPoint = GetClashPoint(clashResult),
             ImagePath = GetImagePath(clashResult)
         };
-        if(elements.Length == 2) {
-            clash.MainElement = elements[0];
-            clash.OtherElement = elements[1];
-        }
+        // Элементы назначаем всегда: ClashViewModel обращается к ним без проверки на null.
+        clash.MainElement = elements.ElementAtOrDefault(0) ?? GetMissingElementModel();
+        clash.OtherElement = elements.ElementAtOrDefault(1) ?? GetMissingElementModel();
         return clash.SetRevitRepository(_revitRepository);
+    }
+
+    /// <summary>
+    /// Заглушка для объекта, которого в коллизии отчёта нет вовсе.
+    /// </summary>
+    private ElementModel GetMissingElementModel() {
+        return new ElementModel() {
+            Id = ElementId.InvalidElementId,
+            DocumentName = GetText("NavisXml.ObjectMissing")
+        };
     }
 
     private string GetImagePath(XElement clashResult) {
@@ -178,68 +198,89 @@ internal class NavisXmlClashesLoader : BaseClashesLoader, IClashesLoader {
     }
 
     private ElementModel GetElementModel(XElement clashObject) {
-        return GetElementModelFromNavisworks(clashObject);
-
-#pragma warning disable CS0162 // Legacy SmartTag parser kept for older exported reports.
-        var tags = clashObject.Descendants("smarttag").ToDictionary(
-            t => t.Element("name").Value.ToLower(),
-            t => t.Element("value").Value);
-        string file = tags.TryGetValue("элемент файл источника", out string fileName) ? fileName : null;
-        const string rvtEnd = ".rvt";
-        if(file.EndsWith(rvtEnd)) {
-            file = file.Substring(0, file.Length - rvtEnd.Length);
-        }
-        var id = tags.TryGetValue("объект id", out string idStr) ? GetId(idStr) : ElementId.InvalidElementId;
-        var elementModel = GetElementModel(file, id);
-        return elementModel.Id.IsNotNull() ? elementModel :
-            new ElementModel() {
-                Id = id,
-                DocumentName = file,
-                Name = tags.TryGetValue("объект имя", out string name) ? name : string.Empty,
-                FamilyName = tags.TryGetValue("объект семейство", out string famName) ? famName : string.Empty,
-                Level = clashObject.Element("layer")?.Value ?? string.Empty
-            };
-#pragma warning restore CS0162
-    }
-
-    private ElementModel GetElementModelFromNavisworks(XElement clashObject) {
-        var elementModel = ResolveElementModelFromNavisworks(clashObject);
+        string objectName = NavisXmlReport.GetPropertyValue(clashObject, NavisXmlReport.ObjectNameNames);
+        var elementModel = ResolveElementModel(clashObject, objectName);
         // Имя объекта из отчёта показываем в таблице как есть, независимо от того,
         // удалось ли сопоставить элемент с моделью Revit.
-        elementModel.ObjectName = GetSmartTagValue(clashObject, "Item Name");
+        elementModel.ObjectName = objectName;
         return elementModel;
     }
 
-    private ElementModel ResolveElementModelFromNavisworks(XElement clashObject) {
-        var idValue = clashObject.Elements("objectattribute")
-            .FirstOrDefault(attribute => string.Equals(
-                (string)attribute.Element("name"), "Element ID", StringComparison.OrdinalIgnoreCase))
-            ?.Element("value")?.Value;
-        var id = GetId(idValue);
-        if(id == ElementId.InvalidElementId) return new ElementModel { Id = id };
-
-        // This Navisworks export does not identify the source RVT. Search the
-        // active document and every loaded Revit link for the exported ID.
-        var match = _revitRepository.DocInfos
-            .Select(info => new { Info = info, Element = info.Doc.GetElement(id) })
-            .FirstOrDefault(item => item.Element is not null);
-        if(match is not null) return new ElementModel(match.Element, match.Info.Transform);
+    private ElementModel ResolveElementModel(XElement clashObject, string objectName) {
+        var id = GetId(NavisXmlReport.GetPropertyValue(clashObject, NavisXmlReport.ElementIdNames));
+        string sourceFile = NavisXmlReport.GetPropertyValue(clashObject, NavisXmlReport.SourceFileNames);
+        var candidates = GetCandidateDocInfos(sourceFile);
+        if(id.IsNotNull()) {
+            var match = candidates
+                .Select(info => new { Info = info, Element = info.Doc.GetElement(id) })
+                .FirstOrDefault(item => item.Element is not null);
+            if(match is not null) {
+                return new ElementModel(match.Element, match.Info.Transform);
+            }
+        }
 
         return new ElementModel {
             Id = id,
-            // The current Navisworks XML format exports no source-RVT field.
-            // Keep the missing resolution visible instead of rendering a blank cell.
-            DocumentName = "<\u043d\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d \u0432 Revit>",
-            Name = GetSmartTagValue(clashObject, "Item Name"),
-            FamilyName = GetSmartTagValue(clashObject, "Item Type"),
-            Level = clashObject.Element("layer")?.Value ?? string.Empty
+            // Пустая ячейка файла выглядела бы как ошибка плагина, поэтому в ней - причина,
+            // по которой объект не сопоставлен. Её же показывает подсказка ClashViewModel.RevitHint.
+            DocumentName = GetUnresolvedDescription(id, sourceFile, candidates.Count > 0),
+            Name = objectName,
+            FamilyName = NavisXmlReport.GetPropertyValue(clashObject, NavisXmlReport.ObjectTypeNames),
+            Level = NavisXmlReport.GetLevel(clashObject)
         };
     }
 
-    private static string GetSmartTagValue(XElement clashObject, string name) =>
-        clashObject.Descendants("smarttag")
-            .FirstOrDefault(tag => string.Equals((string)tag.Element("name"), name, StringComparison.OrdinalIgnoreCase))
-            ?.Element("value")?.Value ?? string.Empty;
+    /// <summary>
+    /// Документы, в которых ищется элемент объекта отчёта.
+    /// </summary>
+    /// <remarks>
+    /// Файл источника есть не во всех форматах отчёта. Если он не указан, перебираем активный
+    /// документ и все связи. Если указан, ищем только в нём: Id элемента уникален лишь внутри
+    /// одного файла, и в чужом документе тот же Id почти всегда находит посторонний элемент.
+    /// Файл указан, но не загружен - элемент остаётся несопоставленным, а не подменяется.
+    /// Дублирующиеся экземпляры одной связи остаются в выборке все: элемент берётся из первого,
+    /// а трансформация хранится в модели элемента, как и раньше.
+    /// </remarks>
+    private ICollection<DocInfo> GetCandidateDocInfos(string sourceFile) {
+        var docInfos = _revitRepository.DocInfos;
+        return string.IsNullOrWhiteSpace(sourceFile)
+            ? docInfos
+            : docInfos.Where(info => IsSameDocument(info.Name, sourceFile)).ToArray();
+    }
+
+    /// <summary>Сравнивает имя документа Revit с именем файла из отчёта.</summary>
+    private static bool IsSameDocument(string docName, string reportFileName) {
+        // Имя из отчёта приводится так же, как имя документа (без суффикса пользователя
+        // локальной копии и пути), иначе локальная копия не узнала бы свой же центральный файл.
+        string reportName = RevitRepository.GetDocumentName(Path.GetFileNameWithoutExtension(reportFileName.Trim()));
+        return string.Equals(docName, reportName, StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    /// <summary>
+    /// Возвращает описание причины, по которой объект отчёта не сопоставлен с элементом Revit.
+    /// </summary>
+    /// <param name="id">Id элемента из отчёта.</param>
+    /// <param name="sourceFile">Файл источника из отчёта или пустая строка.</param>
+    /// <param name="documentLoaded">Документ, в котором искался элемент, загружен в Revit.</param>
+    private string GetUnresolvedDescription(ElementId id, string sourceFile, bool documentLoaded) {
+        if(!id.IsNotNull()) {
+            // Нативная геометрия и узлы групп Navisworks экспортируются без Id элемента Revit.
+            return GetText("NavisXml.NoElementId");
+        }
+        if(string.IsNullOrWhiteSpace(sourceFile)) {
+            return GetText("NavisXml.NotLoaded");
+        }
+        // Файл на месте, а элемента с таким Id в нём нет: модель изменилась после выгрузки
+        // отчёта из Navisworks - элемент удалён или пересоздан.
+        return documentLoaded
+            ? GetText("NavisXml.ElementNotFound", sourceFile)
+            : GetText("NavisXml.FileNotLoaded", sourceFile);
+    }
+
+    private string GetText(string key, params object[] args) {
+        string text = _localization?.GetLocalizedString(key, args);
+        return string.IsNullOrEmpty(text) ? key : text;
+    }
 
     private static XYZModel GetClashPoint(XElement clashResult) {
         var point = clashResult.Element("clashpoint")?.Element("pos3f");
@@ -298,19 +339,10 @@ internal class NavisXmlClashesLoader : BaseClashesLoader, IClashesLoader {
         );
     }
 
-    private ElementModel GetElementModel(string fileName, ElementId id) {
-        var el = _revitRepository.GetElement(fileName, id);
-        if(el != null) {
-            var elModel = new ElementModel(el);
-            var docInfo = elModel.GetDocInfo(_revitRepository.DocInfos);
-            elModel.TransformModel = new TransformModel(docInfo.Transform);
-            return elModel;
-        } else {
-            return new ElementModel() { Id = ElementId.InvalidElementId };
-        }
-    }
-
-    private ClashStatus GetClashStatus(string status) {
+    /// <param name="status">
+    /// Статус Navisworks, уже приведённый к английскому (<see cref="NavisXmlReport.GetStatus"/>).
+    /// </param>
+    private static ClashStatus GetClashStatus(string status) {
         return (status?.ToLower()) switch {
             "new" or "active" => ClashStatus.Active,
             "reviewed" or "approved" => ClashStatus.Analized,

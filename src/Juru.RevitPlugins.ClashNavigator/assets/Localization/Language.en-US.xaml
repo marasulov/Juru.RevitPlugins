@@ -43,6 +43,15 @@
     <system:String x:Key="ChecksWindow.DefaultCheckName">New check</system:String>
     <system:String x:Key="ChecksWindow.SearchCompleted">Clash detection finished</system:String>
     <system:String x:Key="ChecksWindow.ClashCount">Clashes</system:String>
+    <system:String x:Key="ChecksWindow.IgnoreRules">Ignore</system:String>
+    <system:String x:Key="ChecksWindow.IgnoreRulesTitle">Rules: {0}</system:String>
+    <system:String x:Key="ChecksWindow.IgnoreRulesTooltip">Which intersections are not clashes</system:String>
+    <system:String x:Key="ChecksWindow.IgnoreRulesDialogTitle">Do not count as clashes</system:String>
+    <system:String x:Key="IgnoreRule.Insulation">Insulation and lining with their pipe or duct</system:String>
+    <system:String x:Key="IgnoreRule.HostAndNested">An element with its host (door and wall) and nested families</system:String>
+    <system:String x:Key="IgnoreRule.Connected">Elements joined by connectors (pipe and fitting)</system:String>
+    <system:String x:Key="IgnoreRule.SameSystem">Elements of the same MEP system</system:String>
+    <system:String x:Key="IgnoreRule.SameFile">Elements of the same file</system:String>
     <system:String x:Key="ChecksWindow.Tolerance">Tolerance, mm</system:String>
     <system:String x:Key="ChecksWindow.ToleranceTooltip">Intersections shallower than the tolerance are not clashes. 0 means any intersection.</system:String>
     <system:String x:Key="ChecksWindow.SearchCancelled">Clash detection cancelled</system:String>
@@ -111,6 +120,39 @@
     <system:String x:Key="SearchSets.Validation.RuleNoValue">Rule "{0}" has no value.</system:String>
     <system:String x:Key="SearchSets.Validation.NestedSetEmpty">The nested set is empty.</system:String>
 
+    <!-- Search sets window: rename, copy, closing, categories -->
+    <system:String x:Key="SearchSet.Rename">Rename...</system:String>
+    <system:String x:Key="SearchSet.RenameTitle">Rename set</system:String>
+    <system:String x:Key="SearchSet.Copy">Copy...</system:String>
+    <system:String x:Key="SearchSet.CopyTooltip">Create a copy of the set under a new name</system:String>
+    <system:String x:Key="SearchSet.CopyTitle">Copy set</system:String>
+    <system:String x:Key="SearchSet.NameTaken">A set with this name already exists.</system:String>
+    <system:String x:Key="SearchSet.SavePrompt">The sets have changed. Save the changes?</system:String>
+    <system:String x:Key="SearchSet.CannotSavePrompt">The sets have changed but cannot be saved: {0}&#x0a;&#x0a;Close the window without saving? The changes will be lost.</system:String>
+    <system:String x:Key="SearchSet.HideUnselected">Selected only</system:String>
+
+    <!-- Search set preview -->
+    <system:String x:Key="SearchSet.Preview">Preview</system:String>
+    <system:String x:Key="SearchSet.PreviewTooltip">Show the elements the set picks - in a table and on the clash 3D view</system:String>
+    <system:String x:Key="SearchSet.ShowSet">Show set</system:String>
+    <system:String x:Key="SearchSet.ShowSetTooltip">Hide everything outside the set on the clash 3D view</system:String>
+    <system:String x:Key="SearchSet.Previous">Previous</system:String>
+    <system:String x:Key="SearchSet.Next">Next</system:String>
+    <system:String x:Key="SearchSet.StepTooltip">Go to the element and show it on the 3D view</system:String>
+    <system:String x:Key="SearchSet.ShowElement">Show element</system:String>
+    <system:String x:Key="SearchSet.ShowElementTooltip">Crop the 3D view to the selected element and select it (or double-click the row)</system:String>
+    <system:String x:Key="SearchSet.Invert">Inverted set</system:String>
+    <system:String x:Key="SearchSet.InvertTooltip">Elements of the same categories that do not match the set's rules</system:String>
+    <system:String x:Key="SearchSet.Column.File">File</system:String>
+    <system:String x:Key="SearchSet.Column.Id">Id</system:String>
+    <system:String x:Key="SearchSet.Column.Category">Category</system:String>
+    <system:String x:Key="SearchSet.Column.Family">Family</system:String>
+    <system:String x:Key="SearchSet.Column.Type">Type</system:String>
+    <system:String x:Key="SearchSet.ElementsCount">Elements: {0}</system:String>
+    <system:String x:Key="SearchSet.LoadError">Could not collect the set's elements: {0}</system:String>
+    <system:String x:Key="SearchSet.ShowSetError">Revit could not build a view filter from the set's rules - the view shows all elements of its categories.</system:String>
+    <system:String x:Key="SearchSet.ShowElementError">Could not select the element: the document is closed, or the element is in a link (Revit 2023 cannot select linked elements).</system:String>
+
     <!-- Rule conditions -->
     <system:String x:Key="Evaluator.Equals">equals</system:String>
     <system:String x:Key="Evaluator.NotEquals">does not equal</system:String>
@@ -151,8 +193,13 @@
     <system:String x:Key="SettingsWindow.ServerUrl">Server address</system:String>
     <system:String x:Key="SettingsWindow.ClashDisplay">Clash display</system:String>
     <system:String x:Key="SettingsWindow.SectionBoxOffset">Section box size, mm</system:String>
-    <system:String x:Key="SettingsWindow.HighlightClash">Highlight clash elements in colour</system:String>
+    <system:String x:Key="SettingsWindow.HighlightClash">Highlight clash elements in color</system:String>
     <system:String x:Key="SettingsWindow.HalftoneOthers">Show the rest of the model in halftone</system:String>
+    <system:String x:Key="SettingsWindow.FirstHighlight">First element</system:String>
+    <system:String x:Key="SettingsWindow.SecondHighlight">Second element</system:String>
+    <system:String x:Key="SettingsWindow.PickColorTooltip">Highlight color of the element. Click to choose</system:String>
+    <system:String x:Key="SettingsWindow.TransparencyTooltip">Transparency of the highlight faces: 0% is opaque. Edges always stay visible</system:String>
+    <system:String x:Key="SettingsWindow.ResetColorTooltip">Restore the default color and transparency</system:String>
     <system:String x:Key="SettingsWindow.Language">Interface language</system:String>
     <system:String x:Key="SettingsWindow.LanguageTooltip">The language applies the next time the plugin's windows are opened</system:String>
 
@@ -162,6 +209,16 @@
     <system:String x:Key="Language.English">English</system:String>
     <!-- Clash navigator -->
     <system:String x:Key="Navigator.Title">Clash navigator</system:String>
+    <system:String x:Key="Navigator.BcfTitle">Export to BCF</system:String>
+    <system:String x:Key="Navigator.BcfTooltip">Export the visible clashes of the report to BCF 2.1 - for Revizto, BIMcollab, Solibri, Navisworks, ACC</system:String>
+    <system:String x:Key="Navigator.BcfDone">Topics exported: {0}.&#10;File: {1}</system:String>
+    <system:String x:Key="Navigator.GroupTooltip">Group clashes</system:String>
+    <system:String x:Key="Navigator.Group.None">No grouping</system:String>
+    <system:String x:Key="Navigator.Group.FirstElement">By element 1</system:String>
+    <system:String x:Key="Navigator.Group.SecondElement">By element 2</system:String>
+    <system:String x:Key="Navigator.Group.Level">By level</system:String>
+    <system:String x:Key="Navigator.Group.Status">By status</system:String>
+    <system:String x:Key="Navigator.Group.NoValue">(not set)</system:String>
     <system:String x:Key="Navigator.KeysHint">F3 - next clash, Shift+F3 - previous clash</system:String>
     <system:String x:Key="Navigator.TitleWithBuild">Clash navigator (build {0})</system:String>
     <system:String x:Key="Navigator.LoadXml">Load XML</system:String>
@@ -179,12 +236,21 @@
     <system:String x:Key="Navigator.ColumnsTooltip">Show or hide the table columns</system:String>
     <system:String x:Key="Navigator.ReportsTooltip">Choose a report from the loaded XML</system:String>
     <system:String x:Key="Navigator.Show">Show</system:String>
+    <system:String x:Key="Navigator.Pick.First">Select item 1</system:String>
+    <system:String x:Key="Navigator.Pick.FirstTooltip">Select the first element of the selected clashes in Revit</system:String>
+    <system:String x:Key="Navigator.Pick.Second">Select item 2</system:String>
+    <system:String x:Key="Navigator.Pick.SecondTooltip">Select the second element of the selected clashes in Revit</system:String>
+    <system:String x:Key="Navigator.Pick.Both">Select both</system:String>
+    <system:String x:Key="Navigator.Pick.BothTooltip">Select both elements of the selected clashes in Revit</system:String>
+    <system:String x:Key="Navigator.Pick.Done">Clash elements selected: {0}</system:String>
+    <system:String x:Key="Navigator.Pick.Nothing">Nothing to select: elements not found in the document (linked elements can be selected from Revit 2024)</system:String>
     <system:String x:Key="Navigator.ColumnFilterTooltip">Pick the values to keep in this column</system:String>
     <system:String x:Key="Navigator.FilterSearchPlaceholder">Search...</system:String>
     <system:String x:Key="Navigator.FilterSelectAll">All</system:String>
     <system:String x:Key="Navigator.FilterClear">Clear</system:String>
     <system:String x:Key="Navigator.FilterApply">Apply</system:String>
     <system:String x:Key="Navigator.StatusTooltip">The new status reaches the database through the "Send statuses" button</system:String>
+    <system:String x:Key="Navigator.CopyIdTooltip">Select the Id and press Ctrl+C to copy it</system:String>
 
     <!-- Clash table columns -->
     <system:String x:Key="Navigator.Column.ClashName">Clash</system:String>
@@ -241,6 +307,13 @@
     <system:String x:Key="Clash.ElementWithoutId">Element {0} has no element id in the report — there is nothing to show</system:String>
     <system:String x:Key="Clash.ElementNotFound">Element {0} (Id {1}): {2}</system:String>
     <system:String x:Key="Clash.ImaginaryHint">Imaginary clash: there is no second element, nothing to show</system:String>
+
+    <!-- Navisworks report: why an object was not matched to a Revit element (file column) -->
+    <system:String x:Key="NavisXml.ObjectMissing">&lt;object missing from the report&gt;</system:String>
+    <system:String x:Key="NavisXml.NoElementId">&lt;no element id in the report&gt;</system:String>
+    <system:String x:Key="NavisXml.NotLoaded">&lt;not loaded in Revit&gt;</system:String>
+    <system:String x:Key="NavisXml.FileNotLoaded">&lt;file "{0}" is not loaded in Revit&gt;</system:String>
+    <system:String x:Key="NavisXml.ElementNotFound">&lt;element not found in file "{0}"&gt;</system:String>
 
     <!-- Clash statuses -->
     <system:String x:Key="ClashStatus.Active">Active</system:String>

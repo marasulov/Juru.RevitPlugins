@@ -239,7 +239,27 @@
                 BorderThickness="1"
                 BorderBrush="{ui:ThemeResource ControlElevationBorderBrush}"
                 ItemsSource="{Binding Filters.View}"
-                SelectedItem="{Binding SelectedFilter}" />
+                SelectedItem="{Binding SelectedFilter}">
+                <ListBox.InputBindings>
+                    <KeyBinding
+                        Key="F2"
+                        Command="{Binding RenameFilterCommand}" />
+                </ListBox.InputBindings>
+                <ListBox.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem
+                            Header="{me:LocalizationSource SearchSet.Rename}"
+                            InputGestureText="F2"
+                            Command="{Binding RenameFilterCommand}" />
+                        <MenuItem
+                            Header="{me:LocalizationSource SearchSet.Copy}"
+                            Command="{Binding CopyFilterCommand}" />
+                        <MenuItem
+                            Header="{me:LocalizationSource SearchSet.Preview}"
+                            Command="{Binding PreviewCommand}" />
+                    </ContextMenu>
+                </ListBox.ContextMenu>
+            </ListBox>
 
             <GridSplitter
                 Grid.Column="1"
@@ -279,6 +299,20 @@
                         VerticalAlignment="Center"
                         Margin="0 0 8 0"
                         Text="{me:LocalizationSource SearchSets.NameLabel}" />
+                    <!-- Просмотр - главное, что делают с набором после правки правил, поэтому
+                         он здесь, а не только в контекстном меню списка. -->
+                    <ui:Button
+                        DockPanel.Dock="Right"
+                        Margin="8 0 0 0"
+                        Content="{me:LocalizationSource SearchSet.Preview}"
+                        ToolTip="{me:LocalizationSource SearchSet.PreviewTooltip}"
+                        Command="{Binding PreviewCommand}" />
+                    <ui:Button
+                        DockPanel.Dock="Right"
+                        Margin="8 0 0 0"
+                        Content="{me:LocalizationSource SearchSet.Copy}"
+                        ToolTip="{me:LocalizationSource SearchSet.CopyTooltip}"
+                        Command="{Binding CopyFilterCommand}" />
                     <ui:TextBox
                         Text="{Binding SelectedFilter.Name, UpdateSourceTrigger=PropertyChanged}" />
                 </DockPanel>
@@ -361,8 +395,7 @@
                 Margin="8 0"
                 Content="{me:LocalizationSource Common.Ok}"
                 IsDefault="True"
-                Click="ButtonOk_Click"
-                Command="{Binding SaveCommand}" />
+                Command="{Binding SaveAndCloseCommand}" />
             <ui:Button
                 Width="80"
                 Content="{me:LocalizationSource Common.Close}"

@@ -16,7 +16,7 @@ namespace Juru.RevitPlugins.ClashNavigator.Services.ClashHighlight;
 /// транзакции не требует.
 /// <para>
 /// Грани чуть отодвинуты наружу по нормали: геометрия, совпадающая с гранями модели, мерцала бы
-/// на их фоне. Грани полупрозрачные и идут в прозрачном проходе, рёбра - непрозрачные, в обычном.
+/// на их фоне. Грани полупрозрачные (прозрачность - из настроек) и идут в прозрачном проходе, рёбра - непрозрачные, в обычном.
 /// </para>
 /// <para>
 /// Грани - формат <c>PositionNormal</c>, цвет задаётся эффектом, включая собственное свечение.
@@ -34,11 +34,6 @@ internal sealed class ClashHighlightServer : IDirectContext3DServer {
     /// Индексы в буфере 16-битные: на один буфер не больше 65 535 вершин.
     /// </summary>
     private const int _maxVerticesPerBuffer = 60000;
-
-    /// <summary>
-    /// Прозрачность граней: 0 - непрозрачные, 1 - невидимые.
-    /// </summary>
-    private const double _faceTransparency = 0.35;
 
     private readonly Guid _serverId = Guid.NewGuid();
     private readonly object _sync = new();
@@ -100,7 +95,7 @@ internal sealed class ClashHighlightServer : IDirectContext3DServer {
 
         foreach(var faces in _scene.Faces) {
             foreach(var chunk in Chunk(faces.Triangles, _maxVerticesPerBuffer / 3)) {
-                _faceBuffers.Add(RenderBuffer.FromTriangles(chunk, faces.Color));
+                _faceBuffers.Add(RenderBuffer.FromTriangles(chunk, faces.Color, faces.Transparency));
             }
         }
         foreach(var chunk in Chunk(_scene.Edges, _maxVerticesPerBuffer / 2)) {
@@ -131,7 +126,7 @@ internal sealed class ClashHighlightServer : IDirectContext3DServer {
         private int _indexCount;
         private int _primitiveCount;
 
-        public static RenderBuffer FromTriangles(IReadOnlyList<HighlightTriangle> triangles, Color color) {
+        public static RenderBuffer FromTriangles(IReadOnlyList<HighlightTriangle> triangles, Color color, double transparency) {
             int vertexCount = triangles.Count * 3;
             var vertices = new VertexBuffer(vertexCount * VertexPositionNormal.GetSizeInFloats());
             vertices.Map(vertexCount * VertexPositionNormal.GetSizeInFloats());
@@ -157,7 +152,7 @@ internal sealed class ClashHighlightServer : IDirectContext3DServer {
             effect.SetAmbientColor(color);
             effect.SetEmissiveColor(color);
             effect.SetSpecularColor(color);
-            effect.SetTransparency(_faceTransparency);
+            effect.SetTransparency(transparency);
 
             return new RenderBuffer {
                 _vertices = vertices,

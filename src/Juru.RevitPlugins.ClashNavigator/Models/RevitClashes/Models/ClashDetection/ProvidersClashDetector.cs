@@ -19,15 +19,18 @@ internal class ProvidersClashDetector {
     private readonly List<Element> _mainElements;
     private readonly List<Element> _secondElements;
     private readonly double _tolerance;
+    private readonly ClashIgnoreRules _ignoreRules;
 
 
     public ProvidersClashDetector(
         RevitRepository revitRepository,
         IProvider firstProvider,
         IProvider secondProvider,
-        double tolerance = 0) {
+        double tolerance = 0,
+        ClashIgnoreRules ignoreRules = ClashIgnoreRules.None) {
 
         _tolerance = Math.Max(0, tolerance);
+        _ignoreRules = ignoreRules;
 
         _revitRepository = revitRepository ?? throw new ArgumentNullException(nameof(revitRepository));
         _firstProvider = firstProvider ?? throw new ArgumentNullException(nameof(firstProvider));
@@ -93,6 +96,7 @@ internal class ProvidersClashDetector {
             .Excluding(new ElementId[] { element.Id })
             .WherePasses(new BoundingBoxIntersectsFilter(solid.GetOutline()))
             .WherePasses(new ElementIntersectsSolidFilter(solid))
+            .Where(item => !ClashIgnoreRuleMatcher.ShouldIgnore(item, element, _ignoreRules))
             .Select(item => new ClashModel(
                 _revitRepository,
                 item,
@@ -105,6 +109,7 @@ internal class ProvidersClashDetector {
         return new FilteredElementCollector(_firstProvider.Doc, _ids)
                 .Excluding(new ElementId[] { element.Id })
                 .WherePasses(new BoundingBoxIntersectsFilter(solid.GetOutline()))
+                .Where(item => !ClashIgnoreRuleMatcher.ShouldIgnore(item, element, _ignoreRules))
                 .Where(item => HasSolidsIntersection(item, solid))
                 .Select(item => new ClashModel(
                     _revitRepository,

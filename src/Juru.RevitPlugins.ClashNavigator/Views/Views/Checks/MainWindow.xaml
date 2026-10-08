@@ -180,6 +180,18 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
+                <!-- Правила исключения: какие пары не считаются коллизиями. -->
+                <DataGridTemplateColumn Width="Auto" CanUserSort="False"
+                                        local:ColumnLocalization.Key="ChecksWindow.IgnoreRules">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ui:Button Content="{Binding IgnoreRulesTitle}" Command="{Binding SelectIgnoreRulesCommand}"
+                                       ToolTip="{DynamicResource ChecksWindow.IgnoreRulesTooltip}"
+                                       Padding="6,4" Margin="4,2" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
                 <!-- Допуск проверки, мм: пересечения мельче не считаются коллизиями. -->
                 <DataGridTemplateColumn Width="90" CanUserSort="True" SortMemberPath="Tolerance"
                                         local:ColumnLocalization.Key="ChecksWindow.Tolerance">

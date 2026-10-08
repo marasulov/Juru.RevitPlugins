@@ -14,9 +14,9 @@
     WindowStartupLocation="CenterOwner"
     Title="{me:LocalizationSource SettingsWindow.Title}"
     Width="450"
-    Height="320"
+    Height="400"
     MinWidth="420"
-    MinHeight="300"
+    MinHeight="380"
     d:DataContext="{d:DesignInstance vms:SettingsViewModel, IsDesignTimeCreatable=False}">
 
     <Window.Resources>
@@ -109,6 +109,115 @@
                             Content="{me:LocalizationSource SettingsWindow.HalftoneOthers}"
                             IsEnabled="{Binding HighlightClashElements}"
                             IsChecked="{Binding HalftoneOtherElements}" />
+
+                        <!-- Цвета подсветки элементов коллизии. Прозрачность - только граней:
+                             рёбра остаются непрозрачными, иначе при 100% элемент пропал бы целиком. -->
+                        <!-- Две строки разметкой, а не общим DataTemplate: в шаблон
+                             me:LocalizationSource попадает невычисленным, и подписи пропали бы. -->
+                        <DockPanel
+                            Margin="38 8 14 0"
+                            IsEnabled="{Binding DataContext.HighlightClashElements, RelativeSource={RelativeSource AncestorType=Window}}"
+                            DataContext="{Binding FirstHighlight}">
+                            <Label
+                                Width="126"
+                                Style="{StaticResource CustomLabel}"
+                                Content="{me:LocalizationSource SettingsWindow.FirstHighlight}" />
+                            <Button
+                                Width="30"
+                                Height="24"
+                                Padding="0"
+                                Cursor="Hand"
+                                ToolTip="{me:LocalizationSource SettingsWindow.PickColorTooltip}"
+                                Command="{Binding PickColorCommand}">
+                                <Rectangle
+                                    Width="26"
+                                    Height="20"
+                                    RadiusX="3"
+                                    RadiusY="3">
+                                    <Rectangle.Fill>
+                                        <SolidColorBrush
+                                            Color="{Binding Color}" />
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                            </Button>
+                            <ui:Button
+                                DockPanel.Dock="Right"
+                                Margin="8 0 0 0"
+                                Padding="6 2"
+                                Content="&#x21BA;"
+                                ToolTip="{me:LocalizationSource SettingsWindow.ResetColorTooltip}"
+                                Command="{Binding ResetCommand}" />
+                            <TextBlock
+                                DockPanel.Dock="Right"
+                                Width="36"
+                                Margin="6 0 0 0"
+                                VerticalAlignment="Center"
+                                TextAlignment="Right"
+                                Text="{Binding Transparency, StringFormat={}{0} %}" />
+                            <Slider
+                                Margin="12 0 0 0"
+                                VerticalAlignment="Center"
+                                Minimum="0"
+                                Maximum="100"
+                                SmallChange="5"
+                                LargeChange="10"
+                                IsSnapToTickEnabled="True"
+                                TickFrequency="5"
+                                ToolTip="{me:LocalizationSource SettingsWindow.TransparencyTooltip}"
+                                Value="{Binding Transparency}" />
+                        </DockPanel>
+                        <DockPanel
+                            Margin="38 8 14 0"
+                            IsEnabled="{Binding DataContext.HighlightClashElements, RelativeSource={RelativeSource AncestorType=Window}}"
+                            DataContext="{Binding SecondHighlight}">
+                            <Label
+                                Width="126"
+                                Style="{StaticResource CustomLabel}"
+                                Content="{me:LocalizationSource SettingsWindow.SecondHighlight}" />
+                            <Button
+                                Width="30"
+                                Height="24"
+                                Padding="0"
+                                Cursor="Hand"
+                                ToolTip="{me:LocalizationSource SettingsWindow.PickColorTooltip}"
+                                Command="{Binding PickColorCommand}">
+                                <Rectangle
+                                    Width="26"
+                                    Height="20"
+                                    RadiusX="3"
+                                    RadiusY="3">
+                                    <Rectangle.Fill>
+                                        <SolidColorBrush
+                                            Color="{Binding Color}" />
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                            </Button>
+                            <ui:Button
+                                DockPanel.Dock="Right"
+                                Margin="8 0 0 0"
+                                Padding="6 2"
+                                Content="&#x21BA;"
+                                ToolTip="{me:LocalizationSource SettingsWindow.ResetColorTooltip}"
+                                Command="{Binding ResetCommand}" />
+                            <TextBlock
+                                DockPanel.Dock="Right"
+                                Width="36"
+                                Margin="6 0 0 0"
+                                VerticalAlignment="Center"
+                                TextAlignment="Right"
+                                Text="{Binding Transparency, StringFormat={}{0} %}" />
+                            <Slider
+                                Margin="12 0 0 0"
+                                VerticalAlignment="Center"
+                                Minimum="0"
+                                Maximum="100"
+                                SmallChange="5"
+                                LargeChange="10"
+                                IsSnapToTickEnabled="True"
+                                TickFrequency="5"
+                                ToolTip="{me:LocalizationSource SettingsWindow.TransparencyTooltip}"
+                                Value="{Binding Transparency}" />
+                        </DockPanel>
 
                         <StackPanel
                             Margin="14 8"
