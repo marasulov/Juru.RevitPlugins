@@ -3,7 +3,8 @@ name: Compile solution
 on:
   push:
     branches:
-      - '*'
+      # '**', а не '*': одна звёздочка не захватывает '/', и ветки вида feature/... не собирались.
+      - '**'
   pull_request:
   # Ручной запуск: например, после смены секрета CORE_TOKEN, когда новых коммитов нет.
   workflow_dispatch:
