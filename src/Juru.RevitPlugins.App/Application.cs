@@ -30,6 +30,9 @@ namespace Juru.RevitPlugins.App
             RibbonText.Use(Application.ControlledApplication.Language);
 
             CreateClashNavigatorPanel();
+            // Закрепляемую панель Ревит регистрирует только при запуске; откроет ли её кнопка
+            // навигатора вместо окна - выбирает пользователь в настройках.
+            ClashNavigator.NavigatorPane.Register(Application, RibbonText.ClashNavigator);
             CreateOpeningsPanel();
             CreateTextPanel();
         }

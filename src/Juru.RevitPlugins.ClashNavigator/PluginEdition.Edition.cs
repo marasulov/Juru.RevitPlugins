@@ -1,3 +1,5 @@
+using System;
+
 using ClashNavigator.Server;
 using ClashNavigator.Services.ClashServer;
 
@@ -42,4 +44,6 @@ internal static partial class PluginEdition {
     public static string ProfilePath => ProfilePaths.Shared;
 
     public static IClashServer CreateClashServer() => new JuruClashServer();
+
+    public static readonly Guid NavigatorPaneId = new("E216EA17-A6AF-4303-B718-4462B6CDB154");
 }
