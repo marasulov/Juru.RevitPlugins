@@ -34,12 +34,14 @@
         <PackageReference Include="WPF-UI" Version="4.3.0" />
     </ItemGroup>
 
-    <!-- Общий код ClashNavigator: субмодуль external\ClashNavigator.Core, а пока его нет -
-         соседний репозиторий рядом с Juru.RevitPlugins. Здесь остаются только части редакции:
+    <!-- Общий код ClashNavigator: соседний репозиторий рядом с Juru.RevitPlugins или субмодуль
+         external\ClashNavigator.Core. Здесь остаются только части редакции:
          PluginEdition.Edition.cs, словарь по умолчанию и сервер коллизий (Server). -->
     <PropertyGroup>
-        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\external\ClashNavigator.Core\ClashNavigator.Core.props')">$(MSBuildThisFileDirectory)..\..\external\ClashNavigator.Core\</ClashNavigatorCorePath>
-        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == ''">$(MSBuildThisFileDirectory)..\..\..\ClashNavigator.Core\</ClashNavigatorCorePath>
+        <!-- Соседний репозиторий ClashNavigator.Core - на машине разработчика: правка ядра сразу видна обеим редакциям.
+             Субмодуль external\ClashNavigator.Core - в CI, где соседнего репозитория нет. -->
+        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\..\ClashNavigator.Core\ClashNavigator.Core.props')">$(MSBuildThisFileDirectory)..\..\..\ClashNavigator.Core\</ClashNavigatorCorePath>
+        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == ''">$(MSBuildThisFileDirectory)..\..\external\ClashNavigator.Core\</ClashNavigatorCorePath>
     </PropertyGroup>
     <Import Project="$(ClashNavigatorCorePath)ClashNavigator.Core.props" />
 

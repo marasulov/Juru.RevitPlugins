@@ -47,8 +47,10 @@
          работа со строками и XML, без Revit API, а сам ClashNavigator, как и Schedules, тянет
          сборки Ревита. Код ClashNavigator - в общем ядре (см. src/Juru.RevitPlugins.ClashNavigator). -->
     <PropertyGroup>
-        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\external\ClashNavigator.Core\ClashNavigator.Core.props')">$(MSBuildThisFileDirectory)..\..\external\ClashNavigator.Core\</ClashNavigatorCorePath>
-        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == ''">$(MSBuildThisFileDirectory)..\..\..\ClashNavigator.Core\</ClashNavigatorCorePath>
+        <!-- Соседний репозиторий ClashNavigator.Core - на машине разработчика: правка ядра сразу видна обеим редакциям.
+             Субмодуль external\ClashNavigator.Core - в CI, где соседнего репозитория нет. -->
+        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\..\ClashNavigator.Core\ClashNavigator.Core.props')">$(MSBuildThisFileDirectory)..\..\..\ClashNavigator.Core\</ClashNavigatorCorePath>
+        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == ''">$(MSBuildThisFileDirectory)..\..\external\ClashNavigator.Core\</ClashNavigatorCorePath>
     </PropertyGroup>
     <ItemGroup>
         <Compile Include="$(ClashNavigatorCorePath)src\ClashNavigator\Services\NavisworksImport\NavisworksXml.cs"

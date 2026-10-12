@@ -17,6 +17,23 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Общее ядро ClashNavigator - закрытый репозиторий marasulov/ClashNavigator.Core. Встроенный
+      # GITHUB_TOKEN читает только этот репозиторий, поэтому ядро забирается отдельно своим токеном
+      # (секрет CORE_TOKEN, Contents: Read на ядро) - на коммит, закреплённый в субмодуле.
+      - name: Resolve ClashNavigator.Core commit
+        id: core
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD:external/ClashNavigator.Core)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout ClashNavigator.Core
+        uses: actions/checkout@v6
+        with:
+          repository: marasulov/ClashNavigator.Core
+          ref: ${{ steps.core.outputs.sha }}
+          token: ${{ secrets.CORE_TOKEN }}
+          path: external/ClashNavigator.Core
+          persist-credentials: false
+
       - name: Cache packages
         uses: actions/cache@v5
         with:
