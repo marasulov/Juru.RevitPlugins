@@ -5,6 +5,8 @@ on:
     branches:
       - '*'
   pull_request:
+  # Ручной запуск: например, после смены секрета CORE_TOKEN, когда новых коммитов нет.
+  workflow_dispatch:
 
 jobs:
   windows:
