@@ -1,0 +1,189 @@
+<Window x:Class="Juru.RevitPlugins.SystemViews.Views.SystemViewsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:viewModels="clr-namespace:Juru.RevitPlugins.SystemViews.ViewModels"
+        xmlns:loc="clr-namespace:Juru.RevitPlugins.SystemViews.Localization"
+        mc:Ignorable="d"
+        Title="{x:Static loc:Text.WindowTitle}"
+        Width="900"
+        Height="660"
+        MinWidth="760"
+        MinHeight="520"
+        FontSize="12"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        d:DataContext="{d:DesignInstance viewModels:SystemViewsViewModel, IsDesignTimeCreatable=False}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Juru.RevitPlugins.SystemViews;component/Resources/CustomStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+            <!-- У WPF-UI строка списка рассчитана на касание пальцем: две строки на экран флажков
+                 не помещаются. Ключевой стиль, а не неявный: неявный стиль WPF-UI в ресурсах окна
+                 уже ронял окна плагинов. -->
+            <Style x:Key="CompactItem" TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                <Setter Property="Padding" Value="6,2" />
+                <Setter Property="MinHeight" Value="0" />
+                <Setter Property="Margin" Value="0" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            </Style>
+
+            <Style x:Key="Caption" TargetType="TextBlock">
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="0,0,8,0" />
+            </Style>
+
+            <Style x:Key="Hint" TargetType="TextBlock">
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="Foreground" Value="{ui:ThemeResource TextFillColorSecondaryBrush}" />
+            </Style>
+
+            <Style x:Key="Section" TargetType="TextBlock">
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Margin" Value="0,12,0,6" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="16" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Исходный вид -->
+        <DockPanel Grid.Row="0" Grid.ColumnSpan="3">
+            <TextBlock DockPanel.Dock="Left" Text="{x:Static loc:Text.SourceView}" Style="{StaticResource Caption}" />
+            <TextBlock Text="{Binding SourceViewName}" FontWeight="SemiBold" VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis" />
+        </DockPanel>
+
+        <!-- Слева - категории. По умолчанию выбраны ОВ и ВК, категории без элементов на виде приглушены. -->
+        <DockPanel Grid.Row="1" Grid.Column="0">
+            <TextBlock DockPanel.Dock="Top" Style="{StaticResource Section}" Text="{Binding CategoriesSummary}" />
+            <ListBox ItemsSource="{Binding Categories}" ItemContainerStyle="{StaticResource CompactItem}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type viewModels:CategoryRowViewModel}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left" Width="40" Text="{Binding Discipline}"
+                                       VerticalAlignment="Center" Style="{StaticResource Hint}" />
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding Count}" VerticalAlignment="Center"
+                                       Margin="8,0,0,0" Style="{StaticResource Hint}" />
+                            <CheckBox Style="{StaticResource DefaultCheckBoxStyle}"
+                                      Content="{Binding Name}" IsChecked="{Binding IsChecked}">
+                                <CheckBox.Opacity>
+                                    <Binding Path="HasElements">
+                                        <Binding.Converter>
+                                            <viewModels:OpacityConverter />
+                                        </Binding.Converter>
+                                    </Binding>
+                                </CheckBox.Opacity>
+                            </CheckBox>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <!-- Справа - параметр и системы -->
+        <DockPanel Grid.Row="1" Grid.Column="2">
+            <TextBlock DockPanel.Dock="Top" Style="{StaticResource Section}" Text="{x:Static loc:Text.SystemsHeader}" />
+
+            <DockPanel DockPanel.Dock="Top">
+                <TextBlock DockPanel.Dock="Left" Text="{x:Static loc:Text.Parameter}" Style="{StaticResource Caption}" />
+                <ComboBox ItemsSource="{Binding Parameters}" DisplayMemberPath="Name"
+                          SelectedItem="{Binding SelectedParameter}" />
+            </DockPanel>
+            <TextBlock DockPanel.Dock="Top" Margin="0,4,0,8" Style="{StaticResource Hint}" Text="{Binding ParameterNote}" />
+
+            <DockPanel DockPanel.Dock="Top">
+                <ui:Button DockPanel.Dock="Right" Content="{x:Static loc:Text.SelectNone}" Margin="8,0,0,0"
+                           Command="{Binding SelectNoneCommand}" />
+                <ui:Button DockPanel.Dock="Right" Content="{x:Static loc:Text.SelectAll}" Margin="8,0,0,0"
+                           Command="{Binding SelectAllCommand}" />
+                <ui:TextBox PlaceholderText="{x:Static loc:Text.Search}"
+                            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+            </DockPanel>
+
+            <TextBlock DockPanel.Dock="Top" Margin="0,8,0,0" Style="{StaticResource Hint}"
+                       Text="{x:Static loc:Text.NoSystems}"
+                       Visibility="{Binding HasNoSystems, Converter={StaticResource BoolToVisibility}}" />
+
+            <ListBox Margin="0,8,0,0" ItemsSource="{Binding SystemsView}" ItemContainerStyle="{StaticResource CompactItem}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type viewModels:SystemRowViewModel}">
+                        <DockPanel Background="Transparent" ToolTip="{Binding WarningTip}">
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding Count}" VerticalAlignment="Center"
+                                       Margin="8,0,0,0" Style="{StaticResource Hint}" />
+                            <!-- Почти пустая схема: похоже на обрывок системы. Подробности - в подсказке. -->
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding Warning}" VerticalAlignment="Center"
+                                       Margin="8,0,0,0" FontWeight="SemiBold"
+                                       Foreground="{ui:ThemeResource SystemFillColorCautionBrush}"
+                                       Visibility="{Binding HasWarning, Converter={StaticResource BoolToVisibility}}" />
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding WillUpdateText}" VerticalAlignment="Center"
+                                       Margin="8,0,0,0" Style="{StaticResource Hint}" FontStyle="Italic"
+                                       Visibility="{Binding WillUpdate, Converter={StaticResource BoolToVisibility}}" />
+                            <CheckBox Style="{StaticResource DefaultCheckBoxStyle}"
+                                      Content="{Binding Name}" IsChecked="{Binding IsChecked}" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <!-- Оформление видов -->
+        <Grid Grid.Row="2" Grid.ColumnSpan="3" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Column="0" Text="{x:Static loc:Text.ViewNamePrefix}" Style="{StaticResource Caption}" />
+            <ui:TextBox Grid.Column="1" Text="{Binding ViewNamePrefix, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBlock Grid.Column="3" Text="{x:Static loc:Text.Template}" Style="{StaticResource Caption}" />
+            <ComboBox Grid.Column="4" ItemsSource="{Binding Templates}" DisplayMemberPath="Name"
+                      SelectedItem="{Binding SelectedTemplate}" />
+
+            <CheckBox Grid.Row="1" Grid.ColumnSpan="5" Margin="0,8,0,0" Style="{StaticResource DefaultCheckBoxStyle}"
+                      Content="{x:Static loc:Text.FitSectionBox}"
+                      ToolTip="{x:Static loc:Text.FitSectionBoxHint}"
+                      IsChecked="{Binding FitSectionBox}" />
+
+            <TextBlock Grid.Row="2" Grid.ColumnSpan="5" Margin="0,8,0,0" Style="{StaticResource Hint}"
+                       Text="{x:Static loc:Text.Hint}" />
+        </Grid>
+
+        <DockPanel Grid.Row="3" Grid.ColumnSpan="3" Margin="0,16,0,0">
+            <ui:Button DockPanel.Dock="Right" Content="{x:Static loc:Text.Cancel}" Width="100" Margin="8,0,0,0"
+                       IsCancel="True" />
+            <ui:Button DockPanel.Dock="Right" Content="{x:Static loc:Text.Create}" Width="110" Appearance="Primary"
+                       Command="{Binding CreateCommand}" />
+            <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Style="{StaticResource Hint}"
+                       Text="{Binding Summary}" />
+        </DockPanel>
+    </Grid>
+</Window>

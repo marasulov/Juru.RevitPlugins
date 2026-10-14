@@ -43,6 +43,12 @@
                  Link="RussianText.cs" />
     </ItemGroup>
 
+    <!-- Разбор значения параметра системы из «Видов по системам»: чистая работа со строками. -->
+    <ItemGroup>
+        <Compile Include="..\..\src\Juru.RevitPlugins.SystemViews\Services\SystemNames.cs"
+                 Link="SystemNames.cs" />
+    </ItemGroup>
+
     <!-- Так же, файлами: разбор выгрузки Navisworks и имя файла отчёта из ClashNavigator - чистая
          работа со строками и XML, без Revit API, а сам ClashNavigator, как и Schedules, тянет
          сборки Ревита. Код ClashNavigator - в общем ядре (см. src/Juru.RevitPlugins.ClashNavigator). -->

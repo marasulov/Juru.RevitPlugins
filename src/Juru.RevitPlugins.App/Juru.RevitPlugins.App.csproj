@@ -79,12 +79,15 @@
         <Resource Include="Resources\Icons\TranslateIcon32.png"/>
         <Resource Include="Resources\Icons\UpdateCopyIcon16.png"/>
         <Resource Include="Resources\Icons\UpdateCopyIcon32.png"/>
+        <Resource Include="Resources\Icons\SystemViewsIcon16.png"/>
+        <Resource Include="Resources\Icons\SystemViewsIcon32.png"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Juru.RevitPlugins.ClashNavigator\Juru.RevitPlugins.ClashNavigator.csproj"/>
         <ProjectReference Include="..\Juru.RevitPlugins.Openings\Juru.RevitPlugins.Openings.csproj"/>
         <ProjectReference Include="..\Juru.RevitPlugins.Schedules\Juru.RevitPlugins.Schedules.csproj"/>
+        <ProjectReference Include="..\Juru.RevitPlugins.SystemViews\Juru.RevitPlugins.SystemViews.csproj"/>
         <!-- Подготовка проекта в СОД: команда без кнопки на ленте, запускается через Add-in Manager -->
         <ProjectReference Include="..\Juru.RevitPlugins.ProjectSetup\Juru.RevitPlugins.ProjectSetup.csproj"/>
     </ItemGroup>
