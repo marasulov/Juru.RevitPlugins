@@ -1,4 +1,4 @@
-﻿<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
 
     <PropertyGroup>
         <UseWPF>true</UseWPF>
@@ -16,7 +16,12 @@
         <IsRepackable Condition="'$(RevitVersion)' &lt; '2027' And $(Configuration.StartsWith('Release'))">true</IsRepackable>
         <!-- Unused transitive deps of dosymep.Bim4Everyone.dll (nothing in our code calls into Serilog) -
              kept as loose files instead of merging. -->
-        <RepackBinariesExcludes>Serilog.Enrichers.Autodesk.Revit.dll;Serilog.Sinks.Autodesk.Revit.dll</RepackBinariesExcludes>
+        <!-- WPF-UI ставится отдельным файлом, а не вклеивается: при первом использовании он меняет
+             общие классы WPF (метаданные TextBlock, его свойства), а это можно сделать один раз на процесс.
+             Вклеенные копии у Juru и YM - разные сборки, и окно той редакции, что открылась второй, падало.
+             Отдельный Wpf.Ui.dll одной версии Ревит грузит один раз на обе редакции. Версия WPF-UI
+             у редакций должна совпадать, иначе копий снова станет две. -->
+        <RepackBinariesExcludes>Serilog.Enrichers.Autodesk.Revit.dll;Serilog.Sinks.Autodesk.Revit.dll;Wpf.Ui.dll;Wpf.Ui.Abstractions.dll</RepackBinariesExcludes>
         <EnableDynamicLoading>true</EnableDynamicLoading>
         <Configurations>Debug.R23;Debug.R24;Debug.R25;Debug.R26;Debug.R27</Configurations>
         <Configurations>$(Configurations);Release.R23;Release.R24;Release.R25;Release.R26;Release.R27</Configurations>
@@ -80,6 +85,8 @@
         <ProjectReference Include="..\Juru.RevitPlugins.ClashNavigator\Juru.RevitPlugins.ClashNavigator.csproj"/>
         <ProjectReference Include="..\Juru.RevitPlugins.Openings\Juru.RevitPlugins.Openings.csproj"/>
         <ProjectReference Include="..\Juru.RevitPlugins.Schedules\Juru.RevitPlugins.Schedules.csproj"/>
+        <!-- Подготовка проекта в СОД: команда без кнопки на ленте, запускается через Add-in Manager -->
+        <ProjectReference Include="..\Juru.RevitPlugins.ProjectSetup\Juru.RevitPlugins.ProjectSetup.csproj"/>
     </ItemGroup>
 
 </Project>

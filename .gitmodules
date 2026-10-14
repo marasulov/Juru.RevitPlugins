@@ -1,0 +1,4 @@
+[submodule "external/ClashNavigator.Core"]
+	path = external/ClashNavigator.Core
+	url = https://github.com/marasulov/ClashNavigator.Core.git
+	branch = main

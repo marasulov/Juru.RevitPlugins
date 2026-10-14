@@ -34,14 +34,21 @@
         <PackageReference Include="WPF-UI" Version="4.3.0" />
     </ItemGroup>
 
-    <ItemGroup>
-        <Folder Include="Models" />
-        <Folder Include="Commands\" />
-        <Folder Include="Services\" />
-    </ItemGroup>
+    <!-- Общий код ClashNavigator: соседний репозиторий рядом с Juru.RevitPlugins или субмодуль
+         external\ClashNavigator.Core. Здесь остаются только части редакции:
+         PluginEdition.Edition.cs, словарь по умолчанию и сервер коллизий (Server). -->
+    <PropertyGroup>
+        <!-- Соседний репозиторий ClashNavigator.Core - на машине разработчика: правка ядра сразу видна обеим редакциям.
+             Субмодуль external\ClashNavigator.Core - в CI, где соседнего репозитория нет. -->
+        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\..\ClashNavigator.Core\ClashNavigator.Core.props')">$(MSBuildThisFileDirectory)..\..\..\ClashNavigator.Core\</ClashNavigatorCorePath>
+        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == ''">$(MSBuildThisFileDirectory)..\..\external\ClashNavigator.Core\</ClashNavigatorCorePath>
+    </PropertyGroup>
+    <Import Project="$(ClashNavigatorCorePath)ClashNavigator.Core.props" />
 
     <ItemGroup>
         <Reference Include="System.Net.Http" />
+        <!-- ZipArchive: файл BCF - это zip. -->
+        <Reference Include="System.IO.Compression" />
     </ItemGroup>
 
     <ItemGroup>
@@ -83,6 +90,11 @@
         <HintPath>..\Juru.RevitPlugins.Core\libs\Serilog.dll</HintPath>
         <Private>false</Private>
       </Reference>
+    </ItemGroup>
+
+    <!-- Логика здесь internal; тесты внутри Ревита вызывают её напрямую. -->
+    <ItemGroup>
+        <InternalsVisibleTo Include="Juru.RevitPlugins.RevitTests" />
     </ItemGroup>
 
 </Project>

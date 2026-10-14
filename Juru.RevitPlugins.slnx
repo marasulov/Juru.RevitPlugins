@@ -66,6 +66,16 @@
     <File Path="Readme.md" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Juru.RevitPlugins.RevitTests/Juru.RevitPlugins.RevitTests.csproj">
+      <BuildType Solution="Debug|*" Project="Debug.R24" />
+      <BuildType Solution="Release|*" Project="Release.R24" />
+      <!-- В установщик тесты не входят. -->
+      <Build Solution="Release.R23|*" Project="false" />
+      <Build Solution="Release.R24|*" Project="false" />
+      <Build Solution="Release.R25|*" Project="false" />
+      <Build Solution="Release.R26|*" Project="false" />
+      <Build Solution="Release.R27|*" Project="false" />
+    </Project>
     <Project Path="tests/Juru.RevitPlugins.Tests/Juru.RevitPlugins.Tests.csproj">
       <BuildType Solution="Debug|*" Project="Debug.R23" />
       <BuildType Solution="Release|*" Project="Release.R23" />
@@ -95,6 +105,10 @@
       <BuildType Solution="Release|*" Project="Release.R23" />
     </Project>
     <Project Path="src/Juru.RevitPlugins.Openings/Juru.RevitPlugins.Openings.csproj">
+      <BuildType Solution="Debug|*" Project="Debug.R23" />
+      <BuildType Solution="Release|*" Project="Release.R23" />
+    </Project>
+    <Project Path="src/Juru.RevitPlugins.ProjectSetup/Juru.RevitPlugins.ProjectSetup.csproj">
       <BuildType Solution="Debug|*" Project="Debug.R23" />
       <BuildType Solution="Release|*" Project="Release.R23" />
     </Project>

@@ -43,4 +43,22 @@
                  Link="RussianText.cs" />
     </ItemGroup>
 
+    <!-- Так же, файлами: разбор выгрузки Navisworks и имя файла отчёта из ClashNavigator - чистая
+         работа со строками и XML, без Revit API, а сам ClashNavigator, как и Schedules, тянет
+         сборки Ревита. Код ClashNavigator - в общем ядре (см. src/Juru.RevitPlugins.ClashNavigator). -->
+    <PropertyGroup>
+        <!-- Соседний репозиторий ClashNavigator.Core - на машине разработчика: правка ядра сразу видна обеим редакциям.
+             Субмодуль external\ClashNavigator.Core - в CI, где соседнего репозитория нет. -->
+        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\..\ClashNavigator.Core\ClashNavigator.Core.props')">$(MSBuildThisFileDirectory)..\..\..\ClashNavigator.Core\</ClashNavigatorCorePath>
+        <ClashNavigatorCorePath Condition="'$(ClashNavigatorCorePath)' == ''">$(MSBuildThisFileDirectory)..\..\external\ClashNavigator.Core\</ClashNavigatorCorePath>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="$(ClashNavigatorCorePath)src\ClashNavigator\Services\NavisworksImport\NavisworksXml.cs"
+                 Link="NavisworksXml.cs" />
+        <Compile Include="$(ClashNavigatorCorePath)src\ClashNavigator\Models\RevitClashes\Models\Clashes\ReportFileName.cs"
+                 Link="ReportFileName.cs" />
+        <Compile Include="$(ClashNavigatorCorePath)src\ClashNavigator\Models\RevitClashes\Models\RevitClashReport\NavisXmlReport.cs"
+                 Link="NavisXmlReport.cs" />
+    </ItemGroup>
+
 </Project>

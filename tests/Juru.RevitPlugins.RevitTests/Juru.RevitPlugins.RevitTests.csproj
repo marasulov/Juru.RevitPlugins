@@ -1,0 +1,42 @@
+<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+
+    <!-- Тесты, которые выполняются внутри настоящего Ревита (Nice3point.TUnit.Revit): прогон
+         сам запускает установленный Ревит нужного года. Нужна лицензия, поэтому в CI не
+         запускаются - см. Readme.md рядом. -->
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+        <EnableTUnitPolyfills>false</EnableTUnitPolyfills>
+        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+        <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+        <Configurations>Debug.R23;Debug.R24;Debug.R25;Debug.R26;Debug.R27</Configurations>
+        <Configurations>$(Configurations);Release.R23;Release.R24;Release.R25;Release.R26;Release.R27</Configurations>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*" />
+        <PackageReference Include="Nice3point.TUnit.Revit" Version="$(RevitVersion).*" />
+    </ItemGroup>
+
+    <!-- На net48: Nice3point.TUnit.Revit собран против этих сборок версии 10.0.12, но в
+         зависимостях пакета их не объявляет, и восстановление берёт 10.0.10. Без явной ссылки
+         перенаправления сборок не генерируются, и прогон падает на старте с FileLoadException
+         (Microsoft.Bcl.AsyncInterfaces). -->
+    <ItemGroup Condition="'$(RevitVersion)' &lt; '2025'">
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.12" />
+        <PackageReference Include="System.Text.Json" Version="10.0.12" />
+        <PackageReference Include="System.Text.Encodings.Web" Version="10.0.12" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Juru.RevitPlugins.ClashNavigator\Juru.RevitPlugins.ClashNavigator.csproj" />
+        <ProjectReference Include="..\..\src\Juru.RevitPlugins.Openings\Juru.RevitPlugins.Openings.csproj" />
+        <!-- Под псевдонимом: ClashNavigator и ProjectSetup открывают тестам internal, и оба несут
+             свои копии служебных типов Polyfill (IsExternalInit, ModuleInitializerAttribute).
+             В общем пространстве имён они конфликтуют. Тесты ProjectSetup пишут extern alias. -->
+        <ProjectReference Include="..\..\src\Juru.RevitPlugins.ProjectSetup\Juru.RevitPlugins.ProjectSetup.csproj"
+                          Aliases="ProjectSetup" />
+        <ProjectReference Include="..\..\src\Juru.RevitPlugins.Schedules\Juru.RevitPlugins.Schedules.csproj" />
+    </ItemGroup>
+
+</Project>
