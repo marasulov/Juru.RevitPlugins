@@ -42,6 +42,16 @@ namespace Juru.RevitPlugins.App
 
         public static string TextPanel => Pick("Текст", "Text");
 
+        public static string SystemsPanel => Pick("Системы", "Systems");
+
+        // --- Виды по системам
+
+        public static string SystemViews => Pick("Виды по\nсистемам", "System\nviews");
+
+        public static string SystemViewsTip => Pick(
+            "Делает из открытого 3D-вида отдельный вид на каждую систему: остальное скрывает фильтр вида",
+            "Makes a separate view per system from the open 3D view: a view filter hides everything else");
+
         // --- Поиск коллизий
 
         public static string FindClashes => Pick("Поиск\nколлизий", "Find\nclashes");

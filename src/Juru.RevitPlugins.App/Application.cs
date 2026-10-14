@@ -1,6 +1,7 @@
 using ClashNavigator.Commands;
 using Juru.RevitPlugins.Openings.Commands;
 using Juru.RevitPlugins.Schedules.Commands;
+using Juru.RevitPlugins.SystemViews.Commands;
 
 using Nice3point.Revit.Toolkit.External;
 
@@ -35,6 +36,7 @@ namespace Juru.RevitPlugins.App
             ClashNavigator.NavigatorPane.Register(Application, RibbonText.ClashNavigator);
             CreateOpeningsPanel();
             CreateTextPanel();
+            CreateSystemsPanel();
         }
 
         private void CreateClashNavigatorPanel()
@@ -142,6 +144,19 @@ namespace Juru.RevitPlugins.App
                 .SetImage(IconsPath + "UpdateCopyIcon16.png")
                 .SetLargeImage(IconsPath + "UpdateCopyIcon32.png")
                 .SetToolTip(RibbonText.UpdateCopyTip);
+        }
+
+        /// <summary>
+        ///     Инженерные системы: 3D-схемы по системам из открытого вида.
+        /// </summary>
+        private void CreateSystemsPanel()
+        {
+            var panel = Application.CreatePanel(RibbonText.SystemsPanel, TabName);
+
+            panel.AddPushButton<CreateSystemViewsCommand>(RibbonText.SystemViews)
+                .SetImage(IconsPath + "SystemViewsIcon16.png")
+                .SetLargeImage(IconsPath + "SystemViewsIcon32.png")
+                .SetToolTip(RibbonText.SystemViewsTip);
         }
     }
 }
